@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"code.google.com/p/uuid"
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/jmmcatee/cracklord/common"
 	"log"
 	"net/rpc"
