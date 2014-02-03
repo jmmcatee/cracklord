@@ -1,9 +1,9 @@
 package queue
 
 import (
-	"cl/common"
-	"code.google.com/p/uuid"
+	"code.google.com/p/go-uuid/uuid"
 	"errors"
+	"github.com/jmmcatee/cracklord/common"
 	"log"
 	"net/rpc"
 	"sync"
