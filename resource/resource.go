@@ -1,8 +1,8 @@
 package resource
 
 import (
-	"cl/common"
 	"errors"
+	"github.com/jmmcatee/cracklord/common"
 	"log"
 	"net"
 	"net/rpc"

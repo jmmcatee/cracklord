@@ -2,8 +2,8 @@ package resource
 
 import (
 	"bytes"
-	"cl/common"
 	"errors"
+	"github.com/jmmcatee/cracklord/common"
 	"io"
 )
 

@@ -1,8 +1,8 @@
 package resource
 
 import (
-	"cl/common"
 	"code.google.com/p/uuid"
+	"github.com/jmmcatee/cracklord/common"
 	"log"
 	"net/rpc"
 	"testing"
