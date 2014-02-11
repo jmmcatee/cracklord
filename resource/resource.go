@@ -17,28 +17,33 @@ const (
 )
 
 // This will need to be called with a WaitGroup to handle other calls without
-// the program closing.
-func StartResource(n string, addr string, q *Queue) net.Listener {
-	ns := rpc.NewServer()
-	ns.Register(q)
+// the program closing. A channel is provied to alert when the RPC server is done.
+// This can be used to quit the application or simply restart the server for the next
+// master to connect.
+func StartResource(n string, addr string, q *Queue) chan bool {
+	res := rpc.NewServer()
+	res.Register(q)
 
-	listen, err := net.Listen(n, addr)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatal("Resource Listener Error: ", err)
+		log.Fatal(err)
 	}
 
+	quit := make(chan bool)
 	go func() {
-		for {
-			conn, err := listen.Accept()
-			if err != nil {
-				log.Printf("Error with Resource Listener: %s", err.Error())
-			}
-
-			go ns.ServeConn(conn)
+		// Accept and server a limited number of times
+		conn, err := l.Accept()
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		res.ServeConn(conn)
+
+		l.Close()
+		quit <- true
 	}()
 
-	return listen
+	return quit
 }
 
 type Queue struct {
@@ -47,6 +52,16 @@ type Queue struct {
 	sync.RWMutex
 	authToken string
 	hardware  map[string]bool
+}
+
+func NewResourceQueue(token string) Queue {
+	return Queue{
+		authToken: token,
+	}
+}
+
+func (q *Queue) AddTool(tooler common.Tooler) {
+	q.tools = append(q.tools, tooler)
 }
 
 // Task RPC functions

@@ -9,45 +9,45 @@ import (
 	"time"
 )
 
-type simpleTimerTooler struct {
+type SimpleTimerTooler struct {
 	uuid string
 }
 
-func (s *simpleTimerTooler) Name() string {
+func (s *SimpleTimerTooler) Name() string {
 	return "Simple Timer Tool"
 }
 
-func (s *simpleTimerTooler) Type() string {
+func (s *SimpleTimerTooler) Type() string {
 	return "Timer"
 }
 
-func (s *simpleTimerTooler) Version() string {
+func (s *SimpleTimerTooler) Version() string {
 	return "1.0.0"
 }
 
-func (s *simpleTimerTooler) SetUUID(uuid string) {
+func (s *SimpleTimerTooler) SetUUID(uuid string) {
 	s.uuid = uuid
 }
 
-func (s *simpleTimerTooler) UUID() string {
+func (s *SimpleTimerTooler) UUID() string {
 	return s.uuid
 }
 
-func (s *simpleTimerTooler) Parameters() string {
+func (s *SimpleTimerTooler) Parameters() string {
 	return "{timer:num}"
 }
 
-func (s *simpleTimerTooler) Requirements() string {
+func (s *SimpleTimerTooler) Requirements() string {
 	return common.RES_CPU
 }
 
-func (s *simpleTimerTooler) NewTask(j common.Job) common.Tasker {
-	return &simpleTimer{
+func (s *SimpleTimerTooler) NewTask(j common.Job) common.Tasker {
+	return &SimpleTimer{
 		j: j,
 	}
 }
 
-type simpleTimer struct {
+type SimpleTimer struct {
 	s    time.Time
 	d    time.Duration
 	r    time.Duration
@@ -56,7 +56,7 @@ type simpleTimer struct {
 	j    common.Job
 }
 
-func (t *simpleTimer) Status() common.Job {
+func (t *SimpleTimer) Status() common.Job {
 	if t.j.Status == common.STATUS_PAUSED {
 		t.j.Output["TimeLeft"] = strconv.Itoa(int(t.r))
 	}
@@ -73,7 +73,7 @@ func (t *simpleTimer) Status() common.Job {
 	return t.j
 }
 
-func (t *simpleTimer) Run() error {
+func (t *SimpleTimer) Run() error {
 	if t.j.Status == common.STATUS_FAILED || t.j.Status == common.STATUS_DONE {
 		return errors.New("Cannot start task as its status is " + t.j.Status)
 	}
@@ -112,7 +112,7 @@ func (t *simpleTimer) Run() error {
 	return nil
 }
 
-func (t *simpleTimer) Pause() error {
+func (t *SimpleTimer) Pause() error {
 	if t.j.Status == common.STATUS_RUNNING {
 		t.t.Stop()
 
@@ -129,7 +129,7 @@ func (t *simpleTimer) Pause() error {
 
 }
 
-func (t *simpleTimer) Quit() common.Job {
+func (t *SimpleTimer) Quit() common.Job {
 	t.t.Stop()
 	t.kill <- true
 
@@ -142,7 +142,7 @@ func (t *simpleTimer) Quit() common.Job {
 	return t.j
 }
 
-func (t *simpleTimer) IOE() (io.Writer, io.Reader, io.Reader) {
+func (t *SimpleTimer) IOE() (io.Writer, io.Reader, io.Reader) {
 	a := bytes.NewBuffer([]byte("Stdin not implemented"))
 	b := bytes.NewBuffer([]byte("Stdout not implemneted"))
 	c := bytes.NewBuffer([]byte("Stderr not implemented"))

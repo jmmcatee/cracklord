@@ -29,6 +29,18 @@ type Queue struct {
 	qk chan bool
 }
 
+func NewQueue() Queue {
+	// Build the queue
+	q := Queue{
+		status: STATUS_EMPTY,
+		pool:   NewResourcePool(),
+		stack:  []common.Job{},
+		stats:  NewStats(),
+	}
+
+	return q
+}
+
 // Add a job to the queue at the end of the stack
 func (q *Queue) AddJob(j common.Job) error {
 	// Lock the queue for the adding work
@@ -71,9 +83,6 @@ func (q *Queue) AddJob(j common.Job) error {
 				// Update the job in the stack
 				q.stack[jobIndex] = j
 
-				// We started a job so change the Queue status
-				q.status = STATUS_RUNNING
-
 				// Note the resources as being used
 				q.pool[i].Hardware[tool.Requirements] = false
 
@@ -82,6 +91,9 @@ func (q *Queue) AddJob(j common.Job) error {
 					q.qk = make(chan bool)
 					go q.keeper()
 				}
+
+				// We started a job so change the Queue status
+				q.status = STATUS_RUNNING
 
 				// We should be done so return no errors
 				return nil
@@ -340,8 +352,10 @@ func (q *Queue) Quit() []common.Job {
 	defer q.Unlock()
 
 	// First order of business is to kill the keeper
-	q.qk <- true
-	q.qk = nil
+	if q.qk != nil {
+		q.qk <- true
+		q.qk = nil
+	}
 
 	// Now we need to be 100% up-to-date
 	q.updateQueue()
@@ -366,6 +380,11 @@ func (q *Queue) Quit() []common.Job {
 		}
 	}
 
+	// Get rid of all the resource
+	for i, _ := range q.pool {
+		q.pool[i].Client.Close()
+	}
+
 	// We have looped through all jobs so return the last status
 	// The Queue should be deleted or nulled from outside this context
 	return q.stack
@@ -375,6 +394,7 @@ func (q *Queue) Quit() []common.Job {
 // It will need to aquire a lock each time it does this
 // The q.qk channel needs to be created and maintained outside of this function
 func (q *Queue) keeper() {
+	log.Println("----Keeper has started")
 	go func() {
 		// Setup timer for keeper
 		kTimer := time.After(KeeperDuration)
@@ -382,6 +402,7 @@ func (q *Queue) keeper() {
 		for {
 			select {
 			case <-kTimer:
+				log.Println("----Queue Keeper is running....")
 				// Get lock
 				q.Lock()
 
@@ -498,7 +519,7 @@ func (q *Queue) Tools() map[string]common.Tool {
 
 func (q *Queue) AddResource(n string, addr string, auth string) error {
 	// Create empty resource
-	res := new(Resource)
+	res := NewResource()
 
 	// Build the RPC client for the resource
 	var err error
@@ -519,7 +540,12 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 	}
 
 	// Get Tools
-	res.Client.Call("Queue.ResourceTools", res.RPCCall, &res.Tools)
+	var tools []common.Tool
+	res.Client.Call("Queue.ResourceTools", res.RPCCall, &tools)
+
+	for _, v := range tools {
+		res.Tools[v.UUID] = v
+	}
 
 	q.Lock()
 	defer q.Unlock()
@@ -531,6 +557,7 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 		for _, t := range v.Tools {
 			// Loop through new tools
 			for newUUID, newT := range res.Tools {
+				println(newT.Name)
 				if common.CompareTools(newT, t) {
 					// Change UUID to already set one
 					res.Tools[t.UUID] = newT
@@ -541,7 +568,7 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 	}
 
 	// Add resource to resource pool with generated UUID
-	q.pool[uuid.New()] = *res
+	q.pool[uuid.New()] = res
 
 	return nil
 }

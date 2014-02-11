@@ -14,3 +14,14 @@ type Resource struct {
 	Tools    map[string]common.Tool
 	Paused   bool
 }
+
+func NewResourcePool() ResourcePool {
+	return make(map[string]Resource)
+}
+
+func NewResource() Resource {
+	return Resource{
+		Hardware: make(map[string]bool),
+		Tools:    make(map[string]common.Tool),
+	}
+}

@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"log"
 	"net"
 	"net/rpc"
 )

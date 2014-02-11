@@ -4,6 +4,10 @@ type Stats struct {
 	jobsCount int64
 }
 
+func NewStats() Stats {
+	return Stats{}
+}
+
 func (s *Stats) IncJob() {
 	s.jobsCount++
 }
