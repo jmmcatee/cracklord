@@ -396,13 +396,13 @@ func (q *Queue) Quit() []common.Job {
 func (q *Queue) keeper() {
 	log.Println("----Keeper has started")
 	go func() {
-		// Setup timer for keeper
-		kTimer := time.After(KeeperDuration)
-
 		for {
+			log.Println("----Queue Keeper is running....")
+			// Setup timer for keeper
+			kTimer := time.After(KeeperDuration)
+
 			select {
 			case <-kTimer:
-				log.Println("----Queue Keeper is running....")
 				// Get lock
 				q.Lock()
 
@@ -417,10 +417,12 @@ func (q *Queue) keeper() {
 							for ji, _ := range q.stack {
 								requirement := q.pool[i].Tools[q.stack[ji].ToolUUID].Requirements
 								s := q.stack[ji].Status
-								startable := s == common.STATUS_CREATED && s == common.STATUS_PAUSED
+
+								startable := s == common.STATUS_CREATED || s == common.STATUS_PAUSED
 								if requirement == r && startable {
 									// Found a task that can be started and needs this resource
 									// Build the call
+									log.Println("Starting a new job")
 									startJob := common.RPCCall{
 										Auth: q.pool[i].RPCCall.Auth,
 										Job:  q.stack[ji],
@@ -433,7 +435,9 @@ func (q *Queue) keeper() {
 										log.Println(err.Error())
 									} else {
 										// there were no errors so lets take up the hardware resource
+										q.stack[ji].ResAssigned = i
 										q.pool[i].Hardware[r] = false
+										break
 									}
 								}
 							}
@@ -444,7 +448,7 @@ func (q *Queue) keeper() {
 				// Release the Lock
 				q.Unlock()
 			case <-q.qk:
-
+				log.Println("Keeper has been quit.")
 			}
 		}
 	}()
