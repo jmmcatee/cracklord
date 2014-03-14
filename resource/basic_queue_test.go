@@ -102,7 +102,7 @@ func TestResourceAuth(t *testing.T) {
 func TestListResourceTools(t *testing.T) {
 	// Build the queue to pass to the RPC server
 	q := Queue{authToken: "ResourceTest"}
-	b := new(simpleTimerTooler)
+	b := new(SimpleTimerTooler)
 	b.SetUUID(uuid.New())
 	q.tools = append(q.tools, b)
 
@@ -146,7 +146,7 @@ func TestSimpleStartTask(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	st.SetUUID(uuid.New())
 	q.tools = append(q.tools, st)
 
@@ -193,7 +193,7 @@ func TestSimplePauseTask(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	st.SetUUID(uuid.New())
 	q.tools = append(q.tools, st)
 
@@ -248,7 +248,7 @@ func TestSimpleRunTask(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	q.tools = append(q.tools, st)
 
 	// Create the RPC server and bind the queue
@@ -327,7 +327,7 @@ func TestSimpleQuitTask(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	q.tools = append(q.tools, st)
 
 	// Create the RPC server and bind the Queue
@@ -404,7 +404,7 @@ func TestToolDoesNotExist(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	st.SetUUID(uuid.New())
 	q.tools = append(q.tools, st)
 
@@ -438,7 +438,7 @@ func TestMultiToolStatus(t *testing.T) {
 	q := Queue{authToken: "ResourceTest"}
 
 	// Add the tool
-	st := new(simpleTimerTooler)
+	st := new(SimpleTimerTooler)
 	st.SetUUID(uuid.New())
 	q.tools = append(q.tools, st)
 
@@ -490,31 +490,4 @@ func TestMultiToolStatus(t *testing.T) {
 		}
 	}
 
-}
-
-func TestMultipleRPCClients(t *testing.T) {
-	// Create the RPC resource
-	q := Queue{authToken: "ResourceTest"}
-	l := StartResource("tcp", "localhost:4444", &q)
-	defer l.Close()
-
-	// Loop through and make connections for several clients
-
-	d := 4
-	for i := 0; i < d; i++ {
-		// Connect to the RPC server with the first client
-		client, err := rpc.Dial("tcp", "localhost:4444")
-		if err != nil {
-			t.Fatal("dialing:", err)
-		}
-		defer client.Close()
-
-		// Do a random call with the first client
-		rpccall := common.RPCCall{Auth: "ResourceTest"}
-		j := []common.Job{}
-		err = client.Call("Queue.AllTaskStatus", rpccall, &j)
-		if err != nil {
-			log.Fatal("Failed call: ", err)
-		}
-	}
 }

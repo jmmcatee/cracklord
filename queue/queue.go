@@ -68,6 +68,15 @@ func (q *Queue) AddJob(j common.Job) error {
 			// See if the tool exist on this resource
 			tool, ok := q.pool[i].Tools[j.ToolUUID]
 			if ok {
+				// It is now possible that the job about to be assigned to the resource
+				// actually has a Tool UUID different than the one the Queue has for this
+				// tool. This is because the Queue changes the UUID if it has two identical
+				// tools. We need to set the Job's ToolUUID to the real UUID of the tool
+				// if this is the case
+				if tool.UUID != j.ToolUUID {
+					j.ToolUUID = tool.UUID
+				}
+
 				// Tool exist, lets start the job on this resource and assign the resource to the job
 				j.ResAssigned = i
 				addJob := common.RPCCall{
@@ -98,11 +107,22 @@ func (q *Queue) AddJob(j common.Job) error {
 				// We should be done so return no errors
 				return nil
 			}
+
+			// Tool did not exist... return error
+			return errors.New("Tool did not exist for jobs provided.")
 		}
 	}
 
 	// If the queue is running or paused all we need to have done is add it to the queue
 	return nil
+}
+
+// Get the full queue stack
+func (q *Queue) AllJobs() []common.Job {
+	q.Lock()
+	q.Unlock()
+
+	return q.stack
 }
 
 func (q *Queue) PauseJob(jobuuid string) error {
@@ -120,7 +140,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 					Job:  q.stack[i],
 				}
 
-				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskPasue", pauseJob, q.stack[i])
+				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
 				if err != nil {
 					return err
 				}
@@ -157,7 +177,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 					Job:  q.stack[i],
 				}
 
-				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.QuitTask", quitJob, q.stack[i])
+				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
 				if err != nil {
 					return err
 				}
@@ -237,11 +257,10 @@ func (q *Queue) ResumeResource(resUUID string) error {
 func (q *Queue) PauseQueue() []error {
 	var e []error
 
-	q.Lock()
-	defer q.Unlock()
-
 	// First order of business is to kill the keeper
 	q.qk <- true
+	q.Lock()
+	defer q.Unlock()
 	q.qk = nil
 
 	// Now we need to be 100% up-to-date
@@ -348,19 +367,25 @@ func (q *Queue) StackReorder(uuids []string) []error {
 
 // Quit the queue
 func (q *Queue) Quit() []common.Job {
+	// First order of business is to kill the keeper
+	println("Quitting Keeper")
+	if q.qk != nil {
+		println("Sending kill message")
+		q.qk <- true
+		println("Kill message sent")
+	}
+
 	q.Lock()
 	defer q.Unlock()
 
-	// First order of business is to kill the keeper
-	if q.qk != nil {
-		q.qk <- true
-		q.qk = nil
-	}
+	q.qk = nil
 
 	// Now we need to be 100% up-to-date
+	println("Updating Jobs")
 	q.updateQueue()
 
 	// Loop through and quit any job that is not done, failed, quit
+	println("Looping through stack")
 	for i, _ := range q.stack {
 		s := q.stack[i].Status
 
@@ -372,6 +397,7 @@ func (q *Queue) Quit() []common.Job {
 				Job:  q.stack[i],
 			}
 
+			println("Quiting Task")
 			err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
 			// Log any errors but we don't care from a flow perspective
 			if err != nil {
@@ -382,11 +408,14 @@ func (q *Queue) Quit() []common.Job {
 
 	// Get rid of all the resource
 	for i, _ := range q.pool {
+		println("Quiting Resource")
 		q.pool[i].Client.Close()
+		delete(q.pool, i)
 	}
 
 	// We have looped through all jobs so return the last status
 	// The Queue should be deleted or nulled from outside this context
+	println("Returning stack")
 	return q.stack
 }
 
@@ -396,33 +425,51 @@ func (q *Queue) Quit() []common.Job {
 func (q *Queue) keeper() {
 	log.Println("----Keeper has started")
 	go func() {
+	keeperLoop:
 		for {
-			log.Println("----Queue Keeper is running....")
 			// Setup timer for keeper
 			kTimer := time.After(KeeperDuration)
 
 			select {
 			case <-kTimer:
+				log.Println("----Queue Keeper is running....")
+
 				// Get lock
+				log.Println("----Getting Queue Lock")
 				q.Lock()
 
 				// Update all running jobs
+				log.Println("----Updating the the Queue")
 				q.updateQueue()
 
 				// Look for open resources
 				for i, _ := range q.pool {
 					for r, b := range q.pool[i].Hardware {
+						log.Printf("==Res(%s): %s:%b\n", i, r, b)
 						if b {
 							// This resource is free, so lets find a job for it
 							for ji, _ := range q.stack {
 								requirement := q.pool[i].Tools[q.stack[ji].ToolUUID].Requirements
+
+								tool, ok := q.pool[i].Tools[q.stack[ji].ToolUUID]
+
 								s := q.stack[ji].Status
 
 								startable := s == common.STATUS_CREATED || s == common.STATUS_PAUSED
-								if requirement == r && startable {
+								if requirement == r && startable && ok {
 									// Found a task that can be started and needs this resource
 									// Build the call
-									log.Println("Starting a new job")
+									log.Println("Starting a new job on:" + i)
+
+									// It is now possible that the job about to be assigned to the resource
+									// actually has a Tool UUID different than the one the Queue has for this
+									// tool. This is because the Queue changes the UUID if it has two identical
+									// tools. We need to set the Job's ToolUUID to the real UUID of the tool
+									// if this is the case
+									if tool.UUID != q.stack[ji].ToolUUID {
+										q.stack[ji].ToolUUID = tool.UUID
+									}
+
 									startJob := common.RPCCall{
 										Auth: q.pool[i].RPCCall.Auth,
 										Job:  q.stack[ji],
@@ -446,11 +493,14 @@ func (q *Queue) keeper() {
 				}
 
 				// Release the Lock
+				log.Println("----Releasing the lock")
 				q.Unlock()
 			case <-q.qk:
 				log.Println("Keeper has been quit.")
+				break keeperLoop
 			}
 		}
+		log.Println("--------------------Keeper is dead.")
 	}()
 }
 
@@ -475,7 +525,13 @@ func (q *Queue) updateQueue() {
 			// Check if this is now no longer running
 			if q.stack[i].Status != common.STATUS_RUNNING {
 				// Release the resources from this change
-				hw := q.pool[q.stack[i].ResAssigned].Tools[q.stack[i].ToolUUID].Requirements
+				log.Println("=============Job " + q.stack[i].UUID + " is done.")
+				var hw string
+				for _, v := range q.pool[q.stack[i].ResAssigned].Tools {
+					if v.UUID == q.stack[i].ToolUUID {
+						hw = v.Requirements
+					}
+				}
 				q.pool[q.stack[i].ResAssigned].Hardware[hw] = true
 			}
 		}
@@ -557,15 +613,15 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 	// Loop through new tools and look for those we already have
 	// If we find a tool we already have we need to make the UUID the same
 	// If we don't already have this we can just leave the UUID assigned by the resource
-	for _, v := range q.pool {
-		for _, t := range v.Tools {
-			// Loop through new tools
-			for newUUID, newT := range res.Tools {
-				println(newT.Name)
-				if common.CompareTools(newT, t) {
-					// Change UUID to already set one
-					res.Tools[t.UUID] = newT
-					delete(res.Tools, newUUID)
+	for _, aValue := range res.Tools {
+		// Loop through the pool
+	ToolBreak:
+		for i, _ := range q.pool {
+			for _, cValue := range q.pool[i].Tools {
+				if common.CompareTools(aValue, cValue) {
+					res.Tools[cValue.UUID] = aValue
+					delete(res.Tools, aValue.UUID)
+					break ToolBreak
 				}
 			}
 		}
@@ -580,7 +636,7 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 func (q *Queue) RemoveResource(uuid string) error {
 	// Check for the resource with given UUID
 	_, ok := q.pool[uuid]
-	if ok {
+	if !ok {
 		return errors.New("Given Resource UUID does not exist.")
 	}
 

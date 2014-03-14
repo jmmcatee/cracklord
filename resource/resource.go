@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"errors"
 	"github.com/jmmcatee/cracklord/common"
 	"log"
@@ -56,11 +57,18 @@ type Queue struct {
 
 func NewResourceQueue(token string) Queue {
 	return Queue{
+		stack:     map[string]common.Tasker{},
+		tools:     []common.Tooler{},
 		authToken: token,
+		hardware:  map[string]bool{},
 	}
 }
 
 func (q *Queue) AddTool(tooler common.Tooler) {
+	// Add the hardware used by the tool
+	q.hardware[tooler.Requirements()] = true
+
+	tooler.SetUUID(uuid.New())
 	q.tools = append(q.tools, tooler)
 }
 
