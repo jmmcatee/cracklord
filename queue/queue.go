@@ -120,9 +120,23 @@ func (q *Queue) AddJob(j common.Job) error {
 // Get the full queue stack
 func (q *Queue) AllJobs() []common.Job {
 	q.Lock()
-	q.Unlock()
+	defer q.Unlock()
 
 	return q.stack
+}
+
+// Get one specific job
+func (q *Queue) JobInfo(jobUUID string) common.Job {
+	q.Lock()
+	defer q.Unlock()
+
+	for _, job := range q.stack {
+		if job.UUID == jobUUID {
+			return job
+		}
+	}
+
+	return common.Job{}
 }
 
 func (q *Queue) PauseJob(jobuuid string) error {
@@ -577,13 +591,13 @@ func (q *Queue) Tools() map[string]common.Tool {
 	return tools
 }
 
-func (q *Queue) AddResource(n string, addr string, auth string) error {
+func (q *Queue) AddResource(addr string, auth string) error {
 	// Create empty resource
 	res := NewResource()
 
 	// Build the RPC client for the resource
 	var err error
-	res.Client, err = rpc.Dial(n, addr)
+	res.Client, err = rpc.Dial("tcp", addr)
 	if err != nil {
 		return err
 	}
@@ -633,9 +647,27 @@ func (q *Queue) AddResource(n string, addr string, auth string) error {
 	return nil
 }
 
-func (q *Queue) RemoveResource(uuid string) error {
+func (q *Queue) GetResources() []common.Resource {
+	q.Lock()
+	defer q.Unlock()
+
+	var resources []common.Resource
+	for id, v := range q.pool {
+		r := common.Resource{}
+		r.UUID = id
+		r.Tools = v.Tools
+		r.Paused = v.Paused
+		r.Hardware = v.Hardware
+
+		resources = append(resources, r)
+	}
+
+	return resources
+}
+
+func (q *Queue) RemoveResource(resUUID string) error {
 	// Check for the resource with given UUID
-	_, ok := q.pool[uuid]
+	_, ok := q.pool[resUUID]
 	if !ok {
 		return errors.New("Given Resource UUID does not exist.")
 	}
@@ -646,16 +678,16 @@ func (q *Queue) RemoveResource(uuid string) error {
 
 	// Loop through any jobs assigned to the resource and quit them if they are not completed
 	for i, v := range q.stack {
-		if v.ResAssigned == uuid {
+		if v.ResAssigned == resUUID {
 			// Check status
 			if v.Status == common.STATUS_RUNNING || v.Status == common.STATUS_PAUSED {
 				// Quit the task
 				quitTask := common.RPCCall{
-					Auth: q.pool[uuid].RPCCall.Auth,
+					Auth: q.pool[resUUID].RPCCall.Auth,
 					Job:  v,
 				}
 
-				err := q.pool[uuid].Client.Call("Queue.TaskQuit", quitTask, &q.stack[i])
+				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &q.stack[i])
 				if err != nil {
 					log.Println(err.Error())
 				}
@@ -664,7 +696,7 @@ func (q *Queue) RemoveResource(uuid string) error {
 	}
 
 	// Remove from pool
-	delete(q.pool, uuid)
+	delete(q.pool, resUUID)
 
 	return nil
 }

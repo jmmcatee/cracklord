@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+func TestMeetQueueInterface(t *testing.T) {
+	queue := NewQueue()
+
+	takeInterface(&queue)
+}
+
+func takeInterface(a common.Queue) {
+	a.Quit()
+}
+
 func dumpQueue(q Queue) {
 	fmt.Printf("Queue Dump:\n")
 	fmt.Printf("\tStatus:%s\n", q.status)
