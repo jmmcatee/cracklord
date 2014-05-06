@@ -43,9 +43,9 @@ func TestQueueCreate(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueCreate:" + err.Error())
 	}
@@ -79,9 +79,9 @@ func TestQueueStop(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueStop:" + err.Error())
 	}
@@ -105,9 +105,9 @@ func TestQueueAddJob(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -156,9 +156,9 @@ func TestQueueAddMultipleJob(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -223,9 +223,9 @@ func TestQueueDelayAddMultipleJob(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -301,9 +301,9 @@ func TestQueuePause(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -390,9 +390,9 @@ func TestJobPause(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -461,9 +461,9 @@ func TestJobQuit(t *testing.T) {
 	tool := new(resource.SimpleTimerTooler)
 	res.AddTool(tool)
 
-	closed := resource.StartResource("tcp", "localhost:4444", &res)
+	closed := resource.StartResource("localhost:4444", &res)
 
-	err := queue.AddResource("tcp", "localhost:4444", "QueueTest")
+	err := queue.AddResource("localhost:4444", "QueueTest")
 	if err != nil {
 		t.Fatal("TestQueueAddJob:" + err.Error())
 	}
@@ -533,10 +533,10 @@ func TestMultiResourceMultiJobs1(t *testing.T) {
 	res1.AddTool(tool)
 
 	// Start the first resource
-	close1 := resource.StartResource("tcp", "localhost:4441", &res1)
+	close1 := resource.StartResource("localhost:4441", &res1)
 
 	// Add the first resource
-	err := queue.AddResource("tcp", "localhost:4441", "Resource 1")
+	err := queue.AddResource("localhost:4441", "Resource 1")
 	if err != nil {
 		t.Fatal("Error adding resource: " + err.Error())
 	}
@@ -547,10 +547,10 @@ func TestMultiResourceMultiJobs1(t *testing.T) {
 	res2.AddTool(tool)
 
 	// Start the second resource
-	close2 := resource.StartResource("tcp", "localhost:4442", &res2)
+	close2 := resource.StartResource("localhost:4442", &res2)
 
 	// Add the second resource
-	err = queue.AddResource("tcp", "localhost:4442", "Resource 2")
+	err = queue.AddResource("localhost:4442", "Resource 2")
 	if err != nil {
 		t.Fatal("Error adding resource: " + err.Error())
 	}
@@ -628,10 +628,10 @@ func TestMultiResourceMultiJobs2(t *testing.T) {
 	res1.AddTool(tool)
 
 	// Start the first resource
-	close1 := resource.StartResource("tcp", "localhost:4441", &res1)
+	close1 := resource.StartResource("localhost:4441", &res1)
 
 	// Add the first resource
-	err := queue.AddResource("tcp", "localhost:4441", "Resource 1")
+	err := queue.AddResource("localhost:4441", "Resource 1")
 	if err != nil {
 		t.Fatal("Error adding resource: " + err.Error())
 	}
@@ -642,10 +642,10 @@ func TestMultiResourceMultiJobs2(t *testing.T) {
 	res2.AddTool(tool)
 
 	// Start the second resource
-	close2 := resource.StartResource("tcp", "localhost:4442", &res2)
+	close2 := resource.StartResource("localhost:4442", &res2)
 
 	// Add the second resource
-	err = queue.AddResource("tcp", "localhost:4442", "Resource 2")
+	err = queue.AddResource("localhost:4442", "Resource 2")
 	if err != nil {
 		t.Fatal("Error adding resource: " + err.Error())
 	}
@@ -656,10 +656,10 @@ func TestMultiResourceMultiJobs2(t *testing.T) {
 	res3.AddTool(tool3)
 
 	// Start the second resource
-	close3 := resource.StartResource("tcp", "localhost:4443", &res3)
+	close3 := resource.StartResource("localhost:4443", &res3)
 
 	// Add the second resource
-	err = queue.AddResource("tcp", "localhost:4443", "Resource 3")
+	err = queue.AddResource("localhost:4443", "Resource 3")
 	if err != nil {
 		t.Fatal("Error adding resource: " + err.Error())
 	}

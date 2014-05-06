@@ -34,7 +34,7 @@ type Tooler interface {
 	SetUUID(string)
 	Parameters() string
 	Requirements() string
-	NewTask(Job) Tasker
+	NewTask(Job) (Tasker, error)
 }
 
 type Job struct {

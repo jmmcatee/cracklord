@@ -21,7 +21,7 @@ const (
 // the program closing. A channel is provied to alert when the RPC server is done.
 // This can be used to quit the application or simply restart the server for the next
 // master to connect.
-func StartResource(n string, addr string, q *Queue) chan bool {
+func StartResource(addr string, q *Queue) chan bool {
 	res := rpc.NewServer()
 	res.Register(q)
 
@@ -96,11 +96,13 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 
 	// variable to hold the tasker
 	var tasker common.Tasker
+	var err error
 	// loop through common.Toolers for matching tool
 	q.RLock()
 	for i, _ := range q.tools {
 		if q.tools[i].UUID() == rpc.Job.ToolUUID {
-			tasker = q.tools[i].NewTask(rpc.Job)
+			tasker, err = q.tools[i].NewTask(rpc.Job)
+			return err
 		}
 	}
 	q.RUnlock()
@@ -119,7 +121,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	q.stack[rpc.Job.UUID] = tasker
 
 	// Everything should be paused by the control queue so start this job
-	err := q.stack[rpc.Job.UUID].Run()
+	err = q.stack[rpc.Job.UUID].Run()
 	if err != nil {
 		return errors.New("Error starting task on the resource: " + err.Error())
 	}

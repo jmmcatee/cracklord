@@ -4,6 +4,18 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 )
 
+const (
+	ErrorInternal         = "{error:\"Internal Error\"}"
+	ErrorLogin            = "{error:\"Login Error\"}"
+	ErrorBadToken         = "{error:\"Bad Token\"}"
+	ErrorMalformedRequest = "{error:\"Malformed Request\"}"
+	ErrorPermissionDenied = "{error:\"Permission Denied\"}"
+	ErrorJobAdd           = "{error:\"Failed to create Job\"}"
+	ErrorJobPause         = "{error:\"Failed to pause Job\"}"
+	ErrorJobQuit          = "{error:\"Error while quiting Job\"}"
+	Success               = "{error:\"\"}"
+)
+
 /*
  * Structures used for JSON calls to /login
  */
@@ -24,7 +36,7 @@ type APILogoutReq struct {
 }
 
 /*
- * Structures used for JSON calls to /crack/types
+ * Structures used for JSON calls to /tool/types
  */
 type APICrackTypesReq struct {
 	Token string `json:"token"`
@@ -35,7 +47,7 @@ type APICrackTypesResp struct {
 }
 
 /*
- * Structures used for JSON calls to /crack/tools
+ * Structures used for JSON calls to /tools
  */
 type APICrackToolsReq struct {
 	Token string `json:"token"`
@@ -49,7 +61,8 @@ type APICrackToolsResp struct {
  * Structures used for JSON calls to /crack/form
  */
 type APICrackFormReq struct {
-	Token string `json:"token"`
+	Token  string `json:"token"`
+	ToolID string `json:"toolid"`
 }
 
 // This needs to be changed
@@ -62,7 +75,7 @@ type APICrackFormResp struct {
 */
 type APIJobNewReq struct {
 	Token  string            `json:"token"`
-	Tool   string            `json:"tool"`
+	ToolID string            `json:"toolid"`
 	Name   string            `json:"name"`
 	Params map[string]string `json:"params"`
 }

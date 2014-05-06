@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"github.com/jmmcatee/gojsonform"
 	"sync"
 	"time"
 )
@@ -104,4 +105,17 @@ func (t *TokenStore) GetUser(token string) (User, error) {
 	}
 
 	return User{}, errors.New("Invalid Token")
+}
+
+func NewForm() gojsonform.Form {
+	form := gojsonform.Form{}
+
+	name := gojsonform.NewInputText("name")
+	name.SetDesc("Name of the job to create.")
+	name.SetTitle("Job Name")
+	name.SetRequired(true)
+
+	form.Append(&name)
+
+	return form
 }
