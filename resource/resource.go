@@ -102,7 +102,9 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	for i, _ := range q.tools {
 		if q.tools[i].UUID() == rpc.Job.ToolUUID {
 			tasker, err = q.tools[i].NewTask(rpc.Job)
-			return err
+			if err != nil {
+				return err
+			}
 		}
 	}
 	q.RUnlock()

@@ -41,10 +41,22 @@ func (s *SimpleTimerTooler) Requirements() string {
 	return common.RES_CPU
 }
 
-func (s *SimpleTimerTooler) NewTask(j common.Job) common.Tasker {
+func (s *SimpleTimerTooler) NewTask(j common.Job) (common.Tasker, error) {
+	if _, ok := j.Parameters["timer"]; !ok {
+		return nil, errors.New("timer parameter not given!")
+	}
+
+	i, err := strconv.Atoi(j.Parameters["timer"])
+	if err != nil {
+		return nil, err
+	}
+
+	v := time.Duration(i) * time.Second
+
 	return &SimpleTimer{
 		j: j,
-	}
+		d: v,
+	}, nil
 }
 
 type SimpleTimer struct {
@@ -88,12 +100,6 @@ func (t *SimpleTimer) Run() error {
 		t.j.Status = common.STATUS_RUNNING
 	}
 
-	i, err := strconv.Atoi(t.j.Parameters["timer"])
-	if err != nil {
-		return err
-	}
-
-	t.d = time.Duration(i) * time.Second
 	t.t = time.NewTimer(t.d)
 	t.s = time.Now()
 	t.j.StartTime = t.s

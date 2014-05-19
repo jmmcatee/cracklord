@@ -39,10 +39,17 @@ func (s *simpleFailerTooler) Requirements() string {
 	return common.RES_CPU
 }
 
-func (s *simpleFailerTooler) NewTask(j common.Job) common.Tasker {
-	return &simpleFailureTask{
-		j: j,
+func (s *simpleFailerTooler) NewTask(j common.Job) (common.Tasker, error) {
+	if _, ok := j.Parameters["failFunc"]; !ok {
+		return nil, errors.New("failFunc parameter not given.")
 	}
+
+	f, _ := j.Parameters["failFunc"]
+
+	return &simpleFailureTask{
+		failFunc: f,
+		j:        j,
+	}, nil
 }
 
 type simpleFailureTask struct {
@@ -55,12 +62,6 @@ func (t *simpleFailureTask) Status() common.Job {
 }
 
 func (t *simpleFailureTask) Run() error {
-	var ok bool
-	t.failFunc, ok = t.j.Parameters["failFunc"]
-	if !ok {
-		return errors.New("failFunc was not provided.")
-	}
-
 	if t.j.Status == common.STATUS_FAILED || t.j.Status == common.STATUS_DONE {
 		return errors.New("Cannot start task as its status is " + t.j.Status)
 	}
@@ -77,11 +78,13 @@ func (t *simpleFailureTask) Run() error {
 		t.j.Status = common.STATUS_RUNNING
 	}
 
-	t.j.Status = common.STATUS_RUNNING
-
 	if t.failFunc == "Run" {
 		return errors.New("Expected on Run")
+
+		t.j.Status = common.STATUS_FAILED
 	}
+
+	t.j.Status = common.STATUS_RUNNING
 
 	return nil
 }
