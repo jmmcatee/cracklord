@@ -1,0 +1,16 @@
+body {
+	background-color: #ADADAD;
+}
+
+.main {
+	border-color: #000000;
+	border-style: solid;
+	border-width: 3px;
+	background-color: #fff;
+}
+
+.job-progress, .job-cracked {
+	border: 1px solid #adadad;
+	height: 22px;
+	margin: 0;
+}

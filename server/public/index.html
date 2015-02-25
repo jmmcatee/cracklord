@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="./css/bootstrap.min.css">
+	<link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+	<link rel="stylesheet" href="./css/font-awesome.min.css">
+	<link rel="stylesheet" href="./css/ng-sortable.min.css">
+	<link rel="stylesheet" href="./css/base.css">
+	<title>CrackLord - Job Listing</title>
+</head>
+<body ng-app="cracklord">
+	<nav class="navbar navbar-inverse" role="navigation">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#"><i class="fa fa-user-secret"></i> CrackLord Queue Manager</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav navbar-right">
+					<li><a ui-sref="jobs"><i class="fa fa-stack-overflow"></i> Jobs</a></li>
+					<li><a ui-sref="resources"><i class="fa fa-server"></i> Resources</a></li>
+					<li><a ui-sref="settings"><i class="fa fa-cogs"></i> Settings</a></li>
+					<li><a href="https://github.com/jmmcatee/cracklord"><i class="fa fa-github"></i> Github</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="container">
+		<div ui-view></div>
+	</div>
+	<script type="text/javascript" src="./libs/jquery-2.1.3.min.js"></script>
+	<script type="text/javascript" src="./libs/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="./libs/angular.min.js"></script>
+	<script type="text/javascript" src="./libs/angular-ui-router.min.js"></script>
+	<script type="text/javascript" src="./libs/angular-ui-sortable.min.js"></script>
+	<script type="text/javascript" src="./libs/angular-readable-time.min.js"></script>
+	<script type="text/javascript" src="./libs/bootstrap.min.js"></script>
+	<script type="text/javascript" src="./components/app.module.js"></script>
+	<script type="text/javascript" src="./components/app.routes.js"></script>
+	<script type="text/javascript" src="./components/Jobs/jobsController.js"></script>
+	<script type="text/javascript" src="./components/Jobs/jobsService.js"></script>
+	<script type="text/javascript" src="./components/Resources/resourcesController.js"></script>
+	<script type="text/javascript" src="./components/Resources/resourcesService.js"></script>
+	<script type="text/javascript" src="./components/Tools/toolsService.js"></script>
+</body>
+</html>
