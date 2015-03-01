@@ -1,38 +1,13 @@
-cracklord.factory('Jobs', function () {
-	var Jobs = {};
-
-	Jobs.list = [
-		{"jobid":"72fd24ca-e529-4b38-b70d-2ad566de7e49","name":"The Cheerful Shark Logistics Company","status":"running","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423978660,"crackedhashes":5,"totalhashes":800,"percentage":0.68},
-		{"jobid":"786c4f68-1b7f-46e0-b5bd-75090d78b25c","name":"The Deep Lime Builders Company","status":"paused","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423739455,"crackedhashes":102,"totalhashes":539,"percentage":0.17},
-		{"jobid":"af231ea6-5ec4-4bd8-a5f8-5317b69c1b36","name":"The Little Cow Builders Company","status":"paused","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423521017,"crackedhashes":5,"totalhashes":72,"percentage":0.47},
-		{"jobid":"de83f0e9-f53a-4e43-9285-0fc0e01e1ed7","name":"Stupid Pigeon Films","status":"paused","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423703738,"crackedhashes":98,"totalhashes":755,"percentage":0.85},
-		{"jobid":"9000a92c-cabf-45aa-97a1-dd739c42e5fc","name":"Jealous Tiger Web Design","status":"stopped","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424040300,"crackedhashes":22,"totalhashes":148,"percentage":0.71},
-		{"jobid":"b762b17a-c324-4385-8629-a829e1bc4395","name":"Beta Gecko Films","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423494683,"crackedhashes":62,"totalhashes":352,"percentage":0.96},
-		{"jobid":"901b0806-4870-43d5-b270-5034f779f55f","name":"The Alpha Camel Builders Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423566810,"crackedhashes":30,"totalhashes":698,"percentage":0.48},
-		{"jobid":"ac61c389-e49d-4d10-8f1d-b54e69690a87","name":"Beta Tomato Marketing","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423498166,"crackedhashes":28,"totalhashes":199,"percentage":0.84},
-		{"jobid":"bca93fb6-a609-4e66-b70b-2ed84c09ad78","name":"The Deep Chinchilla Corporation","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423668946,"crackedhashes":54,"totalhashes":398,"percentage":0.87},
-		{"jobid":"3257efbb-44e2-4bd6-b087-8f042e17e5a6","name":"Rainy Pen Builders","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423675695,"crackedhashes":86,"totalhashes":994,"percentage":0.85},
-		{"jobid":"f3448427-da97-402c-958d-465c48ef0fc8","name":"Green Phone Web Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423581903,"crackedhashes":1,"totalhashes":10,"percentage":0.47},
-		{"jobid":"f4db813f-5db7-47d1-9d9d-d5071ef135ff","name":"The Ice-Cold Sheep Web Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423816312,"crackedhashes":14,"totalhashes":74,"percentage":0.10},
-		{"jobid":"c3a393eb-76aa-43af-adbf-e0973a6480ee","name":"Foggy Meerkat Builders","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423788340,"crackedhashes":71,"totalhashes":924,"percentage":0.19},
-		{"jobid":"1b76c21b-5e02-4b76-ae08-7f9663ae7e6b","name":"Small Whale Web Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423947518,"crackedhashes":67,"totalhashes":436,"percentage":0.76},
-		{"jobid":"fb4223de-9a65-40b3-b78b-fd549e10e726","name":"The Freezing Tree Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1424000049,"crackedhashes":134,"totalhashes":680,"percentage":0.94},
-		{"jobid":"68ab4678-a9f5-457a-af64-528e7d5810c6","name":"The Orange Lime Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423626046,"crackedhashes":29,"totalhashes":709,"percentage":0.04},
-		{"jobid":"3a3c84d4-ca65-4628-b3cf-cc72cf9594cf","name":"The Blue Mouse Films Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423837255,"crackedhashes":47,"totalhashes":721,"percentage":0.31},
-		{"jobid":"407c642e-fe4c-4b2d-9516-5ddc79e89376","name":"Sad Orange Web Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424041731,"crackedhashes":60,"totalhashes":367,"percentage":0.92},
-		{"jobid":"9b197d1a-df60-4c7e-b801-3ed42868d8cb","name":"Deep Beaver Print Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424070022,"crackedhashes":49,"totalhashes":760,"percentage":0.35},
-		{"jobid":"ff14abc5-3284-4152-b4e0-1fa2057e3567","name":"Little Dog Films","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423882378,"crackedhashes":138,"totalhashes":970,"percentage":0.30},
-		{"jobid":"456f83e8-257d-4b78-908d-eee6f632a62c","name":"Sunny Shark Bank","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423681321,"crackedhashes":10,"totalhashes":140,"percentage":0.18},
-		{"jobid":"b7ee938f-2c67-43f6-b57d-9bad5a6423b0","name":"Opaque Robot Bank","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423786731,"crackedhashes":50,"totalhashes":939,"percentage":0.18},
-		{"jobid":"126947b7-c00a-4047-b447-d5b4d5134774","name":"The Black Cherry Bank","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1423617778,"crackedhashes":17,"totalhashes":208,"percentage":0.33},
-		{"jobid":"45194ea0-b60b-430f-9be1-d14d7195620a","name":"The Cold Duck theatre Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"jmmcatee","starttime":1424015948,"crackedhashes":54,"totalhashes":321,"percentage":0.82},
-		{"jobid":"6f32a524-504a-41fb-9a95-7f2598f12566","name":"The Ice-Cold Sheep Web Design Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424045947,"crackedhashes":121,"totalhashes":809,"percentage":0.73},
-		{"jobid":"aa5f1417-7c3c-440f-947a-d32c96eb3b6a","name":"White Box Builders","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423540885,"crackedhashes":83,"totalhashes":585,"percentage":0.31},
-		{"jobid":"628c1286-05b5-4643-b9d2-07d53fc0f36e","name":"The Purple Pen Trading Company","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423873796,"crackedhashes":177,"totalhashes":916,"percentage":0.03},
-		{"jobid":"9ed731cc-4e7a-494d-8ec8-4d6a1c52e530","name":"Blue Fan Web Design","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423515472,"crackedhashes":64,"totalhashes":812,"percentage":0.59},
-		{"jobid":"1906f26b-13ea-4e88-a58a-d63f307d1018","name":"The Brown Moose","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423854430,"crackedhashes":12,"totalhashes":503,"percentage":0.92},
-		{"jobid":"1b26fd52-d0d4-4a3a-9dfb-3e122e6eadf1","name":"Big Zebra Builders","status":"queued","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424054561,"crackedhashes":35,"totalhashes":441,"percentage":0.74}
-	];
-
-    return Jobs;
+cracklord.factory('JobsService', function ($resource) {
+   return $resource('/api/jobs/:id', {id: '@id'}, {
+   	query: {
+   		isArray: false,
+   		method: 'GET',
+   		params: {},
+   		transformResponse: function(data) {
+   			var results = angular.fromJson(data);
+   			return results.jobs;
+   		}	
+   	}
+   });
 });

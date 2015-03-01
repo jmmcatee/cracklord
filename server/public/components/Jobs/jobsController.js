@@ -1,6 +1,5 @@
-cracklord.controller('JobsController', function JobsController($scope, Jobs){
+cracklord.controller('JobsController', function JobsController($scope, JobsService){
 	$scope.now = Math.floor(Date.now() / 1000);
-	$scope.jobs = Jobs.list;
 
 	$scope.sortableOptions = {
 		handle: '.draghandle',
@@ -10,4 +9,16 @@ cracklord.controller('JobsController', function JobsController($scope, Jobs){
 		},
 		axis: 'y'
 	};
+
+	var jobs = JobsService.query(
+		//Our success handler
+		function(data) {
+	
+		},
+		//Our error handler
+		function(error) {
+			alert("error");
+		}
+	);
+	$scope.jobs = jobs;
 });
