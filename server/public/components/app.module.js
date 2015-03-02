@@ -1,6 +1,7 @@
 var cracklord = angular.module('cracklord', [
 	'ui.router',
    'ui.sortable',
+   'ui.bootstrap',
    'readableTime',
    'ngResource',
    'angular-growl',

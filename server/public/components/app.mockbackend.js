@@ -8,7 +8,7 @@ angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataM
     });
 
     $httpBackend.whenGET(/\/tools\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var id = url.split('/')[2];
+        var id = url.split('/')[3];
         var tool = JobsDataModel.read(id);
 
         if(tool != false) {
@@ -27,7 +27,7 @@ angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataM
     });
 
     $httpBackend.whenGET(/\/resources\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var id = url.split('/')[2];
+        var id = url.split('/')[3];
         var resource = ResourcesDataModel.read(id);
 
         if(resource != false) {
@@ -46,7 +46,7 @@ angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataM
     });
 
     $httpBackend.whenGET(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var jobid = url.split('/')[2];
+        var jobid = url.split('/')[3];
         
         var job = JobsDataModel.read(jobid);
 
@@ -69,18 +69,18 @@ angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataM
 
     $httpBackend.whenPUT(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
         var params = angular.fromJson(data);
-        var jobid = url.split('/')[2];
+        var jobid = url.split('/')[3];
         var result = JobsDataModel.update(jobid, params);
        
-        if(result == true) {
-            return [200, {"status": 200, "message": "OK"}, {}];
-        } else {
+        if(!result) {
             return [404, { "status": 404, "message": "Job not found" }, {}];
+        } else {
+            return [200, {"status": 200, "message": "OK", "job": result}, {}];
         }
     });
     
     $httpBackend.whenDELETE(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var jobid = url.split('/')[2];
+        var jobid = url.split('/')[3];
         var result = JobsDataModel.delete(jobid);
         
         if(result == true) {

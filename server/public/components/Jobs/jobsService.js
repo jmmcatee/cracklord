@@ -10,7 +10,11 @@ cracklord.factory('JobsService', function ($resource) {
    		}	
    	},
       update: {
-         method: 'PUT'
+         method: 'PUT', 
+         transformResponse: function(data) {
+            var results = angular.fromJson(data);
+            return results.job;
+         }
       }
    });
 });

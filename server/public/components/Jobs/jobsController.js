@@ -11,48 +11,56 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 		}
 	};
 
-	$scope.jobactions.play = function(id, index, name) {
-		JobsService.update({jobid: id}, {"action": "resume"}, 
+	$scope.jobactions.play = function(job) {
+		job.status = "created";
+
+		job.$update({jobid: job.jobid},  
 			function(successResult) {
-				$scope.jobs[index].status = "created";
-				growl.success(name+" resumed.");
+				growl.success(job.name+" resumed.");
 			}, 
 			function(errorResult) {
-				growl.error("Error ("+errorResult.status+") occured.");
+				growl.error("Error "+errorResult.message);
 			}
 		);
 	}
-	$scope.jobactions.pause = function(id, index, name) {
-		JobsService.update({jobid: id}, {"action": "pause"}, 
+	$scope.jobactions.pause = function(job) {
+		job.status = "paused";
+
+		job.$update({jobid: job.jobid}, 
 			function(successResult) {
-				$scope.jobs[index].status = "paused";
-				growl.success(name+" was paused.");
+				growl.success(job.name+" was paused.");
 			}, 
 			function(errorResult) {
-				growl.error("Error ("+errorResult.status+") occured.");
+				growl.error("Error "+errorResult.message);
 			}
 		);
 	}
-	$scope.jobactions.stop = function(id, index, name) {
-		JobsService.update({jobid: id}, {"action": "stop"}, 
+	$scope.jobactions.stop = function(job) {
+		job.status = "quit";
+
+		job.$update({jobid: job.jobid}, 
 			function(successResult) {
-				$scope.jobs[index].status = "quit";
-				growl.success(name+" was stopped.");
+				growl.success(job.name+" was stopped.");
 			}, 
 			function(errorResult) {
-				growl.error("Error ("+errorResult.status+") occured.");
+				growl.error("Error "+errorResult.message);
 			}
 		);
 	}
 
-	$scope.jobactions.delete = function(id, index, name) {
-		JobsService.delete({jobid: id}, 
+	$scope.jobactions.delete = function(job) {
+		var index = $scope.jobs.map(function(el) {
+			return el.jobid;
+		}).indexOf(job.jobid);
+
+		var name = job.name;
+		job.$delete({jobid: job.jobid}, 
 			function(successResult) {
-				$scope.jobs.splice(index, 1);
 				growl.success(name+" was deleted.");
+				$scope.jobs.splice(index, 1);
 			}, 
 			function(errorResult) {
-				growl.error("Error ("+errorResult.status+") occured.");
+				growl.error("Error "+errorResult.message);
 			}
 		);
 	}
