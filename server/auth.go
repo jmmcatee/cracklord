@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"sync"
 	"time"
 )
 
@@ -40,7 +42,6 @@ type User struct {
  * provided by default. Authenticators must be thread safe.
  */
 type Authenticator interface {
-	Setup(mapping map[string]string)
 	Login(user, pass string) (User, error)
 }
 

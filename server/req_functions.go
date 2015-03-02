@@ -20,7 +20,7 @@ type AppController struct {
 	Q    queue.Queue
 }
 
-func (a *AppController) Router() mux.Router {
+func (a *AppController) Router() *mux.Router {
 	r := mux.NewRouter().StrictSlash(false)
 
 	// Login and Logout
@@ -92,7 +92,7 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 	// Get the token from the Query string
 	req.Token = r.URL.Query().Get("token")
 
-	a.T.RemoveToken(req.token)
+	a.T.RemoveToken(req.Token)
 
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T

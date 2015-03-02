@@ -17,7 +17,7 @@ type LoginResp struct {
 
 // Logout Request Structure
 type LogoutReq struct {
-	Token
+	Token string `json:"token"`
 }
 
 // Logout Response Structure

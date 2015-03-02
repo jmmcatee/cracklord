@@ -58,7 +58,7 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 
 	for _, g := range adUser.Member {
 		// Check if the AD group has a mapping
-		if clGroup, ok := a.GroupMap[g]; ok {
+		if clGroup, ok := a.GroupMap[g.String()]; ok {
 			// Group existed so store the result in the User structure
 			NewUser.Groups = append(NewUser.Groups, clGroup)
 		}
