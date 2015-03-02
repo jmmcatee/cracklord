@@ -39,16 +39,19 @@ type Tooler interface {
 }
 
 type Job struct {
-	UUID        string
-	ToolUUID    string
-	Name        string
-	Status      string
-	Error       string
-	StartTime   time.Time
-	Owner       string
-	ResAssigned string
-	Parameters  map[string]string
-	Output      map[string]string
+	UUID          string
+	ToolUUID      string
+	Name          string
+	Status        string
+	Error         string
+	StartTime     time.Time
+	Owner         string
+	ResAssigned   string
+	CrackedHashes int64
+	TotalHashes   int64
+	Percentage    int
+	Parameters    map[string]string
+	Output        map[string]string
 }
 
 func NewJob(tooluuid string, name string, owner string, params map[string]string) Job {

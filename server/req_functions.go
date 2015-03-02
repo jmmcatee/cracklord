@@ -33,6 +33,10 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/tools").Methods("GET").HandlerFunc(a.ListTools)
 	r.Path("/api/tools/{id}").Methods("GET").HandlerFunc(a.GetTool)
 
+	// Jobs endpoints
+	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
+	r.Path("/api/jobs").Methods("POST").HandlerFunc(a.CreateJob)
+
 	return r
 }
 
@@ -197,6 +201,105 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	resp.Version = tool.Version
 	resp.Form = form.Form
 	resp.Schema = form.Schema
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+// Get Job list (GET - /api/jobs)
+func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var resp GetJobsResp
+
+	// JSON Encoder and Decoder
+	respJSON := json.NewEncoder(rw)
+
+	// Check the token
+	token := r.URL.Query().Get("token")
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the list of jobs and populate a return structure
+	for _, j := range a.Q.AllJobs() {
+		var job APIJobs
+
+		job.JobID = j.UUID
+		job.Name = j.Name
+		job.Status = j.Status
+		job.Owner = j.Owner
+		job.StartTime = j.StartTime
+		job.CrackedHashes = j.CrackedHashes
+		job.TotalHashes = j.TotalHashes
+		job.Percentage = j.Percentage
+
+		resp.Jobs = append(resp.Jobs, job)
+	}
+
+	// Return the results
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+// Create a new job (POST - /api/job)
+func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req JobCreateReq
+	var resp JobCreateResp
+
+	// JSON Encoder and Decoder
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the user
+	user, _ := a.T.GetUser(req.Token) // Ignoring the error because we know the token is good
+
+	// Build a job structure
+	job := common.NewJob(req.ToolID, req.Name, user.Username, req.Params)
+
+	err = a.Q.AddJob(job)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Job was created so populate the response structure and return
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+	resp.JobID = job.UUID
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)

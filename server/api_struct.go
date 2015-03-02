@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"time"
 )
 
 // Login Request Structure
@@ -46,4 +47,38 @@ type ToolsGetResp struct {
 	Version string          `json:version`
 	Form    json.RawMessage `json:form`
 	Schema  json.RawMessage `json:schema`
+}
+
+// API Jobs structure
+type APIJobs struct {
+	JobID         string    `json:jobid`
+	Name          string    `json:name`
+	Status        string    `json:status`
+	Owner         string    `json:owner`
+	StartTime     time.Time `json:starttime`
+	CrackedHashes int64     `json:crackedhashes`
+	TotalHashes   int64     `json:totalhashes`
+	Percentage    int       `json:percentage`
+}
+
+// Get Jobs structure
+type GetJobsResp struct {
+	Status  int       `json:status`
+	Message string    `json:message`
+	Jobs    []APIJobs `json:jobs`
+}
+
+// Create Jobs request
+type JobCreateReq struct {
+	Token  string            `json:token`
+	ToolID string            `json:toolid`
+	Name   string            `json:name`
+	Params map[string]string `json:params`
+}
+
+// Create Job response
+type JobCreateResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+	JobID   string `json:jobid`
 }
