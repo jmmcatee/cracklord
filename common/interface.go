@@ -2,6 +2,7 @@ package common
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"encoding/json"
 	"io"
 	"time"
 )
@@ -94,6 +95,11 @@ func CompareTools(t1, t2 Tool) bool {
 	}
 
 	return true
+}
+
+type ToolJSONForm struct {
+	Form   json.RawMessage `json:form`
+	Schema json.RawMessage `json.schema`
 }
 
 type RPCCall struct {
