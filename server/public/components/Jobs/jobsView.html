@@ -11,7 +11,8 @@
   		</div>
 	</div>
 	<div class="col-md-11 col-md-offset-1 main">
-		<h1 class="page-header"><i class="fa fa-stack-overflow"></i> Current Jobs</h1>
+		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
+		<h2 class="page-header">Current Queue</h2>
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
@@ -27,7 +28,7 @@
 					</tr>
 				</thead>
 				<tbody id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
-					<tr ng-repeat="job in jobs" class="{{job.status}}">
+					<tr ng-repeat="job in jobs | filter: {status: '!quit'}" class="{{job.status}}">
 						<td class="index">{{$index + 1}}</td>
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
@@ -37,7 +38,7 @@
 							<div class="progress job-cracked">
 								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{job.totalhashes / job.crackedhashes}}%">
 								</div>
-								<span>{{job.crackedhashes}} cracked</span>
+								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>
 						</td>
 						<td>
@@ -49,13 +50,48 @@
 						</td>
 						<td>
 							<div class="btn-group btn-group-xs" role="group" aria-label="...">
-								<button ng-click="jobactions.play(job.jobid, $index, job.name)" ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>
-								<button ng-click="jobactions.pause(job.jobid, $index, job.name)" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
-								<button ng-click="jobactions.stop(job.jobid, $index, job.name)" ng-class="job.status != 'quit' ? 'btn-danger' : 'btn-default disabled'" aria-label="stop" type="button" class="btn"><i class="fa fa-stop"></i></button>
-								<button ng-click="jobactions.delete(job.jobid, $index, job.name)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
-								<div ng-class="job.status != 'quit' ? 'btn-primary draghandle' : 'btn-default disabled'" class="btn"><i class="fa fa-arrows-v"></i></div>
+								<button ng-click="jobactions.play(job)" ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>
+								<button ng-click="jobactions.pause(job)" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
+								<button ng-click="jobactions.stop(job)" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-stop"></i></button>
+								<button ng-click="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
+								<div class="btn btn-primary draghandle"><i class="fa fa-arrows-v"></i></div>
 							</div>
 						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<h2 class="page-header">Completed / Stopped Jobs</h2>
+		<div class="table-responsive">
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th class="">Name</th>
+						<th class="">Owner</th>
+						<th class="">Cracked</th>
+						<th class="">Progress</th>
+						<th class=""></th>
+					</tr>
+				</thead>
+				<tbody id="#completedcontainer">
+					<tr ng-repeat="job in jobs | filter: {status: 'quit'}" class="{{job.status}}">
+						<td class="name">{{job.name}}</td>
+						<td class="owner">{{job.owner}}</td>
+						<td class="">
+							<div class="progress job-cracked">
+								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{job.totalhashes / job.crackedhashes}}%">
+								</div>
+								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
+							</div>
+						</td>
+						<td>
+							<div class="progress job-progress">
+								<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="{{job.progress * 100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.progress * 100}}%">
+									<span>{{job.progress * 100}}%</span>
+								</div>
+							</div>
+						</td>
+						<td><button ng-click="jobactions.delete(job.jobid, $index, job.name)" aria-label="delete" type="button" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i></button></td>
 					</tr>
 				</tbody>
 			</table>
