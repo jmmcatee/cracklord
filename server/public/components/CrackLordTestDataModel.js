@@ -1,24 +1,24 @@
 
 angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel() {
     this.data = {
-        "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
-        "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
-        "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } }
+        { "toolid": "63ee8045-966f-449e-9839-58e7e0586f3c", "name": "Hashcat", "version": "1.3.3", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
+        { "toolid": "8d660ce9-f15d-40a3-a997-a4e8867cb802", "name": "John the Ripper", "version": "1.7.9", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
+        { "toolid": "8d660ce9-f15d-328b-a997-39dl10d012ld", "name": "John the Ripper", "version": "1.8.0", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } }
     };
 
     this.query = function() {
         var tmpdata = this.data;
-        for (var id in tmpdata) {
-            delete tmpdata[id]["resources"];
-            delete tmpdata[id]["form"];
-            delete tmpdata[id]["schema"];
+        for (var i = 0; i < tmpdata.length; i++) {
+            delete tmpdata[i]["form"];
+            delete tmpdata[i]["schema"];
         }
         return tmpdata;
     };
 
     this.read = function(id) {
-        if(id in this.data) {
-            return this.data[id];
+        var found = $filter('filter')(this.data, {toolid: id}, true);
+        if(found.length) {
+            return found[0];
         } else {
             return false;
         }
@@ -27,22 +27,23 @@ angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel() 
 
 angular.module('cracklord').service('ResourcesDataModel', function ResourcesDataModel() {
     this.data = {
-        "1116814b-7c59-4b5d-87b6-fabaa5f594d1": { "status": "running", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } },
-        "202fa763-ab6d-4cad-b29d-5fa108766760": { "status": "paused", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } }
+        { "resourceid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1", "status": "running", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } },
+        { "resourceid": "202fa763-ab6d-4cad-b29d-5fa108766760", "status": "paused", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } }
     };
 
     this.query = function() {
         var tmpdata = this.data;
-        for (var id in tmpdata) {
-            delete tmpdata[id]["hardware"];
-            delete tmpdata[id]["tools"];
+        for (var i = 0; i < tmpdata.length; i++) {
+            delete tmpdata[i]["hardware"];
+            delete tmpdata[i]["tools"];
         }
         return tmpdata;
-    }
+    };
 
     this.read = function(id) {
-        if(id in this.data) {
-            return this.data[id];
+        var found = $filter('filter')(this.data, {resourceid: id}, true);
+        if(found.length) {
+            return found[0];
         } else {
             return false;
         }
@@ -62,28 +63,26 @@ angular.module('cracklord').service('ResourcesDataModel', function ResourcesData
     }
 
     this.update = function(id, data) {
-        var newStatus = "";
-        switch (data["action"]) {
-            case "pause":
-                newStatus = "paused";
-                break;
-            case "shutdown":
-                newStatus = "paused";
-                break;
-            default: 
-                return false;
+        for(var i = 0; i < this.data.length; i++) {
+            if(this.data[i].resourceid === id) {
+                this.data[i] = data;
+                return this.data[i];;
+            }
         }
-        this.data[id]["status"] = newStatus;
-        return true;
+
+        return false;
     }
 
     this.delete = function(id) {
-        if(id in this.data) {
-            delete this.data[id];
-            return true;
-        } else {
-            return false;
+        var match = false;
+        for(var i = 0; i < this.data.length; i++) {
+            if(this.data[i].jobid = id) {
+                match = true;
+                this.data.splice(i, 1);
+                break;
+            }
         }
+        return match;    
     }; 
 });
 
@@ -168,7 +167,6 @@ angular.module('cracklord').service('JobsDataModel', function JobsDataModel() {
     this.update = function(id, data) {
         for(var i = 0; i < this.data.length; i++) {
             if(this.data[i].jobid === id) {
-                match = true;
                 this.data[i] = data;
                 return this.data[i];;
             }

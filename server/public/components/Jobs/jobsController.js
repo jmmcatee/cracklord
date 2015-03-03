@@ -1,4 +1,4 @@
-cracklord.controller('JobsController', function JobsController($scope, JobsService, growl) {
+cracklord.controller('JobsController', function JobsController($scope, $modal, JobsService, growl) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);
 	$scope.jobactions = {};
