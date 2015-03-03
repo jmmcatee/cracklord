@@ -212,6 +212,42 @@ func (q *Queue) QuitJob(jobuuid string) error {
 	return errors.New("Job does not exist!")
 }
 
+func (q *Queue) RemoveJob(jobuuid string) error {
+	q.Lock()
+	defer q.Unlock()
+
+	// Loop through and find the job
+	for i, _ := range q.stack {
+		if q.stack[i].UUID == jobuuid {
+			// We have the job so check to make sure it isn't running
+			s := q.stack[i].Status
+			if s == common.STATUS_RUNNING {
+				// Quit the job
+				err := q.QuitJob(jobuuid)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Job should now be quit so lets rebuild the stack
+			newStack := []common.Job{}
+			for _, v := range q.stack {
+				if v.UUID != jobuuid {
+					newStack = append(newStack, v)
+				}
+			}
+
+			// Rest stack
+			q.stack = newStack
+
+			// Stack has been cleaned so return no errors
+			return nil
+		}
+	}
+
+	return errors.New("Job not found.")
+}
+
 func (q *Queue) PauseResource(resUUID string) error {
 	q.Lock()
 	defer q.Unlock()

@@ -36,6 +36,9 @@ func (a *AppController) Router() *mux.Router {
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
 	r.Path("/api/jobs").Methods("POST").HandlerFunc(a.CreateJob)
+	r.Path("/api/jobs/{id}").Methods("GET").HandlerFunc(a.ReadJob)
+	r.Path("/api/jobs/{id}").Methods("PUT").HandlerFunc(a.UpdateJob)
+	r.Path("/api/jobs/{id}").Methods("DELETE").HandlerFunc(a.DeleteJob)
 
 	return r
 }
@@ -114,7 +117,7 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 	respJSON.Encode(resp)
 }
 
-// List Tools endpoint (GET - /tools)
+// List Tools endpoint (GET - /api/tools)
 func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	// Resposne and Request structures
 	var resp ToolsResp
@@ -149,7 +152,7 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	respJSON.Encode(resp)
 }
 
-// Get Tool Endpoint
+// Get Tool Endpoint (GET - /api/tools/{id})
 func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var resp ToolsGetResp
@@ -227,11 +230,11 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 
 	// Get the list of jobs and populate a return structure
 	for _, j := range a.Q.AllJobs() {
-		var job APIJobs
+		var job APIJob
 
 		job.JobID = j.UUID
 		job.Name = j.Name
-		job.Status = j.Status
+		job.JobStatus = j.Status
 		job.Owner = j.Owner
 		job.StartTime = j.StartTime
 		job.CrackedHashes = j.CrackedHashes
@@ -300,6 +303,182 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 	resp.JobID = job.UUID
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+// Read an individual Job (GET - /api/jobs/{id})
+func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var resp JobReadResp
+
+	// JSON Encoder and Decoder
+	respJSON := json.NewEncoder(rw)
+
+	// Get the token from the URI
+	token := r.URL.Query().Get("token")
+
+	// Check the token
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	jobid := mux.Vars(r)["id"]
+
+	// Pull Job info from the Queue
+	job := a.Q.JobInfo(jobid)
+
+	// Build the response structure
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+	resp.JobID = job.UUID
+	resp.Name = job.Name
+	resp.JobStatus = job.Status
+	resp.Owner = job.Owner
+	resp.StartTime = job.StartTime
+	resp.CrackedHashes = job.CrackedHashes
+	resp.TotalHashes = job.TotalHashes
+	resp.Percentage = job.Percentage
+	resp.Performance = job.Performance
+	resp.PerformanceTitle = job.PerformanceTitle
+	resp.Output = job.Output
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+// Update a job
+func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req JobUpdateReq
+	var resp JobUpdateResp
+
+	// JSON Encoder and Decoder
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	jobid := mux.Vars(r)["id"]
+
+	// Get the action requested
+	switch req.Action {
+	case "pause":
+		// Pause the job
+		err = a.Q.PauseJob(jobid)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	case "stop":
+		// Stop the job
+		err = a.Q.QuitJob(jobid)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	}
+
+	// Now return everything is good and the job info
+	j := a.Q.JobInfo(jobid)
+
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+	resp.Job.JobID = j.UUID
+	resp.Job.Name = j.Name
+	resp.Job.JobStatus = j.Status
+	resp.Job.Owner = j.Owner
+	resp.Job.StartTime = j.StartTime
+	resp.Job.CrackedHashes = j.CrackedHashes
+	resp.Job.TotalHashes = j.TotalHashes
+	resp.Job.Percentage = j.Percentage
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req JobDeleteReq
+	var resp JobDeleteResp
+
+	// JSON Encoders and Decoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	jobid := mux.Vars(r)["id"]
+
+	// Remove the job
+	err = a.Q.RemoveJob(jobid)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Job should now be removed, so return all OK
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)

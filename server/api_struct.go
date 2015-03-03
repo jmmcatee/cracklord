@@ -50,10 +50,10 @@ type ToolsGetResp struct {
 }
 
 // API Jobs structure
-type APIJobs struct {
+type APIJob struct {
 	JobID         string    `json:jobid`
 	Name          string    `json:name`
-	Status        string    `json:status`
+	JobStatus     string    `json:jobstatus`
 	Owner         string    `json:owner`
 	StartTime     time.Time `json:starttime`
 	CrackedHashes int64     `json:crackedhashes`
@@ -63,9 +63,9 @@ type APIJobs struct {
 
 // Get Jobs structure
 type GetJobsResp struct {
-	Status  int       `json:status`
-	Message string    `json:message`
-	Jobs    []APIJobs `json:jobs`
+	Status  int      `json:status`
+	Message string   `json:message`
+	Jobs    []APIJob `json:jobs`
 }
 
 // Create Jobs request
@@ -81,4 +81,38 @@ type JobCreateResp struct {
 	Status  int    `json:status`
 	Message string `json:message`
 	JobID   string `json:jobid`
+}
+
+// Read Job resposne
+type JobReadResp struct {
+	Status           int               `json:status`
+	Message          string            `json:message`
+	Performance      map[string]string `json:performance`
+	PerformanceTitle string            `json:performancetitle`
+	Output           map[string]string `json:output`
+	APIJob
+}
+
+// Update Job Request
+type JobUpdateReq struct {
+	Token  string `json:token`
+	Action string `json:action`
+}
+
+// Update Job Response
+type JobUpdateResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+	Job     APIJob `json:job`
+}
+
+// Delete Job request
+type JobDeleteReq struct {
+	Token string `json:token`
+}
+
+// Delete Job response
+type JobDeleteResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
 }
