@@ -12,3 +12,8 @@ cracklord.config(['growlProvider', function (growlProvider) {
 //  growlProvider.globalDisableCountDown(true);
 }]);
 
+cracklord.constant('USER_ROLES', {
+	admin: 'administrator',
+	standard: 'standard user',
+	read: 'read-only'
+});

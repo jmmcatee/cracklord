@@ -1,0 +1,24 @@
+<div class="row">
+    <div class="col-md-offset-5 col-md-3 main">
+        <div class="text-center login-header">
+            <h3><i class="fa fa-user"></i> Login</h3>
+        </div>
+        <form id="login" ng-submit="processLoginForm()">
+            <div class="form-group">
+                <label for="name">Username</label>
+                <input type="text" class="form-control" name="username" ng-model="login.username">
+            </div>
+            <div class="form-group">
+                <label for="name">Password</label>
+                <input type="password" class="form-control" name="password" ng-model="login.password">
+            </div>
+            <div class="form-group row">
+                <div class="col-xs-5 pull-right">
+                    <a class="btn btn-block btn-primary">
+                        Login <i class="fa fa-sign-in"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

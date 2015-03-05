@@ -82,7 +82,7 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 	$scope.loadJobs();
 });
 
-cracklord.controller('CreateJobController', function CreateJobController($scope, $state, ToolsService, growl) {
+cracklord.controller('CreateJobController', function CreateJobController($scope, $state, ToolsService, JobsService, growl) {
 	$scope.formData = {};
 	$scope.formData.params = {};
 
@@ -99,7 +99,20 @@ cracklord.controller('CreateJobController', function CreateJobController($scope,
 	}
 
 	$scope.processNewJobForm = function() {
-		growl.success("Job successfully added");
-		$state.transitionTo('jobs');
+		var newjob = new JobsService();
+
+		newjob.toolid = $scope.formData.tool.toolid;
+		newjob.name = $scope.formData.name;
+		newjob.params = $scope.formData.params;
+		
+		JobsService.save(newjob, 
+			function(data) {
+				growl.success("Job successfully added");
+				$state.transitionTo('jobs');
+			}, 
+			function(error) {
+				growl.error("An error occured while trying to save the job.");
+			}
+		);
 	}	
 });

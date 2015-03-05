@@ -1,6 +1,12 @@
+html {
+	min-height: 100%;
+	position: relative;
+}
 body {
 	background-color: #ADADAD;
+	margin-bottom: 60px;
 }
+
 
 .growl-container {
 	clear: both;
@@ -56,6 +62,12 @@ body {
 	color: #ffffff;
 }
 
+.login-header {
+	font-weight: bold;
+	color: #0073AA;
+	text-shadow: 1px 1px 2px #000000;
+}
+
 td.running {
 	color: #00B800;
 }
@@ -87,10 +99,14 @@ td.created {
 
 footer {
 	background-color: #cccccc;
+   bottom: 0;
+   height: 60px;
+   position: absolute;
+   width: 100%;
 }
 footer p.license {
 	font-size: .8em;
-	width: 300px;
+	width: 400px;
 }
 
 /* form styling */
