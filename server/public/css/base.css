@@ -21,6 +21,7 @@ body {
 	border: #000000 solid 3px;
 	background-color: #fff;
 	border-radius: 2em;
+	padding-bottom: 10px;
 }
 
 .sidebar {

@@ -18,7 +18,7 @@ angular.module('cracklord').service('UserDataModel', function UserDataModel($fil
 
     this.login = function(user, pass) {
         var found = this.data[user];
-        if(found.length) {
+        if(found) {
             if(found["password"] === pass) {
                 return {
                     "role": found["role"],

@@ -16,11 +16,7 @@ cracklord.factory('AuthService', function($http, UserSession) {
 	var authService = {};
 
 	authService.login = function(creds) {
-		return $http
-			.post('/api/login', creds)
-			.then(function (result) {
-				UserSession.create(res.data.token, res.data.username, res.data.userrole);
-			});
+		return $http.post('/api/login', creds);
 	};
 
 	authService.isAuthenticated = function() {
@@ -35,6 +31,10 @@ cracklord.factory('AuthService', function($http, UserSession) {
 		return (authService.isAuthenticated() && allowedRoles.indexOf(UserSession.role) !== -1);
 	};
 
+	authService.logout = function(token) {
+		return $http.get('/api/logout?token='+token);
+	};
+
 	return authService;
 });
 
@@ -44,7 +44,7 @@ cracklord.run(function($rootScope, $state, AuthService, growl) {
 			if(!AuthService.isAuthorized(next.data.authorizedRoles)) {
 				event.preventDefault();
 				if(AuthService.isAuthenticated()) {
-					growl.warning("You're not allowed to do that.");
+					growl.warning("Ah ah ah! You didn't say the magic word!");
 				} else {
 					$state.go('login');
 				}

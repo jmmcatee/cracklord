@@ -1,5 +1,8 @@
 angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataModel, ToolsDataModel, ResourcesDataModel) {
-    $httpBackend.whenPOST('/api/login').respond(function(method, url, data) {
+    $httpBackend.whenPOST('/api/login').passThrough();
+    $httpBackend.whenGET(/\/api\/logout/).passThrough();
+    /*
+    .respond(function(method, url, data) {
        var params = angular.fromJson(data);
        var user = UserDataModel.login(params['username'], params['password']);
         if(user) {
@@ -7,7 +10,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         } else {
             return [401, {"status": 401, "message": "Bad username or password."}, {}];
         }
-    });
+    });*/
 
     $httpBackend.whenGET('/api/queue').respond(function(method, url, data) {
         var jobs = JobsDataModel.query();

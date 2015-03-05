@@ -20,6 +20,7 @@
 				<ul class="nav navbar-nav navbar-right">
 					<li><a ng-if="currentUser" ui-sref="jobs"><i class="fa fa-stack-overflow"></i> Jobs</a></li>
 					<li><a ng-if="isAuthorized(userRoles.admin)" ui-sref="resources"><i class="fa fa-server"></i> Resources</a></li>
+					<li><a ng-if="currentUser" ng-click="userLogout()" href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
 					<li><a href="https://github.com/jmmcatee/cracklord"><i class="fa fa-github"></i> Github</a></li>
 				</ul>
 			</div>
@@ -62,7 +63,7 @@
 	<script type="text/javascript" src="./components/Resources/resourcesService.js"></script>
 	<script type="text/javascript" src="./components/Jobs/jobsService.js"></script>
 	<script type="text/javascript" src="./components/Jobs/jobsController.js"></script>
-	<script type="text/javascript" src="./components/User/userController.js"></script>
 	<script type="text/javascript" src="./components/User/userService.js"></script>
+	<script type="text/javascript" src="./components/User/userController.js"></script>
 </body>
 </html>

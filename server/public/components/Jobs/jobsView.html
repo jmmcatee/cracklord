@@ -2,7 +2,7 @@
 	<div class="col-md-1 sidebar fixed">
 		<div class="btn-group-vertical" role="group">
 			<button class="btn btn-default disabled">Actions</button>
-			<a class="btn btn-primary" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
+			<a class="btn btn-primary" ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
 			<button class="btn btn-primary" ng-click="reloadJobs()"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>
 			<button class="btn btn-default disabled" ng-show="listreordered">Confirm<br>Reorder</button>
 			<button class="btn btn-success" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-up"></i><br><div class="btnwrd">Confirm</div></button>
@@ -50,11 +50,11 @@
 						</td>
 						<td>
 							<div class="btn-group btn-group-xs" role="group" aria-label="...">
-								<button ng-click="jobactions.update(job, 'created')" ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>
-								<button ng-click="jobactions.update(job, 'paused')" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
-								<button confirm-popover="jobactions.update(job, 'quit')" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-stop"></i></button>
-								<button confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
-								<div class="btn btn-primary draghandle"><i class="fa fa-arrows-v"></i></div>
+								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ng-click="jobactions.update(job, 'created')" ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>
+								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ng-click="jobactions.update(job, 'paused')" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
+								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.update(job, 'quit')" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-stop"></i></button>
+								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
+								<div ng-if="isAuthorized([userRoles.standard, userRoles.admin])" class="btn btn-primary draghandle"><i class="fa fa-arrows-v"></i></div>
 							</div>
 						</td>
 					</tr>
@@ -78,6 +78,7 @@
 					<tr ng-repeat="job in jobs | filter: {status: 'quit'}" class="{{job.status}}">
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
+
 						<td class="status {{job.status}}">{{job.status}}</td>
 						<td class="">
 							<div class="progress job-cracked">
@@ -93,7 +94,7 @@
 								</div>
 							</div>
 						</td>
-						<td><button confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i></button></td>
+						<td><button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i></button></td>
 					</tr>
 				</tbody>
 			</table>

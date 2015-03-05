@@ -3,21 +3,22 @@
         <div class="text-center login-header">
             <h3><i class="fa fa-user"></i> Login</h3>
         </div>
-        <form id="login" ng-submit="processLoginForm()">
-            <div class="form-group">
-                <label for="name">Username</label>
-                <input type="text" class="form-control" name="username" ng-model="login.username">
+        <form name="loginForm" id="loginForm" ng-controller="LoginFormController" novalidate rc-attempt rc-submit="processLoginForm()">
+            <div class="form-group" ng-class="{'has-error': loginForm.username.$invalid && (loginForm.username.$dirty || rc.loginForm.attempted)}">
+                <input type="text" class="form-control" name="username" placeholder="Username" required ng-model="login.username">
+                <span class="help-block" ng-show="loginForm.username.$invalid && (loginForm.username.$dirty || rc.loginForm.attempted)">Please input a username</span>
+            </div>
+            <div class="form-group" ng-class="{'has-error': loginForm.password.$invalid && (loginForm.password.$dirty || rc.loginForm.attempted)}">
+                <input type="password" class="form-control" name="password" placeholder="Password" required ng-model="login.password">
+                <span class="help-block" ng-show="loginForm.password.$invalid && (loginForm.password.$dirty || rc.loginForm.attempted)">Password is required</span>
+            </div>
+            <div ng-show="login.failed" class="text-danger text-center">
+                <p>{{login.errormessage}}</p>
             </div>
             <div class="form-group">
-                <label for="name">Password</label>
-                <input type="password" class="form-control" name="password" ng-model="login.password">
-            </div>
-            <div class="form-group row">
-                <div class="col-xs-5 pull-right">
-                    <a class="btn btn-block btn-primary">
-                        Login <i class="fa fa-sign-in"></i>
-                    </a>
-                </div>
+                <button type="submit" class="btn btn-primary pull-right" value="Login" title="Login">
+                    <span>Login <i class="fa fa-sign-in"></i></span>
+                </button>
             </div>
         </form>
     </div>
