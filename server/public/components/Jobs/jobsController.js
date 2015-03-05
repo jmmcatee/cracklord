@@ -11,6 +11,10 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 		}
 	};
 
+	$scope.filterJobs = function(status) {
+		return (status === 'quit' || status === 'failed');
+	}
+
 	$scope.jobactions.update = function(job, status) {
 		job.status = status;
 

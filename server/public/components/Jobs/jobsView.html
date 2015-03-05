@@ -28,7 +28,7 @@
 					</tr>
 				</thead>
 				<tbody id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
-					<tr ng-repeat="job in jobs | filter: {status: '!quit'}" class="{{job.status}}">
+					<tr ng-repeat="job in jobs | filter: {status: '!quit'} | filter: {status: '!failed'}" class="{{job.status}}">
 						<td class="index">{{$index + 1}}</td>
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
@@ -75,7 +75,7 @@
 					</tr>
 				</thead>
 				<tbody id="#completedcontainer">
-					<tr ng-repeat="job in jobs | filter: {status: 'quit'}" class="{{job.status}}">
+					<tr ng-repeat="job in jobs | filter: {status: '!running'} | filter: {status: '!paused'} | filter: {status: '!created'}" class="{{job.status}}">
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
 

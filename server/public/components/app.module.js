@@ -4,6 +4,7 @@ var cracklord = angular.module('cracklord', [
    'ngResource',
    'schemaForm',
    'angular-growl',
+   'ngAnimate',
    'ngMockE2E'
 ]);
 

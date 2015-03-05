@@ -36,6 +36,7 @@ cracklord.controller('LoginFormController', function LoginFormController($state,
 				$state.go('jobs');
 			})
 			.error(function (data, status, headers, config) {
+				$scope.login.failed = true;
 				growl.error("Login failed.");
 			});
 	};
