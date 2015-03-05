@@ -1,3 +1,37 @@
+angular.module('cracklord').service('UserDataModel', function UserDataModel($filter) {
+    this.data = {
+        "readonly": { "password": "readonly", "role": "read-only" },
+        "user": { "password": "user", "role": "standard user" },
+        "admin": { "password": "admin", "role": "administrator" }
+    }
+
+    this.newid = function() {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 12; i++ ) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+
+        return text;
+    }
+
+    this.login = function(user, pass) {
+        var found = this.data[user];
+        if(found.length) {
+            if(found["password"] === pass) {
+                return {
+                    "role": found["role"],
+                    "token": this.newid()
+                };
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+});
 
 angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel($filter) {
     this.data = [
