@@ -1,5 +1,5 @@
 cracklord.factory('ToolsService', function ($resource) {
-   return $resource('/api/tools/:jobid', {jobid: '@jobid'}, {
+   return $resource('/api/tools/:toolid', {toolid: '@toolid'}, {
    	query: {
    		isArray: true,
    		method: 'GET',
@@ -9,12 +9,5 @@ cracklord.factory('ToolsService', function ($resource) {
    			return results.tools;
    		}	
    	},
-      update: {
-         method: 'PUT', 
-         transformResponse: function(data) {
-            var results = angular.fromJson(data);
-            return results.tool;
-         }
-      }
    });
 });

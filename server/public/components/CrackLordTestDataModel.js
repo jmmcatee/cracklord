@@ -1,13 +1,13 @@
 
-angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel() {
-    this.data = {
-        { "toolid": "63ee8045-966f-449e-9839-58e7e0586f3c", "name": "Hashcat", "version": "1.3.3", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
-        { "toolid": "8d660ce9-f15d-40a3-a997-a4e8867cb802", "name": "John the Ripper", "version": "1.7.9", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
-        { "toolid": "8d660ce9-f15d-328b-a997-39dl10d012ld", "name": "John the Ripper", "version": "1.8.0", "form": [ "name", "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "name": { "title": "Name", "type": "string" }, "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } }
-    };
+angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel($filter) {
+    this.data = [
+        { "toolid": "63ee8045-966f-449e-9839-58e7e0586f3c", "name": "Hashcat", "version": "1.3.3", "form": [ "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
+        { "toolid": "8d660ce9-f15d-40a3-a997-a4e8867cb802", "name": "John the Ripper", "version": "1.7.9", "form": [ "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } },
+        { "toolid": "1cee8439-7f22-457c-84b8-5a8b04414090", "name": "John the Ripper", "version": "1.8.0", "form": [ "algorithm", "dictionary", "rules", { "key": "hashes", "type": "textarea", "placeholder": "Hashes go here!" } ], "schema": { "type": "object", "properties": { "algorithm": { "title": "Algorithm", "type": "string", "enum": [ "NTLM", "NTLMv2", "ms-cache", "ms-cache v2", "SQL 2005", "SQL 2008", "MD5" ] }, "dictionary": { "title": "Dictionary", "type": "string", "enum": [ "crackstation", "crackstation-human-only", "m3g9tr0n", "words-english" ] }, "rules": { "title": "Rule File", "type": "string", "enum": [ "d3ad0ne", "t0xic" ] }, "hashes": { "title": "Hashes", "type": "string", "description": "Note: Use the file format as required by hashcat" } } } }
+    ];
 
     this.query = function() {
-        var tmpdata = this.data;
+        var tmpdata = angular.copy(this.data);
         for (var i = 0; i < tmpdata.length; i++) {
             delete tmpdata[i]["form"];
             delete tmpdata[i]["schema"];
@@ -25,14 +25,14 @@ angular.module('cracklord').service('ToolsDataModel', function ToolsDataModel() 
     };
 });
 
-angular.module('cracklord').service('ResourcesDataModel', function ResourcesDataModel() {
-    this.data = {
+angular.module('cracklord').service('ResourcesDataModel', function ResourcesDataModel($filter) {
+    this.data = [
         { "resourceid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1", "status": "running", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } },
         { "resourceid": "202fa763-ab6d-4cad-b29d-5fa108766760", "status": "paused", "hardware": { "gpu": { "1424133520":0.2, "1424144520":0.3 }, "cpu": { "1424133520":0.7, "1424144520":0.9 } }, "tools": { "63ee8045-966f-449e-9839-58e7e0586f3c": { "name": "Hashcat", "version": "1.3.3" }, "8d660ce9-f15d-40a3-a997-a4e8867cb802": { "name": "John the Ripper", "version": "1.7.9" }, "8d660ce9-f15d-328b-a997-39dl10d012ld": { "name": "John the Ripper", "version": "1.8.0" } } }
-    };
+    ];
 
     this.query = function() {
-        var tmpdata = this.data;
+        var tmpdata = angular.copy(this.data);
         for (var i = 0; i < tmpdata.length; i++) {
             delete tmpdata[i]["hardware"];
             delete tmpdata[i]["tools"];
@@ -86,7 +86,7 @@ angular.module('cracklord').service('ResourcesDataModel', function ResourcesData
     }; 
 });
 
-angular.module('cracklord').service('JobsDataModel', function JobsDataModel() {
+angular.module('cracklord').service('JobsDataModel', function JobsDataModel($filter) {
     this.data = [
         {"jobid":"72fd24ca-e529-4b38-b70d-2ad566de7e49", "name":"The Cheerful Shark Logistics Company","status":"running","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423978660,"crackedhashes":5,"totalhashes":800,"progress":0.68, "params": { "rules": "d3ad0ne", "dictionary": "m3g9tr0n", "algorithm": "NTLMv2", "hashes": "Administrator:500:6A98EB0FB88A449CBE6FABFD825BCA61:D144986C6122B1B1654BA39932465528:::\nGuest:501:A0E150C75A17008EAAD3B435B51404EE:3D2B4DFAC512B7EF6188248B8E113CB9:::\nfakeuser:1000:24500AFA4E78B1C1944E2DF489A880E4:F47E4045A58ECEBD1F544168E050B1A9:::"}, "toolid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1"},
         {"jobid":"786c4f68-1b7f-46e0-b5bd-75090d78b25c", "name":"The Deep Lime Builders Company","status":"paused","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423739455,"crackedhashes":102,"totalhashes":539,"progress":0.17,  "params": { "rules": "d3ad0ne", "dictionary": "m3g9tr0n", "algorithm": "NTLMv2", "hashes": "Administrator:500:6A98EB0FB88A449CBE6FABFD825BCA61:D144986C6122B1B1654BA39932465528:::\nGuest:501:A0E150C75A17008EAAD3B435B51404EE:3D2B4DFAC512B7EF6188248B8E113CB9:::\nfakeuser:1000:24500AFA4E78B1C1944E2DF489A880E4:F47E4045A58ECEBD1F544168E050B1A9:::"}, "toolid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1"},
@@ -119,9 +119,14 @@ angular.module('cracklord').service('JobsDataModel', function JobsDataModel() {
         {"jobid":"1906f26b-13ea-4e88-a58a-d63f307d1018", "name":"The Brown Moose","status":"quit","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1423854430,"crackedhashes":12,"totalhashes":503,"progress":0.92, "params": { "rules": "d3ad0ne", "dictionary": "m3g9tr0n", "algorithm": "NTLMv2", "hashes": "Administrator:500:6A98EB0FB88A449CBE6FABFD825BCA61:D144986C6122B1B1654BA39932465528:::\nGuest:501:A0E150C75A17008EAAD3B435B51404EE:3D2B4DFAC512B7EF6188248B8E113CB9:::\nfakeuser:1000:24500AFA4E78B1C1944E2DF489A880E4:F47E4045A58ECEBD1F544168E050B1A9:::"}, "toolid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1"},
         {"jobid":"1b26fd52-d0d4-4a3a-9dfb-3e122e6eadf1", "name":"Big Zebra Builders","status":"quit","resourceid":"1116814b-7c59-4b5d-87b6-fabaa5f594d1","owner":"emperorcow","starttime":1424054561,"crackedhashes":35,"totalhashes":441,"progress":0.7, "params": { "rules": "d3ad0ne", "dictionary": "m3g9tr0n", "algorithm": "NTLMv2", "hashes": "Administrator:500:6A98EB0FB88A449CBE6FABFD825BCA61:D144986C6122B1B1654BA39932465528:::\nGuest:501:A0E150C75A17008EAAD3B435B51404EE:3D2B4DFAC512B7EF6188248B8E113CB9:::\nfakeuser:1000:24500AFA4E78B1C1944E2DF489A880E4:F47E4045A58ECEBD1F544168E050B1A9:::"}, "toolid": "1116814b-7c59-4b5d-87b6-fabaa5f594d1"},
     ];
-    
+   
+    this.queueQuery = function() {
+        var tmpdata = [];
+    }
+
+
     this.query = function() {
-        var tmpdata = this.data;
+        var tmpdata = angular.copy(this.data);
         for (var i = 0; i < tmpdata.length; i++) {
             delete tmpdata[i]["params"];
         }

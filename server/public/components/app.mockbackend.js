@@ -1,15 +1,11 @@
 angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataModel, ResourcesDataModel) {
-   
-
-    $httpBackend.whenGET('/api/tools').respond(function(method, url, data) {
-        var tools = ToolsDataModel.query();
-        var returninfo = { "status": 200, "message": "OK", "tools": tools};
-        return [200, returninfo, {}];
+    $httpBackend.whenGET('/api/queue').respond(function(method, url, data) {
+        var jobs = JobsDataModel.query();
     });
 
     $httpBackend.whenGET(/\/tools\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
         var id = url.split('/')[3];
-        var tool = JobsDataModel.read(id);
+        var tool = ToolsDataModel.read(id);
 
         if(tool != false) {
             tool["status"] = 200;
@@ -18,6 +14,12 @@ angular.module('cracklord').run(function($httpBackend, JobsDataModel, ToolsDataM
         } else {
             return [404, {"status": 404, "message": "Tool "+id+" not found."}, {}];
         }
+    });
+
+    $httpBackend.whenGET('/api/tools').respond(function(method, url, data) {
+        var tools = ToolsDataModel.query();
+        var returninfo = { "status": 200, "message": "OK", "tools": tools};
+        return [200, returninfo, {}];
     });
 
     $httpBackend.whenGET('/api/resources').respond(function(method, url, data) {

@@ -1,4 +1,4 @@
-cracklord.controller('JobsController', function JobsController($scope, $modal, JobsService, growl) {
+cracklord.controller('JobsController', function JobsController($scope, JobsService, growl) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);
 	$scope.jobactions = {};
@@ -11,36 +11,22 @@ cracklord.controller('JobsController', function JobsController($scope, $modal, J
 		}
 	};
 
-	$scope.jobactions.play = function(job) {
-		job.status = "created";
+	$scope.jobactions.update = function(job, status) {
+		job.status = status;
 
 		job.$update({jobid: job.jobid},  
 			function(successResult) {
-				growl.success(job.name+" resumed.");
-			}, 
-			function(errorResult) {
-				growl.error("Error "+errorResult.message);
-			}
-		);
-	}
-	$scope.jobactions.pause = function(job) {
-		job.status = "paused";
-
-		job.$update({jobid: job.jobid}, 
-			function(successResult) {
-				growl.success(job.name+" was paused.");
-			}, 
-			function(errorResult) {
-				growl.error("Error "+errorResult.message);
-			}
-		);
-	}
-	$scope.jobactions.stop = function(job) {
-		job.status = "quit";
-
-		job.$update({jobid: job.jobid}, 
-			function(successResult) {
-				growl.success(job.name+" was stopped.");
+				switch(status) {
+					case 'created':
+						growl.success(job.name+" resumed.");
+						break;
+					case 'paused':
+						growl.success(job.name+" was paused.");
+						break;
+					case 'quit':
+						growl.success(job.name+" was stopped.");
+						break;
+				}
 			}, 
 			function(errorResult) {
 				growl.error("Error "+errorResult.message);
@@ -94,4 +80,26 @@ cracklord.controller('JobsController', function JobsController($scope, $modal, J
 	}
 
 	$scope.loadJobs();
+});
+
+cracklord.controller('CreateJobController', function CreateJobController($scope, $state, ToolsService, growl) {
+	$scope.formData = {};
+	$scope.formData.params = {};
+
+	$scope.toolChange = function() {
+		var toolid = $scope.formData.tool.toolid;
+		var tool = ToolsService.get({toolid: toolid}, 
+			function(data) {
+				$scope.tool = data;
+			}, 
+			function(error) {
+				growl.error("An error occured while trying to load tool information.");
+			}
+		);
+	}
+
+	$scope.processNewJobForm = function() {
+		growl.success("Job successfully added");
+		$state.transitionTo('jobs');
+	}	
 });
