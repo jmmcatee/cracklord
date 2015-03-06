@@ -111,7 +111,34 @@ td.failed {
 .popover-content {
 	text-align: center;
 }
+td.collapser > a {
+	cursor: pointer;
+}
 
+/*Detail expand animations*/
+.job-detail.ng-enter, .job-detail.ng-leave {
+	-webkit-transition: 1s linear all;
+	-moz-transition: 1s linear all;
+	-ms-transition: 1s linear all;
+	-o-transition: 1s linear all;
+	transition: 1s linear all;
+}
+.job-detail.ng-enter.ng-enter-active {
+   max-height: 999px;
+   opacity:1;
+}
+.job-detail.ng-enter {
+	max-height: 0;
+	opacity: 0;
+}
+.job-detail.ng-leave {
+   max-height: 999px;
+	opacity:1;
+}
+.job-detail.ng-leave.ng-leave-active {
+   max-height: 0;
+   opacity:1;
+}
 /*******************************************************************************
                              LOGIN PAGE SETTINGS
 *******************************************************************************/
@@ -197,20 +224,20 @@ td.failed {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#83c783', endColorstr='#002400',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 }
 
+/* Create Job Form Animation Settings */
 #form-container form {
 	padding: 20px 0;
 }
 
-/* Create Job Form Animation Settings */
-#createjob-views { 
-	position:relative; 
-	min-height:300px; 
+#form-container > div.row {
 	overflow:hidden; 
-	padding:30px; 
+	margin:30px; 
+	min-height:300px; 
 }
 
 #createjob-views { 
 	width:auto; 
+	position:relative; 
 }
 
 /* basic styling for entering and leaving */
@@ -218,11 +245,8 @@ td.failed {
 #createjob-views.ng-enter,
 #createjob-views.ng-leave { 
 	position:absolute; 
-	left:30px; 
-	right:30px;
-	transition:0.5s all ease; 
-	-moz-transition:0.5s all ease; 
-	-webkit-transition:0.5s all ease; 
+	left:15px; 
+	right:15px;
 }
     
 /* Enter Animation */
