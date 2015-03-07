@@ -14,7 +14,6 @@ cracklord.controller('ToolsController', function ToolsController($scope, ToolsSe
 	this.loadTool = function(toolid) {
 		var tool = ToolsService.get({id: toolid}, 
 			function(data) {
-				console.log(data)
 			}, 
 			function(error) {
 				growl.error("An error occured while trying to load tool information.");

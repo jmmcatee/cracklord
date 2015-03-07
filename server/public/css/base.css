@@ -18,6 +18,9 @@ body {
 	border: #000000 solid 3px;
 	background-color: #fff;
 	border-radius: 2em;
+}
+
+.login {
 	padding: 2em;
 }
 
@@ -79,6 +82,14 @@ footer p.license {
 	margin-top: 50px;
 }
 
+tr.odd {
+	background-color: #ffffff;
+} 
+tr.even {
+	background-color: #f9f9f9;
+}
+
+
 /*******************************************************************************
                           LISTING (JOB/RESOURCE) STYLES
 *******************************************************************************/
@@ -115,30 +126,15 @@ td.collapser > a {
 	cursor: pointer;
 }
 
-/*Detail expand animations*/
-.job-detail.ng-enter, .job-detail.ng-leave {
-	-webkit-transition: 1s linear all;
-	-moz-transition: 1s linear all;
-	-ms-transition: 1s linear all;
-	-o-transition: 1s linear all;
-	transition: 1s linear all;
+.job-detail div.slider {
+	display: none;
+	padding: 20px;
 }
-.job-detail.ng-enter.ng-enter-active {
-   max-height: 999px;
-   opacity:1;
+
+.job-detail > td {
+	padding: 0 !important;
 }
-.job-detail.ng-enter {
-	max-height: 0;
-	opacity: 0;
-}
-.job-detail.ng-leave {
-   max-height: 999px;
-	opacity:1;
-}
-.job-detail.ng-leave.ng-leave-active {
-   max-height: 0;
-   opacity:1;
-}
+
 /*******************************************************************************
                              LOGIN PAGE SETTINGS
 *******************************************************************************/
