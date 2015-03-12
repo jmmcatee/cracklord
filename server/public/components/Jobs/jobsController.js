@@ -1,3 +1,37 @@
+cracklord.directive('jobplaybutton', function (growl) {
+	return {
+		restrict: 'E',
+		replace: true,
+		template: '<button aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>',
+		scope: {
+			job: '='			
+		},
+		controller: function($scope) {
+			$scope.doOnClick = function() {
+				job.status = 'created';
+				job.$update({jobid: job.jobid}, 
+					function(successResult) {
+						growl.success(job.name+' resumed successfully.');
+					}, 
+					function(errorResult) {
+						growl.error("Error ".errorResult.message);
+					}
+				);
+			}
+		},
+		link: function($scope, $element, $attrs) {
+			if(!isAuthorized([userRoles.standard, userRoles.admin])) {
+				$scope.$destroy();
+				$scope.remove();
+			} else {
+				$element.bind('click', function() {
+					$scope.doOnClick();
+				});
+			}
+		}
+	};
+});
+
 cracklord.controller('JobsController', function JobsController($scope, JobsService, growl) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);

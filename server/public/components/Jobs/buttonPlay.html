@@ -1,0 +1,10 @@
+<button 
+	ng-if="isAuthorized([userRoles.standard, userRoles.admin])" 
+	ng-click="jobactions.update(job, 'created')" 
+	ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" 
+	aria-label="play" 
+	type="button" 
+	class="btn"
+>
+	<i class="fa fa-play"></i>
+</button> 

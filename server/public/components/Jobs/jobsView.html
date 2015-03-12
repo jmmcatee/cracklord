@@ -45,7 +45,7 @@
 						</td>
 						<td>
 							<div class="btn-group btn-group-xs" role="group" aria-label="...">
-								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ng-click="jobactions.update(job, 'created')" ng-class="job.status == 'paused' ? 'btn-success' : 'btn-default disabled'" aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>
+								<jobplaybutton></jobplaybutton>	
 								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ng-click="jobactions.update(job, 'paused')" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
 								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.update(job, 'quit')" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-stop"></i></button>
 								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
