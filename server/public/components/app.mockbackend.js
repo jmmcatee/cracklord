@@ -1,5 +1,5 @@
 angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataModel, ToolsDataModel, ResourcesDataModel) {
-    $httpBackend.whenGET(/\/api\/login/).passThrough();
+    $httpBackend.whenPOST(/\/api\/login/).passThrough();
     $httpBackend.whenGET(/\/api\/logout/).passThrough();
 
     $httpBackend.whenGET('/api/queue').respond(function(method, url, data) {
