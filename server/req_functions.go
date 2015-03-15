@@ -92,6 +92,7 @@ func (a *AppController) Login(rw http.ResponseWriter, r *http.Request) {
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 	resp.Token = token
+	resp.Role = user.EffectiveRole()
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)

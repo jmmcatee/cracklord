@@ -33,6 +33,33 @@ type User struct {
 	Timeout   time.Time
 }
 
+func (u *User) EffectiveRole() string {
+	var role string
+
+	for _, v := range u.Groups {
+		switch role {
+		case "":
+			role = v
+		case Administrator:
+			return role
+		case StandardUser:
+			if v == Administrator {
+				role = Administrator
+			}
+		case ReadOnly:
+			if v == StandardUser {
+				role = StandardUser
+			}
+
+			if v == Administrator {
+				role = Administrator
+			}
+		}
+	}
+
+	return role
+}
+
 /*
  * This interface is used to allow multiple different types of authenticator
  * mechanisms to be used. Given a username and password it should return User
