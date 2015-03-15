@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/codegangsta/negroni"
 	"github.com/jmmcatee/cracklord/queue"
 	"github.com/unrolled/secure"
@@ -40,11 +41,13 @@ func main() {
 	}
 
 	// Get the Authentication configuration
-	confAuth := confFile.Section("Authenication")
+	confAuth := confFile.Section("Authentication")
 	if confAuth == nil {
 		println("No authentication configuration!")
 		return
 	}
+
+	fmt.Printf("%+v\n", confAuth)
 
 	// Check for type of authentication and set conf
 	switch confAuth["type"] {
