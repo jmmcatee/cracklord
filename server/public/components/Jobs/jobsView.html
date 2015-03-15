@@ -2,8 +2,8 @@
 	<div class="col-md-1 sidebar fixed">
 		<div class="btn-group-vertical" role="group">
 			<button class="btn btn-default disabled">Actions</button>
-			<a class="btn btn-primary" ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
-			<button class="btn btn-primary" ng-click="reloadJobs()"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>
+			<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
+			<jobs-reload-button></jobs-reload-button>	
 			<button class="btn btn-default disabled" ng-show="listreordered">Confirm<br>Reorder</button>
 			<button class="btn btn-success" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-up"></i><br><div class="btnwrd">Confirm</div></button>
 			<button class="btn btn-warning" ng-click="reorderCancel()" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-down"></i><br><div class="btnwrd">Cancel</div></button>
@@ -36,20 +36,19 @@
 						<td class="owner">{{job.owner}}</td>
 						<td class="status {{job.status}}">{{job.status}}</td>
 						<td class="time">{{now - job.starttime}}</td>
-						<td class="">
+						<td class="jobprogress">
 							<div class="progress job-cracked">
 								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{job.totalhashes / job.crackedhashes}}%">
 								</div>
 								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>
 						</td>
-						<td>
-							<div class="btn-group btn-group-xs" role="group" aria-label="...">
-								<jobplaybutton></jobplaybutton>	
-								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" ng-click="jobactions.update(job, 'paused')" ng-class="job.status == 'running' || job.status == 'created' ? 'btn-warning' : 'btn-default disabled'" aria-label="pause" type="button" class="btn"><i class="fa fa-pause"></i></button>
-								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.update(job, 'quit')" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-stop"></i></button>
-								<button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
-								<div ng-if="isAuthorized([userRoles.standard, userRoles.admin])" class="btn btn-primary draghandle"><i class="fa fa-arrows-v"></i></div>
+						<td class="actions">
+							<div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">
+								<playbutton target="job"></playbutton>	
+								<stopbutton target="job"></stopbutton>
+								<trashbutton target="job" targetlist="jobs"></trashbutton>
+								<draghandle></draghandle>
 							</div>
 						</td>
 					</tr>
@@ -94,7 +93,9 @@
 								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>
 						</td>
-						<td><button ng-if="isAuthorized([userRoles.standard, userRoles.admin])" confirm-popover="jobactions.delete(job)" aria-label="delete" type="button" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i></button></td>
+						<td>
+							<div class="btn-group btn-group-xs pull-right" role="group"><trashbutton target="job" targetlist="jobs"></trashbutton></div>
+						</td>
 					</tr>
 					<tr ng-repeat-end ng-if="job.expanded" class="job-detail">
 						<td colspan=9><div class="slider text-center">

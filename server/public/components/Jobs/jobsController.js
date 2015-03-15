@@ -1,37 +1,3 @@
-cracklord.directive('jobplaybutton', function (growl) {
-	return {
-		restrict: 'E',
-		replace: true,
-		template: '<button aria-label="play" type="button" class="btn"><i class="fa fa-play"></i></button>',
-		scope: {
-			job: '='			
-		},
-		controller: function($scope) {
-			$scope.doOnClick = function() {
-				job.status = 'created';
-				job.$update({jobid: job.jobid}, 
-					function(successResult) {
-						growl.success(job.name+' resumed successfully.');
-					}, 
-					function(errorResult) {
-						growl.error("Error ".errorResult.message);
-					}
-				);
-			}
-		},
-		link: function($scope, $element, $attrs) {
-			if(!isAuthorized([userRoles.standard, userRoles.admin])) {
-				$scope.$destroy();
-				$scope.remove();
-			} else {
-				$element.bind('click', function() {
-					$scope.doOnClick();
-				});
-			}
-		}
-	};
-});
-
 cracklord.controller('JobsController', function JobsController($scope, JobsService, growl) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);
@@ -45,58 +11,10 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 		}
 	};
 
-	$scope.filterJobs = function(status) {
-		return (status === 'quit' || status === 'failed');
-	}
-
-	$scope.jobactions.update = function(job, status) {
-		job.status = status;
-
-		job.$update({jobid: job.jobid},  
-			function(successResult) {
-				switch(status) {
-					case 'created':
-						growl.success(job.name+" resumed.");
-						break;
-					case 'paused':
-						growl.success(job.name+" was paused.");
-						break;
-					case 'quit':
-						growl.success(job.name+" was stopped.");
-						break;
-				}
-			}, 
-			function(errorResult) {
-				growl.error("Error "+errorResult.message);
-			}
-		);
-	}
-
-	$scope.jobactions.delete = function(job) {
-		var index = $scope.jobs.map(function(el) {
-			return el.jobid;
-		}).indexOf(job.jobid);
-
-		var name = job.name;
-		job.$delete({jobid: job.jobid}, 
-			function(successResult) {
-				growl.success(name+" was deleted.");
-				$scope.jobs.splice(index, 1);
-			}, 
-			function(errorResult) {
-				growl.error("Error "+errorResult.message);
-			}
-		);
-	}
-
-	$scope.reloadJobs = function() {
-		$scope.loadJobs();
-		growl.success("Data successfully refreshed.")
-	}
-
 	$scope.reorderConfirm = function() {
 
 	}
+
 	$scope.reorderCancel = function() {
 		$scope.listreordered = false;
 		$scope.loadJobs();
@@ -119,10 +37,24 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 	$scope.loadJobs();
 });
 
+cracklord.directive('jobsReloadButton', function jobsReloadButton(growl) {
+	return {
+		restrict: 'E',
+		replace: true,
+		template: '<button class="btn btn-primary"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>',
+		link: function($scope, $element, $attrs) {
+			$element.bind('click', function() {
+				$scope.loadJobs();
+				growl.success("Data successfully refreshed.");
+			});
+		}	
+	}
+});
+
 cracklord.controller('JobDetailController', function JobDetailController($scope, JobsService, growl) {
 	$scope.loadJobDetail = function(job) {
 		job.expanded = true;
-		var job = JobsService.get({jobid: job.jobid}, 
+		var job = JobsService.get({id: job.id}, 
 			function(data) {
 				console.log(data);
 			}, 

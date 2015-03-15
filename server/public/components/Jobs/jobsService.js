@@ -1,5 +1,5 @@
 cracklord.factory('JobsService', function ($resource) {
-   return $resource('/api/jobs/:jobid', {jobid: '@jobid'}, {
+   return $resource('/api/jobs/:id', {id: '@id'}, {
    	query: {
    		isArray: true,
    		method: 'GET',

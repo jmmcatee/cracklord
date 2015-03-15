@@ -1,11 +1,11 @@
 <form id="createjob" ng-submit="processNewJobForm()">
 	<div class="form-group">
 		<label for="name">Friendly Name for the Job</label>
-		<input type="text" class="form-control" name="name" ng-model="formData.name">
+		<input type="text" class="form-control" name="name" ng-model="formData.name" required>
 	</div>
 	<div class="form-group" ng-controller="ToolsController">
 		<label for="tool">What Tool Should Be Used?</label>
-		<select ng-change="toolChange()" name="tool" class="form-control" ng-options="(tool.name + ' - ' + tool.version) for tool in tools" ng-model="formData.tool">
+		<select ng-change="toolChange()" name="tool" class="form-control" ng-options="(tool.name + ' - ' + tool.version) for tool in tools" ng-model="formData.tool" required>
 		</select>
 	</div>
 	<div class="form-group row">

@@ -76,6 +76,16 @@ footer p.license {
 	color: #ffffff;
 }
 
+.progress {
+	position: relative;
+	text-align: center;
+}
+.progress span {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
 /* Message Center Settings */
 .growl-container {
 	clear: both;
