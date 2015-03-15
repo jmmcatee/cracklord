@@ -20,5 +20,10 @@ _cgo_export.*
 _testmain.go
 
 *.exe
+<<<<<<< HEAD
+=======
+
+# Generated Keys
+>>>>>>> origin/master
 *.key
 *.pem
