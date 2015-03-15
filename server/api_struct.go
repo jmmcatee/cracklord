@@ -116,3 +116,74 @@ type JobDeleteResp struct {
 	Status  int    `json:status`
 	Message string `json:message`
 }
+
+// Resource API Structure
+type APIResource struct {
+	ResourceID string   `json:resourceid`
+	Status     string   `json:status`
+	Tools      APITools `json:tools`
+}
+
+// Get Resources
+type ResourceListResp struct {
+	Status    int           `json:status`
+	Message   string        `json:message`
+	Resources []APIResource `json:resources`
+}
+
+// Create Resource structures
+type ResourceCreateReq struct {
+	Token string `json:token`
+	Key   string `json:key`
+	Host  string `json:host`
+}
+
+type ResourceCreateResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+}
+
+// Read Resource structures
+type ResourceReadReq struct {
+	Token string `json:token`
+}
+
+type ResourceReadResp struct {
+	Status         int      `json:status`
+	Message        string   `json:message`
+	ResourceStatus string   `json:resource_status`
+	Hardware       []string `json:hardware`
+	Tools          APITools `json:tools`
+}
+
+// Update Resource structures
+type ResourceUpdateReq struct {
+	Token  string `json:token`
+	Action string `json:action`
+}
+
+type ResourceUpdateResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+}
+
+// Delete Resource structures
+type ResourceDeleteReq struct {
+	Token string `json:token`
+}
+
+type ResourceDeleteResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+}
+
+// Queue Update structures
+type QueueUpdateReq struct {
+	Token    string   `json:token`
+	JobOrder []string `json:joborder`
+}
+
+type QueueUpdateResp struct {
+	Status  int    `json:status`
+	Message string `json:message`
+}

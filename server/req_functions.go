@@ -40,6 +40,16 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/jobs/{id}").Methods("PUT").HandlerFunc(a.UpdateJob)
 	r.Path("/api/jobs/{id}").Methods("DELETE").HandlerFunc(a.DeleteJob)
 
+	// Resource endpoints
+	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResources)
+	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
+	r.Path("/api/resources/{id}").Methods("GET").HandlerFunc(a.ReadResource)
+	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
+	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResource)
+
+	// Queue endpoints
+	r.Path("/api/queue").Methods("PUT").HandlerFunc(a.UpdateQueue)
+
 	return r
 }
 
@@ -477,6 +487,355 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Job should now be removed, so return all OK
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) ListResources(rw http.ResponseWriter, r *http.Request) {
+	// Response and request structures
+	var resp ResourceListResp
+
+	// JSON encoders and decoders
+	respJSON := json.NewEncoder(rw)
+
+	// Get the token from the URI
+	token := r.URL.Query().Get("token")
+
+	// Check Token
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get resources and fill return structure
+	for _, v := range a.Q.GetResources() {
+		var res APIResource
+
+		res.ResourceID = v.UUID
+		if v.Paused {
+			res.Status = "paused"
+		} else {
+			res.Status = "running"
+		}
+
+		for tID, tv := range v.Tools {
+			var apitool APITool
+			apitool.Name = tv.Name
+			apitool.Version = tv.Version
+
+			res.Tools[tID] = apitool
+		}
+
+		resp.Resources = append(resp.Resources, res)
+	}
+
+	// Return the structure
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and request structures
+	var req ResourceCreateReq
+	var resp ResourceCreateResp
+
+	// JSON encoders and decoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Add resource
+	err = a.Q.AddResource(req.Host, req.Key)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Return the structure
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResourceReadReq
+	var resp ResourceReadResp
+
+	// JSON encoders and decoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	resid := mux.Vars(r)["id"]
+
+	// Get the resource by ID
+	var found bool
+	for _, v := range a.Q.GetResources() {
+		// look for ID
+		if v.UUID == resid {
+			// Map the hardware
+			for h, _ := range v.Hardware {
+				resp.Hardware = append(resp.Hardware, h)
+			}
+
+			// Map resource status
+			if v.Paused {
+				resp.ResourceStatus = "paused"
+			} else {
+				resp.ResourceStatus = "running"
+			}
+
+			// Map the tools
+			for _, tv := range v.Tools {
+				var apitool APITool
+
+				apitool.Name = tv.Name
+				apitool.Version = tv.Version
+
+				resp.Tools[tv.UUID] = apitool
+			}
+
+			// Note that we found a resource
+			found = true
+		}
+	}
+
+	// Check if we have a resource to return
+	if !found {
+		resp.Status = RESP_CODE_NOCONTENT
+		resp.Message = RESP_CODE_NOCONTENT_T
+
+		rw.WriteHeader(RESP_CODE_NOCONTENT)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Return the structure
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResourceUpdateReq
+	var resp ResourceUpdateResp
+
+	// JSON decoder and encoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	resid := mux.Vars(r)["id"]
+
+	// Check the action for resume or pause
+	switch req.Action {
+	case "pause":
+		err = a.Q.PauseResource(resid)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	case "resume":
+		err = a.Q.ResumeResource(resid)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	}
+
+	// No errors so we should be good
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) DeleteResource(rw http.ResponseWriter, r *http.Request) {
+	// Request and response structure
+	var req ResourceDeleteReq
+	var resp ResourceDeleteResp
+
+	// JSON decoders and encoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the ID of the job we want
+	resid := mux.Vars(r)["id"]
+
+	// Attempt to remove the resource
+	err = a.Q.RemoveResource(resid)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// No errors so we should be good
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) UpdateQueue(rw http.ResponseWriter, r *http.Request) {
+	// Request and response structures
+	var req QueueUpdateReq
+	var resp QueueUpdateResp
+
+	// JSON decoders and encoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Reorder the queue
+	errs := a.Q.StackReorder(req.JobOrder)
+	if len(errs) != 0 {
+		// TODO: Log erros
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// No errors so we should be good
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 
