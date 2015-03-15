@@ -1,7 +1,8 @@
 cracklord.controller('UserController', function UserController($state, $scope, USER_ROLES, AuthService, UserSession) {
-	$scope.currentUser = null;
-	$scope.userRoles = USER_ROLES;
-	$scope.isAuthorized = AuthService.isAuthorized;
+	$scope.user = {}
+	$scope.user.current = null;
+	$scope.user.allroles = USER_ROLES;
+	$scope.user.checkrole = AuthService.isAuthorized;
 
 	$scope.setCurrentUser = function(user) {
 		$scope.currentUser = user;

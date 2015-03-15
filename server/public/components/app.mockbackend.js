@@ -1,14 +1,5 @@
 angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataModel, ToolsDataModel, ResourcesDataModel) {
-    $httpBackend.whenPOST('/api/login')
-    .respond(function(method, url, data) {
-       var params = angular.fromJson(data);
-       var user = UserDataModel.login(params['username'], params['password']);
-        if(user) {
-            return [200, {"status": 200, "message": "Login Successful", "token": user.token, "role": user.role}, {}];
-        } else {
-            return [401, {"status": 401, "message": "Bad username or password."}, {}];
-        }
-    });
+    $httpBackend.whenGET(/\/api\/login/).passThrough();
     $httpBackend.whenGET(/\/api\/logout/).passThrough();
 
     $httpBackend.whenGET('/api/queue').respond(function(method, url, data) {
@@ -60,9 +51,9 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
     });
 
     $httpBackend.whenGET(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var jobid = url.split('/')[3];
+        var id = url.split('/')[3];
         
-        var job = JobsDataModel.read(jobid);
+        var job = JobsDataModel.read(id);
 
         if(job != false) {
             job["status"] = 200;
@@ -70,21 +61,21 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
 
             return [200, job, {}];
         } else {
-            return [404, {"status": 404, "message": "Job "+jobid+" not found."}, {}];
+            return [404, {"status": 404, "message": "Job "+id+" not found."}, {}];
         }
     });
 
     $httpBackend.whenPOST('/api/jobs').respond(function(method, url, data) {
         var params = angular.fromJson(data);
-        var jobid = JobsDataModel.create(params);
+        var id = JobsDataModel.create(params);
         
-        return [201, {"status": 201, "message": "Job "+jobid+" successfully created.", "jobid": jobid}, {}];
+        return [201, {"status": 201, "message": "Job "+id+" successfully created.", "id": id}, {}];
     });
 
     $httpBackend.whenPUT(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
         var params = angular.fromJson(data);
-        var jobid = url.split('/')[3];
-        var result = JobsDataModel.update(jobid, params);
+        var id = url.split('/')[3];
+        var result = JobsDataModel.update(id, params);
        
         if(!result) {
             return [404, { "status": 404, "message": "Job not found" }, {}];
@@ -94,8 +85,8 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
     });
     
     $httpBackend.whenDELETE(/\/jobs\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).respond(function(method, url, data) {
-        var jobid = url.split('/')[3];
-        var result = JobsDataModel.delete(jobid);
+        var id = url.split('/')[3];
+        var result = JobsDataModel.delete(id);
         
         if(result == true) {
             return [200, {"status": 200, "message": "OK"}, {}];
