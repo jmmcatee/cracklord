@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// Get the Authentication configuration
-	confAuth := confFile.Section("Authenication")
+	confAuth := confFile.Section("Authentication")
 	if confAuth == nil {
 		println("No authentication configuration!")
 		return
