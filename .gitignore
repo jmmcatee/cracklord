@@ -27,3 +27,4 @@ _testmain.go
 >>>>>>> origin/master
 *.key
 *.pem
+server/cracklord.ini

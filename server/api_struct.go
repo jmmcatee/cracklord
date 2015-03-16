@@ -16,7 +16,7 @@ type LoginResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 	Token   string `json:"token"`
-	Role    string `json:role`
+	Role    string `json:"role"`
 }
 
 // Logout Response Structure

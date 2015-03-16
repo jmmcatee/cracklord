@@ -14,7 +14,7 @@ cracklord.config(['growlProvider', function (growlProvider) {
 }]);
 
 cracklord.constant('USER_ROLES', {
-	admin: 'administrator',
-	standard: 'standard user',
-	read: 'read-only'
+	admin: 'Administrator',
+	standard: 'Standard User',
+	read: 'Read-Only'
 });
