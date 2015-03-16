@@ -71,7 +71,7 @@ type hascatTasker struct {
 	done       chan bool
 }
 
-func NewHashcatTask(j common.Job) (common.Tasker, error) {
+func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h := hascatTasker{}
 
 	h.job = j

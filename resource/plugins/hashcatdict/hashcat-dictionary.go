@@ -216,31 +216,31 @@ func Setup(path string) error {
 	return nil
 }
 
-type hashcatTooler struct {
+type hashcatDictTooler struct {
 	toolUUID string
 }
 
-func (h *hashcatTooler) Name() string {
+func (h *hashcatDictTooler) Name() string {
 	return "Hashcat Dictionary Attack"
 }
 
-func (h *hashcatTooler) Type() string {
+func (h *hashcatDictTooler) Type() string {
 	return "Dictionary"
 }
 
-func (h *hashcatTooler) Version() string {
+func (h *hashcatDictTooler) Version() string {
 	return "1.33"
 }
 
-func (h *hashcatTooler) UUID() string {
+func (h *hashcatDictTooler) UUID() string {
 	return h.UUID()
 }
 
-func (h *hashcatTooler) SetUUID(s string) {
+func (h *hashcatDictTooler) SetUUID(s string) {
 	h.toolUUID = s
 }
 
-func (h *hashcatTooler) Parameters() string {
+func (h *hashcatDictTooler) Parameters() string {
 	params := `
 {
 form: [
@@ -331,10 +331,14 @@ schema: {
 	return params
 }
 
-func (h *hashcatTooler) Requirements() string {
+func (h *hashcatDictTooler) Requirements() string {
 	return common.RES_GPU
 }
 
-func (h *hashcatTooler) NewTask(job common.Job) common.Tasker {
-	return nil
+func (h *hashcatDictTooler) NewTask(job common.Job) (common.Tasker, error) {
+	return newHashcatTask(job)
+}
+
+func NewTooler() common.Tooler {
+	return &hashcatDictTooler{}
 }
