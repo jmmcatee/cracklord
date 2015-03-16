@@ -103,8 +103,8 @@ func CompareTools(t1, t2 Tool) bool {
 }
 
 type ToolJSONForm struct {
-	Form   json.RawMessage `json:form`
-	Schema json.RawMessage `json.schema`
+	Form   json.RawMessage `json:"form"`
+	Schema json.RawMessage `json:"schema"`
 }
 
 type RPCCall struct {

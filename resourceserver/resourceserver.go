@@ -2,20 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/resource"
 	"github.com/jmmcatee/cracklord/resource/plugins/hashcatdict"
 	"github.com/vaughan0/go-ini"
 	"net"
 	"net/rpc"
 )
-
-var tools []common.Tooler
-
-func init() {
-	// Add tool plugins here
-	tools = append(tools, hashcatdict.NewTooler())
-}
 
 func main() {
 	// Define the flags
@@ -58,10 +50,14 @@ func main() {
 	// Create a resource queue
 	resQueue := resource.NewResourceQueue(authToken)
 
-	// Add tools
-	for i, _ := range tools {
-		resQueue.AddTool(tools[i])
+	// Setup and Add tools
+	if *confPath == "" {
+		hashcatdict.Setup("./")
+	} else {
+		hashcatdict.Setup(*confPath)
 	}
+
+	resQueue.AddTool(hashcatdict.NewTooler())
 
 	res := rpc.NewServer()
 	res.Register(&resQueue)

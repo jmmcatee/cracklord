@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/queue"
+	"log"
 	"net/http"
 )
 
@@ -139,7 +140,7 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the tools list from the Queue
-	var tmap APITools
+	var tmap = APITools{}
 	for _, t := range a.Q.Tools() {
 		tmap[t.UUID] = APITool{Name: t.Name, Version: t.Version}
 	}
@@ -187,9 +188,11 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	// We need to split the response from the tool into Form and Schema
 	var form common.ToolJSONForm
+	log.Printf("Tool Params: %+v\n", tool.Parameters)
 	jsonBuf := bytes.NewBuffer([]byte(tool.Parameters))
 	err := json.NewDecoder(jsonBuf).Decode(&form)
 	if err != nil {
+		log.Println(err)
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T
 
@@ -203,8 +206,8 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	resp.Message = RESP_CODE_OK_T
 	resp.Name = tool.Name
 	resp.Version = tool.Version
-	resp.Form = form.Form
-	resp.Schema = form.Schema
+	resp.Form = &form.Form
+	resp.Schema = &form.Schema
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)

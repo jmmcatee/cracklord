@@ -175,7 +175,7 @@ var supportedHash = map[string]string{
 */
 func Setup(path string) error {
 	// Join the path provided
-	fullpath := filepath.Join(path, "hastcatdict.ini")
+	fullpath := filepath.Join(path, "hashcatdict.ini")
 	confFile, err := ini.LoadFile(fullpath)
 	if err != nil {
 		return err
@@ -233,7 +233,7 @@ func (h *hashcatDictTooler) Version() string {
 }
 
 func (h *hashcatDictTooler) UUID() string {
-	return h.UUID()
+	return h.toolUUID
 }
 
 func (h *hashcatDictTooler) SetUUID(s string) {
@@ -243,7 +243,7 @@ func (h *hashcatDictTooler) SetUUID(s string) {
 func (h *hashcatDictTooler) Parameters() string {
 	params := `
 {
-form: [
+"form": [
   "name",
   "algorithm",
   "dictionaries",
@@ -254,7 +254,7 @@ form: [
     "placeholder": "Add in Hashcat required format"
   }
 ],
-schema: {
+"schema": {
 "type": "object",
   "properties": {
     "name": {
@@ -266,14 +266,19 @@ schema: {
       "type": "string",
       "enum": [
         `
-
+	var first = true
 	for key, _ := range supportedHash {
+		if !first {
+			params += `,`
+		}
+
 		params += `"` + key + `"`
+
+		first = false
 	}
 
 	params += `
 ]
-    },
    },
     "dictionaries": {
       "title": "Select dictionary to use",
@@ -281,7 +286,7 @@ schema: {
       "enum": [
 `
 
-	var first = true
+	first = true
 	for key, _ := range config.Dictionaries {
 		if !first {
 			params += `,`
@@ -325,6 +330,7 @@ schema: {
     "dictionaries",
     "hashes"
   ]
+}
 }
 	`
 
