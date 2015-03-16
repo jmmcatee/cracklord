@@ -4,27 +4,20 @@ Queue and resource system for cracking passwords
 ### Server Setups ###
 You are expected to have a working Go build environment with GOPATH setup
 
+Get Cracklord
 `go get github.com/jmmcatee/cracklord`
 
-`go install github.com/jmmcatee/cracklord/server`
+Build the server and resource server components
+`go build github.com/jmmcatee/cracklord/server`
 
-Copy the `public` folder to `$GOPATH/bin`.
+`go build github.com/jmmcatee/cracklord/resourceserver`
 
-Create a INI file in the `$GOPATH/bin` that looks like the follow:
+Navigate to the resource server directory and run it
+`cd $GOPATH/src/github.com/jmmcatee/cracklord/resourceserver`
 
-```
-[Authentication]
-type=INI
-adminuser=admin
-adminpass=password
-standarduser=standard
-standardpass=password
-readonlyuser=readonly
-readonlypass=readonly
+`./resourceserver.exe`
 
-#type=ActiveDirectory
-#realm=example.lcl
-#ReadOnlyGroup="Domain Users"
-#StandardGroup="Cracking Users"
-#AdminGroup="Domain Admins"
-```
+Now open another prompt and navigate to the Cracklord server and run it
+`cd $GOPATH/src/github.com/jmmcatee/cracklord/server`
+
+`./server.exe`
