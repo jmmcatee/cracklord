@@ -99,6 +99,16 @@ tr.even {
 	background-color: #f9f9f9;
 }
 
+hr {
+    border: 0;
+    height: 1px;
+    background: -moz-linear-gradient(left center, transparent, black, transparent);
+    background: -webkit-gradient(linear, left center, right center,
+                                 color-stop(0, transparent),
+                                 color-stop(0.5, black),
+                                 color-stop(1, transparent));
+}
+
 
 /*******************************************************************************
                           LISTING (JOB/RESOURCE) STYLES
@@ -136,6 +146,26 @@ td.collapser > a {
 	cursor: pointer;
 }
 
+.job-detail { 
+	background-color: #fff;
+}
+
+.job-detail div.slider {
+	border-top-right-radius: 0px;
+	border-top-left-radius: 0px;
+	border-bottom-right-radius:10px; 
+	border-bottom-left-radius:10px; 
+	border-top: none;
+	border-right: solid 1px #666;
+	border-left: solid 1px #666;
+	border-bottom: solid 1px #666;
+	margin-bottom: 20px;
+}
+
+.job-detail: hover {
+	background-color: #fff;
+}
+
 .job-detail div.slider {
 	display: none;
 	padding: 20px;
@@ -144,6 +174,16 @@ td.collapser > a {
 .job-detail > td {
 	padding: 0 !important;
 }
+
+.job-output {
+	margin-bottom: 0;
+}
+
+.tool-options {
+	font-size: .8em;
+	margin: 10px;
+}
+
 
 /*******************************************************************************
                              LOGIN PAGE SETTINGS

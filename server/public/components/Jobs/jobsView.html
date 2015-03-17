@@ -14,7 +14,7 @@
 		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
 		<h2 class="page-header">Current Queue</h2>
 		<div class="">
-			<table class="table table-hover">
+			<table class="table">
 				<thead>
 					<tr>
 						<th class="">&nbsp;</th>
@@ -35,7 +35,7 @@
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
 						<td class="status {{job.status}}">{{job.status}}</td>
-						<td class="time">{{now - job.starttime}}</td>
+						<td class="time">{{now - job.starttime | readableTime}}</td>
 						<td class="jobprogress">
 							<div class="progress job-cracked">
 								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{job.totalhashes / job.crackedhashes}}%">
@@ -52,20 +52,13 @@
 							</div>
 						</td>
 					</tr>
-					<tr ng-repeat-end ng-if="job.expanded" class="job-detail">
-						<td colspan=9>
-							<div class="slider text-center">
-								<i class="fa fa-spinner fa-pulse fa-4x"></i>
-								<ng-include src="'components/Jobs/jobsViewDetail.html'"></ng-include>
-							</div>
-						</td>
-					</tr>
+					<tr ng-repeat-end class="job-detail"><td colspan=20 style="display: none;"><job-detail jobid="{{job.id}}" visibility="job.expanded"></job-detail></td></tr>
 				</tbody>
 			</table>
 		</div>
 		<h2 class="page-header">Completed / Stopped Jobs</h2>
 		<div class="table-responsive">
-			<table class="table table-hover">
+			<table class="table">
 				<thead>
 					<tr>
 						<th class="">&nbsp;</th>
@@ -97,11 +90,7 @@
 							<div class="btn-group btn-group-xs pull-right" role="group"><trashbutton target="job" targetlist="jobs"></trashbutton></div>
 						</td>
 					</tr>
-					<tr ng-repeat-end ng-if="job.expanded" class="job-detail">
-						<td colspan=9><div class="slider text-center">
-							<i class="fa fa-spinner fa-pulse fa-4x"></i>
-						</div></td>
-					</tr>
+					<tr ng-repeat-end><td colspan=20 style="display: none;"><job-detail jobid="{{job.id}}" visibility="job.expanded"></job-detail></td></tr>
 				</tbody>
 			</table>
 		</div>

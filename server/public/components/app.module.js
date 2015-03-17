@@ -4,8 +4,10 @@ var cracklord = angular.module('cracklord', [
    'ngResource',
    'schemaForm',
    'angular-growl',
+   'readableTime',
    'ngAnimate',
-   'ngMockE2E'
+   'ngMockE2E',
+   'chart.js'
 ]);
 
 cracklord.config(['growlProvider', function (growlProvider) {

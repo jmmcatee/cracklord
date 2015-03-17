@@ -13,7 +13,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         if(tool != false) {
             tool["status"] = 200;
             tool["message"] = "OK";
-            return [200, tool, {}];
+            return [200, {'status': 200, 'message': 'OK', 'tool': tool}, {}];
         } else {
             return [404, {"status": 404, "message": "Tool "+id+" not found."}, {}];
         }
@@ -36,9 +36,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         var resource = ResourcesDataModel.read(id);
 
         if(resource != false) {
-            resource["status"] = 200;
-            resource["message"] = "OK";
-            return [200, tool, {}];
+            return [200, {'status': 200, 'message': 'OK', 'resource': resource} , {}];
         } else {
             return [404, {"status": 404, "message": "Resource "+id+" not found."}, {}];
         }
@@ -56,10 +54,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         var job = JobsDataModel.read(id);
 
         if(job != false) {
-            job["status"] = 200;
-            job["message"] = "OK";
-
-            return [200, job, {}];
+            return [200, {'status': 200, "message": "OK", "job": job}, {}];
         } else {
             return [404, {"status": 404, "message": "Job "+id+" not found."}, {}];
         }
