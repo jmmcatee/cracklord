@@ -29,6 +29,7 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 				for(var i = 0; i < $scope.jobs.length; i++) {
 					$scope.jobs[i].expanded = false;
 				}
+				growl.success("Jobs successfully loaded.");
 			},
 			//Our error handler
 			function(error) {
@@ -38,20 +39,6 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 		$scope.jobs = jobs;
 	}
 	$scope.loadJobs();
-});
-
-cracklord.directive('jobsReloadButton', function jobsReloadButton(growl) {
-	return {
-		restrict: 'E',
-		replace: true,
-		template: '<button class="btn btn-primary"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>',
-		link: function($scope, $element, $attrs) {
-			$element.bind('click', function() {
-				$scope.loadJobs();
-				growl.success("Data successfully refreshed.");
-			});
-		}	
-	}
 });
 
 cracklord.directive('jobDetail', function jobDetail(JobsService, growl) {

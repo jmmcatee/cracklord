@@ -3,7 +3,7 @@
 		<div class="btn-group-vertical" role="group">
 			<button class="btn btn-default disabled">Actions</button>
 			<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
-			<jobs-reload-button></jobs-reload-button>	
+			<reloadbutton datareload="loadJobs()"></reloadbutton>	
 			<button class="btn btn-default disabled" ng-show="listreordered">Confirm<br>Reorder</button>
 			<button class="btn btn-success" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-up"></i><br><div class="btnwrd">Confirm</div></button>
 			<button class="btn btn-warning" ng-click="reorderCancel()" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-down"></i><br><div class="btnwrd">Cancel</div></button>

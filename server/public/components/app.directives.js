@@ -152,6 +152,22 @@ cracklord.directive('trashbutton', function trashbutton(growl, AuthService, USER
     };
 });
 
+cracklord.directive('reloadbutton', function jobsReloadButton(growl) {
+    return {
+        restrict: 'E',
+        scope: {
+            datareload: '&'
+        },
+        replace: true,
+        template: '<button class="btn btn-primary"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>',
+        link: function($scope, $element, $attrs) {
+            $element.bind('click', function() {
+                $scope.datareload();
+            });
+        }   
+    }
+});
+
 cracklord.directive('draghandle', function draghandle(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E',

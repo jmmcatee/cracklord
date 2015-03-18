@@ -6,6 +6,7 @@ var cracklord = angular.module('cracklord', [
    'angular-growl',
    'readableTime',
    'ngAnimate',
+   'ngCsv',
    'ngMockE2E',
    'chart.js'
 ]);

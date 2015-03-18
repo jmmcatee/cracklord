@@ -1,6 +1,14 @@
 <div class="row" ng-controller="ResourcesController">
-	<div class="col-md-12 main">
-		<h1 class="page-header"><i class="fa fa-server"></i> Resources Configured</h1>
+	<div class="col-md-1 sidebar fixed">
+		<div class="btn-group-vertical" role="group">
+			<button class="btn btn-default disabled">Actions</button>
+			<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-link"></i><br> <div class="btnwrd">Connect</div></a>
+			<reloadbutton datareload="loadServers()"></reloadbutton>
+			<button class="btn btn-default disabled"> </button>
+  		</div>
+	</div>
+	<div class="col-md-11 col-md-offset-1 main">
+		<h1 class="page-header"><i class="fa fa-server"></i> Resources Connected</h1>
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
@@ -15,12 +23,11 @@
 					<tr ng-repeat="res in resources">
 						<td class="name">{{res.name}}</td>
 						<td class="address">{{res.address}}</td>
-						<td class="status">{{res.state}}</td>
+						<td class="status {{res.status}}">{{res.status}}</td>
 						<td>
-							<div class="btn-group btn-group-xs" role="group" aria-label="...">
-								<button type="button" class="btn btn-warning" data-toggle="tooltip" data-placement="top" data-original-title="Pause" tooltip><i class="fa fa-pause"></i></button>
-								<button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" data-original-title="Stop" tooltip><i class="fa fa-stop"></i></button>
-								<button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" data-original-title="Shutdown" tooltip><i class="fa fa-trash"></i></button>
+							<div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">
+								<stopbutton target="res"></stopbutton>
+								<trashbutton target="res" targetlist="resources"></trashbutton>
 							</div>
 						</td>
 					</tr>

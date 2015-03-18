@@ -175,6 +175,19 @@ td.collapser > a {
 	padding: 0 !important;
 }
 
+.job-output-container {
+	height: 200px !important;
+	overflow: auto;
+}
+
+.job-output-actions {
+	margin: 0 20px;
+}
+
+.job-output-actions .btn-default {
+	color: #000;
+}
+
 .job-output {
 	margin-bottom: 0;
 }
