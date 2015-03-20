@@ -25,6 +25,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         return [200, returninfo, {}];
     });
 
+    /*
     $httpBackend.whenGET('/api/resources').respond(function(method, url, data) {
         var resources = ResourcesDataModel.query();
         var returninfo = { "status": 200, "message": "OK", "resources": resources};
@@ -40,7 +41,12 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         } else {
             return [404, {"status": 404, "message": "Resource "+id+" not found."}, {}];
         }
-    });
+    });*/
+    $httpBackend.whenGET('/api/resources').passThrough();
+    $httpBackend.whenGET(/\/resources\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).passThrough();
+    $httpBackend.whenPOST('/api/resources').passThrough();
+    $httpBackend.whenPUT(/\/resources\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).passThrough();
+    $httpBackend.whenDELETE(/\/resources\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/).passThrough();
 
     $httpBackend.whenGET('/api/jobs').respond(function(method, url, data) {
         var jobs = JobsDataModel.query();
