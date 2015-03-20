@@ -15,6 +15,13 @@ cracklord.config(function($stateProvider, $urlRouterProvider, USER_ROLES) {
 				authorizedRoles: [USER_ROLES.admin]
 			}
 		})
+		.state('connectresource', {
+			url:'/resources/new',
+			templateUrl: 'components/Resources/connectResource.html',
+			data: {
+				authorizedRoles: [USER_ROLES.admin]
+			}
+		})
 		.state('createjob', {
 			url:'/jobs/new',
 			templateUrl: 'components/Jobs/newJob.html',

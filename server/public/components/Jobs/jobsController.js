@@ -116,10 +116,10 @@ cracklord.controller('CreateJobController', function CreateJobController($scope,
 	$scope.formData.params = {};
 
 	$scope.toolChange = function() {
-		var toolid = $scope.formData.tool.toolid;
-		var tool = ToolsService.get({toolid: toolid}, 
+		var id = $scope.formData.tool.id;
+		var tool = ToolsService.get({id: id}, 
 			function(data) {
-				$scope.tool = data;
+				$scope.tool = data.tool;
 			}, 
 			function(error) {
 				growl.error("An error occured while trying to load tool information.");
@@ -130,7 +130,7 @@ cracklord.controller('CreateJobController', function CreateJobController($scope,
 	$scope.processNewJobForm = function() {
 		var newjob = new JobsService();
 
-		newjob.toolid = $scope.formData.tool.toolid;
+		newjob.toolid = $scope.formData.tool.id;
 		newjob.name = $scope.formData.name;
 		newjob.params = $scope.formData.params;
 		
@@ -145,12 +145,3 @@ cracklord.controller('CreateJobController', function CreateJobController($scope,
 		);
 	}	
 });
-
-cracklord.animation('.job-detail', function() {
-	return {
-		enter: function(element, done) {
-		},
-		leave: function(element, done) {
-		}
-	};	
-})

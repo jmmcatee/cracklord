@@ -28,3 +28,5 @@ _testmain.go
 *.key
 *.pem
 server/cracklord.ini
+*.sublime-project
+sublimetext.sublime-workspace

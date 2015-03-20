@@ -11,8 +11,8 @@ cracklord.controller('ToolsController', function ToolsController($scope, ToolsSe
 		$scope.tools = tools;
 	}
 
-	this.loadTool = function(toolid) {
-		var tool = ToolsService.get({id: toolid}, 
+	this.loadTool = function(id) {
+		var tool = ToolsService.get({id: id}, 
 			function(data) {
 			}, 
 			function(error) {

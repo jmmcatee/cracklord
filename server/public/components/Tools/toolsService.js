@@ -1,5 +1,5 @@
 cracklord.factory('ToolsService', function ($resource) {
-   return $resource('/api/tools/:toolid', {toolid: '@toolid'}, {
+   return $resource('/api/tools/:id', {id: '@id'}, {
    	query: {
    		isArray: true,
    		method: 'GET',
