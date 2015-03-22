@@ -60,6 +60,22 @@ func (u *User) EffectiveRole() string {
 	return role
 }
 
+func (u *User) Allowed(required string) bool {
+	if u.EffectiveRole() == Administrator {
+		return true
+	}
+
+	if u.EffectiveRole() == required {
+		return true
+	}
+
+	if u.EffectiveRole() == StandardUser && required == ReadOnly {
+		return true
+	}
+
+	return false
+}
+
 /*
  * This interface is used to allow multiple different types of authenticator
  * mechanisms to be used. Given a username and password it should return User

@@ -114,8 +114,8 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 	// Build the JSON Decoder
 	respJSON := json.NewEncoder(rw)
 
-	// Get the token from the Query string
-	token := r.URL.Query().Get("token")
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
 
 	a.T.RemoveToken(token)
 
@@ -131,13 +131,24 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	// Resposne and Request structures
 	var resp ToolsResp
 
-	// Check the Token provided
-	token := r.URL.Query().Get("token")
-
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
 	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
@@ -166,13 +177,24 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var resp ToolsGetResp
 
-	// Check the token
-	token := r.URL.Query().Get("token")
-
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
 	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
@@ -228,8 +250,9 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
 
-	// Check the token
-	token := r.URL.Query().Get("token")
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
 	if !a.T.CheckToken(token) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
@@ -273,6 +296,29 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
@@ -283,19 +329,6 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 		respJSON.Encode(resp)
 		return
 	}
-
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
-		resp.Status = RESP_CODE_UNAUTHORIZED
-		resp.Message = RESP_CODE_UNAUTHORIZED_T
-
-		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Get the user
-	user, _ := a.T.GetUser(req.Token) // Ignoring the error because we know the token is good
 
 	// Build a job structure
 	job := common.NewJob(req.ToolID, req.Name, user.Username, req.Params)
@@ -327,10 +360,9 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
 
-	// Get the token from the URI
-	token := r.URL.Query().Get("token")
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
 
-	// Check the token
 	if !a.T.CheckToken(token) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
@@ -375,6 +407,29 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
@@ -382,16 +437,6 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 		resp.Message = RESP_CODE_BADREQ_T
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
-		resp.Status = RESP_CODE_UNAUTHORIZED
-		resp.Message = RESP_CODE_UNAUTHORIZED_T
-
-		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
@@ -445,26 +490,26 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
-	var req JobDeleteReq
 	var resp JobDeleteResp
 
 	// JSON Encoders and Decoders
-	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
-	// Decode the request
-	err := reqJSON.Decode(&req)
-	if err != nil {
-		resp.Status = RESP_CODE_BADREQ
-		resp.Message = RESP_CODE_BADREQ_T
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
 
-		rw.WriteHeader(RESP_CODE_BADREQ)
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
 
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
@@ -477,7 +522,7 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 	jobid := mux.Vars(r)["id"]
 
 	// Remove the job
-	err = a.Q.RemoveJob(jobid)
+	err := a.Q.RemoveJob(jobid)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T
@@ -503,11 +548,21 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 	// JSON Encoders and Decoders
 	respJSON := json.NewEncoder(rw)
 
-	// Get the token from the URI
-	token := r.URL.Query().Get("token")
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
 
-	// Check Token
 	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
@@ -527,6 +582,8 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 			apires.Status = "running"
 		}
 		apires.Address = r.Address
+
+		apires.Tools = map[string]APITool{}
 		for _, t := range r.Tools {
 			apires.Tools[t.UUID] = APITool{t.Name, t.Version}
 		}
@@ -551,6 +608,29 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for Administrators user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(Administrator) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
@@ -558,16 +638,6 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		resp.Message = RESP_CODE_BADREQ_T
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
-		resp.Status = RESP_CODE_UNAUTHORIZED
-		resp.Message = RESP_CODE_UNAUTHORIZED_T
-
-		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
@@ -600,6 +670,29 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for standard user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
@@ -607,16 +700,6 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 		resp.Message = RESP_CODE_BADREQ_T
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
-		resp.Status = RESP_CODE_UNAUTHORIZED
-		resp.Message = RESP_CODE_UNAUTHORIZED_T
-
-		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
@@ -636,6 +719,8 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 			} else {
 				resp.Resource.Status = "running"
 			}
+
+			resp.Resource.Tools = map[string]APITool{}
 			for _, t := range r.Tools {
 				resp.Resource.Tools[t.UUID] = APITool{t.Name, t.Version}
 			}
@@ -661,6 +746,29 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check for Administrator user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(Administrator) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
@@ -668,16 +776,6 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 		resp.Message = RESP_CODE_BADREQ_T
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
-		resp.Status = RESP_CODE_UNAUTHORIZED
-		resp.Message = RESP_CODE_UNAUTHORIZED_T
-
-		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
@@ -722,26 +820,26 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
-	var req ResDeleteReq
 	var resp ResDeleteResp
 
 	// JSON Encoder and Decoder
-	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
-	// Decode the request
-	err := reqJSON.Decode(&req)
-	if err != nil {
-		resp.Status = RESP_CODE_BADREQ
-		resp.Message = RESP_CODE_BADREQ_T
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
 
-		rw.WriteHeader(RESP_CODE_BADREQ)
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 		return
 	}
 
-	// Check Token
-	if !a.T.CheckToken(req.Token) {
+	// Check for Administrator user level at least
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(Administrator) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
@@ -754,7 +852,7 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 	resID := mux.Vars(r)["id"]
 
 	// Remove the resource
-	err = a.Q.RemoveResource(resID)
+	err := a.Q.RemoveResource(resID)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T

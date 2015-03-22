@@ -71,7 +71,6 @@ type GetJobsResp struct {
 
 // Create Jobs request
 type JobCreateReq struct {
-	Token  string            `json:"token"`
 	ToolID string            `json:"toolid"`
 	Name   string            `json:"name"`
 	Params map[string]string `json:"params"`
@@ -96,7 +95,6 @@ type JobReadResp struct {
 
 // Update Job Request
 type JobUpdateReq struct {
-	Token  string `json:"token"`
 	Action string `json:"action"`
 }
 
@@ -105,11 +103,6 @@ type JobUpdateResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 	Job     APIJob `json:"job"`
-}
-
-// Delete Job request
-type JobDeleteReq struct {
-	Token string `json:"token"`
 }
 
 // Delete Job response
@@ -136,7 +129,6 @@ type ResListResp struct {
 
 // Create resource structs
 type ResCreateReq struct {
-	Token   string `json:"token"`
 	Key     string `json:"key"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
@@ -160,7 +152,6 @@ type ResReadResp struct {
 
 // Update a resource struct
 type ResUpdateReq struct {
-	Token  string `json:"token"`
 	Status string `json:"status"`
 }
 
@@ -170,10 +161,6 @@ type ResUpdateResp struct {
 }
 
 // Delete a resource struct
-type ResDeleteReq struct {
-	Token string `json:"token"`
-}
-
 type ResDeleteResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`

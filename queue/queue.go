@@ -736,6 +736,9 @@ func (q *Queue) RemoveResource(resUUID string) error {
 		}
 	}
 
+	// Close the connection to the client
+	q.pool[resUUID].Client.Close()
+
 	// Remove from pool
 	delete(q.pool, resUUID)
 
