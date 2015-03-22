@@ -4,9 +4,11 @@ import ()
 
 type Resource struct {
 	UUID     string
+	Name     string
 	Hardware map[string]bool
 	Tools    map[string]Tool
 	Paused   bool
+	Address  string
 }
 
 type Queue interface {

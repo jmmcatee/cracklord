@@ -34,6 +34,13 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/tools").Methods("GET").HandlerFunc(a.ListTools)
 	r.Path("/api/tools/{id}").Methods("GET").HandlerFunc(a.GetTool)
 
+	// Resource endpoints
+	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResource)
+	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
+	r.Path("/api/resources/{id}").Methods("GET").HandlerFunc(a.ReadResource)
+	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResources)
+	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
+
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
 	r.Path("/api/jobs").Methods("POST").HandlerFunc(a.CreateJob)
@@ -481,6 +488,285 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Job should now be removed, so return all OK
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+// List Resource API function
+func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structure
+	var resp ResListResp
+
+	// JSON Encoders and Decoders
+	respJSON := json.NewEncoder(rw)
+
+	// Get the token from the URI
+	token := r.URL.Query().Get("token")
+
+	// Check Token
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// List resources
+	for _, r := range a.Q.GetResources() {
+		var apires APIResource
+		apires.ID = r.UUID
+		apires.Name = r.Name
+		if r.Paused {
+			apires.Status = "paused"
+		} else {
+			apires.Status = "running"
+		}
+		apires.Address = r.Address
+		for _, t := range r.Tools {
+			apires.Tools[t.UUID] = APITool{t.Name, t.Version}
+		}
+
+		resp.Resources = append(resp.Resources, apires)
+	}
+
+	// Job should now be removed, so return all OK
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResCreateReq
+	var resp ResCreateResp
+
+	// JSON Encoders and Decoders
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Try and add the resource
+	err = a.Q.AddResource(req.Address, req.Name, req.Key)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Job should now be removed, so return all OK
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResReadReq
+	var resp ResReadResp
+
+	// JSON Encoder and Decoder
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the resource ID
+	resID := mux.Vars(r)["id"]
+
+	// Get the resource
+	for _, r := range a.Q.GetResources() {
+		if resID == r.UUID {
+			// Found the resource so set it to the response
+			resp.Resource.ID = r.UUID
+			resp.Resource.Name = r.Name
+			resp.Resource.Address = r.Address
+			if r.Paused {
+				resp.Resource.Status = "paused"
+			} else {
+				resp.Resource.Status = "running"
+			}
+			for _, t := range r.Tools {
+				resp.Resource.Tools[t.UUID] = APITool{t.Name, t.Version}
+			}
+		}
+	}
+
+	// TODO (mcatee): Add a check for no found resource and return correct status codes
+
+	// Build good response
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResUpdateReq
+	var resp ResUpdateResp
+
+	// JSON Encoder and Decoder
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the resource ID
+	resID := mux.Vars(r)["id"]
+
+	// Check the status change given
+	if req.Status == "pause" {
+		err = a.Q.PauseResource(resID)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	}
+
+	if req.Status == "resume" {
+		err = a.Q.ResumeResource(resID)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = RESP_CODE_ERROR_T
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+			return
+		}
+	}
+
+	// TODO (mcatee): Add a check for no found resource and return correct status codes
+
+	// Build good response
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	rw.WriteHeader(RESP_CODE_OK)
+	respJSON.Encode(resp)
+}
+
+func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var req ResDeleteReq
+	var resp ResDeleteResp
+
+	// JSON Encoder and Decoder
+	reqJSON := json.NewDecoder(r.Body)
+	respJSON := json.NewEncoder(rw)
+
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Check Token
+	if !a.T.CheckToken(req.Token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// Get the resource ID
+	resID := mux.Vars(r)["id"]
+
+	// Remove the resource
+	err = a.Q.RemoveResource(resID)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+		return
+	}
+
+	// TODO (mcatee): Add a check for no found resource and return correct status codes
+
+	// Build good response
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 

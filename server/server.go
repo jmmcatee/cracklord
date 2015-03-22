@@ -178,7 +178,7 @@ func main() {
 		kFile = *keyPath
 	}
 
-	server.Q.AddResource("localhost:9443", "f2j983jfn293uihfnj23u9in")
+	//server.Q.AddResource("localhost:9443", "f2j983jfn293uihfnj23u9in")
 
 	http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
 }

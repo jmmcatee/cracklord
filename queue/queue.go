@@ -627,7 +627,7 @@ func (q *Queue) Tools() map[string]common.Tool {
 	return tools
 }
 
-func (q *Queue) AddResource(addr string, auth string) error {
+func (q *Queue) AddResource(addr, name, auth string) error {
 	// Create empty resource
 	res := NewResource()
 
@@ -677,6 +677,9 @@ func (q *Queue) AddResource(addr string, auth string) error {
 		}
 	}
 
+	res.Name = name
+	res.Address = addr
+
 	// Add resource to resource pool with generated UUID
 	q.pool[uuid.New()] = res
 
@@ -691,6 +694,8 @@ func (q *Queue) GetResources() []common.Resource {
 	for id, v := range q.pool {
 		r := common.Resource{}
 		r.UUID = id
+		r.Name = v.Name
+		r.Address = v.Address
 		r.Tools = v.Tools
 		r.Paused = v.Paused
 		r.Hardware = v.Hardware

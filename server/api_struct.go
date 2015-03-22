@@ -117,3 +117,64 @@ type JobDeleteResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
+
+// Resource API structure
+type APIResource struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	Address string   `json:"address"`
+	Status  string   `json:"status"`
+	Tools   APITools `json:"tools"`
+}
+
+// List resource structs
+type ResListResp struct {
+	Status    int           `json:"status"`
+	Message   string        `json:"message"`
+	Resources []APIResource `json:"resources"`
+}
+
+// Create resource structs
+type ResCreateReq struct {
+	Token   string `json:"token"`
+	Key     string `json:"key"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+}
+
+type ResCreateResp struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+// Read a resource struct
+type ResReadReq struct {
+	Token string `json:"token"`
+}
+
+type ResReadResp struct {
+	Status   int         `json:"status"`
+	Message  string      `json:"message"`
+	Resource APIResource `json:"resource"`
+}
+
+// Update a resource struct
+type ResUpdateReq struct {
+	Token  string `json:"token"`
+	Status string `json:"status"`
+}
+
+type ResUpdateResp struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+// Delete a resource struct
+type ResDeleteReq struct {
+	Token string `json:"token"`
+}
+
+type ResDeleteResp struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
