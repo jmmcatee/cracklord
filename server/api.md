@@ -30,7 +30,7 @@ The following documentation exists to provide documentation for the RESTful API 
 - Job – An individual job within the queue that is passed to individual Resource Clients 
 
 ## Notes
-The API is hosted on the Queue at https://<HOST>/api and must be accessed over HTTPS.  As noted below, all requests must be authenticated utilizing the token provided through the login resource as described below.  In the case of GET requests, parameters will be expected within the query string.  In the case of POST requests, properties should be submitted as a JSON hash (don't forget to set Content-Type: application/json)! 
+The API is hosted on the Queue at https://<HOST>/api and must be accessed over HTTPS.  As noted below for authentication, all requests must be authenticated utilizing the token provided through the login resource as described below.  In the case of GET requests, parameters will be expected within the query string.  In the case of POST requests, properties should be submitted as a JSON hash (don't forget to set Content-Type: application/json)! 
 
 For all requests, a response code and message is provided whether it is successful or failed.  For additional information, see [[API-Status-Codes]] on the specific codes returned.  
 
@@ -54,6 +54,9 @@ The various types of objects (jobs, queues, and resources) have a set of states 
 ### Resource
 + Running - The resource is accepting jobs and processing them.
 + Paused - The resource is not accepting jobs.
+
+## Authentication
+For all API calls (except login), an authentication token must be submitted with the call.  This token will be provided as a response upon successful login.  The server will then expect the token to be provided within an HTTP header named AuthorizationToken.  
 
 # API Documentation
 ## Users / Credentials
@@ -102,7 +105,6 @@ This function allows a user to deactivate their token and log out from the syste
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 
 __Return Value__  
 
@@ -112,7 +114,7 @@ __Return Value__
 __Example Request__
 
 ```javascript
-GET /api/logout?token=fa2074ff31c20348bd6da41cd75fe3f4cd120fff6362386fb5b5dd367e08ca2f
+GET /api/logout
 ```
 
 __Example Return__  
@@ -132,7 +134,6 @@ This will return a list of all tools configured within the system that could be 
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 
 __Return Value__  
 
@@ -143,7 +144,7 @@ __Return Value__
 __Example Request__
 
 ```javascript
-GET /api/tools?token=fa2074ff31c20348bd6da41cd75fe3f4cd120fff6362386fb5b5dd367e08ca2f
+GET /api/tools
 ```
 
 __Example Return__  
@@ -154,17 +155,17 @@ __Example Return__
   "message": "OK",
   "tools": [
     {
-      "toolid":"63ee8045-966f-449e-9839-58e7e0586f3c",
+      "id":"63ee8045-966f-449e-9839-58e7e0586f3c",
       "name":"Hashcat",
       "version":"1.3.3"
     },
     {
-      "toolid":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
+      "id":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
       "name":"John the Ripper",
       "version":"1.7.9"
     },
     {
-      "toolid":"1cee8439-7f22-457c-84b8-5a8b04414090",
+      "id":"1cee8439-7f22-457c-84b8-5a8b04414090",
       "name":"John the Ripper",
       "version":"1.8.0"
     }
@@ -179,7 +180,6 @@ This will read the information about an individual tool, primarily the form that
 
 __Arguments:__  
 
-+ token: [string] - User authentication token. 
 + id: [string] - UUID of the tool
 
 __Return Value__  
@@ -193,7 +193,7 @@ __Return Value__
 __Example Request__
 
 ```javascript
-GET /api/tools/63ee8045-966f-449e-9839-58e7e0586f3c?token=fa2074ff31c20348bd6da41cd75fe3f4cd120fff6362386fb5b5dd367e08ca2f
+GET /api/tools/63ee8045-966f-449e-9839-58e7e0586f3c
 ```
 
 __Example Return__  
@@ -270,14 +270,13 @@ This will return a list of all jobs in the queue with some basic statistics abou
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 
 __Return Value__  
 
 + status: [int] - The return code for our function, see [[API-Status-Codes]].
 + message: [string] - A message based on the return code.
 + jobs: [array] - The returned value is a JSON array for all of the jobs in the queue with each item containing the following:
-  + jobid: [string] – ID of the Job
+  + id: [string] – ID of the Job
   + name: [string] – Name of the job
   + status: [string] - The status of the job (running, paused, stopped, none)
   + resourceid: [string]  –  Resource the job is running on
@@ -290,7 +289,7 @@ __Return Value__
 __Example Request__
 
 ```javascript
-GET /api/jobs?token=2lkj1325098ek12lg98231
+GET /api/jobs
 ```
 
 __Example Return__  
@@ -331,10 +330,9 @@ __Example Return__
 ### Create <a name="job-create"></a>
 __Resource Name:__  POST /jobs/
 
-Create a Job to be added to the Queue.  Takes three static pieces of information, the user token, tool, and name.  The remaining item is a list of form information produced from the job/create/form function.
+Create a Job to be added to the Queue.  
 
 __Arguments:__  
-+ token: [string] -  User authentication token. 
 + toolid: [string] - ID of the tool to be used
 + name: [string] - Name used to track the job
 + params: [string] - JSON of parameters from new job form
@@ -351,7 +349,6 @@ __Example Request__
 POST /api/jobs
 
 {
-  "token": "2ldljk120o89fgh31wlk12",
   "toolid":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
   "name":"Crack for ABC",
   "params":{
@@ -379,30 +376,29 @@ __Resource Name:__  GET /jobs/:id
 Get a detailed status on a specific job
 
 __Arguments:__  
-+ token: [string] -  User authentication token. 
-+ jobid: [string] – ID of the Job
++ id: [string] – ID of the Job
 
 __Return Value__  
 
 + status: [int] - The return code for our function, see [[API-Status-Codes]].
 + message: [string] - A message based on the return code.
-+ jobid: [string] - The UUID of the job.
-+ name: [string] - Name of the selected job.
-+ status: [string] - Status of the job.  Will be one of completed, running, paused, stopped, or queued
-+ resourceid: [string] - The UUID of the resource the job is running on.
-+ owner: [string] - Username of the person who started this job.
-+ starttime: [timestamp] - Timestamp of when this job was startedj
-+ cracked: [int] - How many tasks or hashes have we completed/cracked
-+ total: [int] - Total number of tasks or hashes that were originally submitted.
-+ progress: [int] - A number from 0 to 1 representing how far the job has completed.
-+ performance: [array] - An array of key value pairs, with the key as the timestamp of the data and the value being a piece of data showing over time performance of the tool
-+ performancetitle: [string] - The title to show above the graph of performance.
-+ output: [array] - An array of key/value pairs for output from the tool.  Will be different for each tool.
+  + id: [string] - The UUID of the job.
+  + name: [string] - Name of the selected job.
+  + status: [string] - Status of the job.  Will be one of completed, running, paused, stopped, or queued
+  + resourceid: [string] - The UUID of the resource the job is running on.
+  + owner: [string] - Username of the person who started this job.
+  + starttime: [timestamp] - Timestamp of when this job was startedj
+  + cracked: [int] - How many tasks or hashes have we completed/cracked
+  + total: [int] - Total number of tasks or hashes that were originally submitted.
+  + progress: [int] - A number from 0 to 1 representing how far the job has completed.
+  + performance: [array] - An array of key value pairs, with the key as the timestamp of the data and the value being a piece of data showing over time performance of the tool
+  + performancetitle: [string] - The title to show above the graph of performance.
+  + output: [array] - An array of key/value pairs for output from the tool.  Will be different for each tool.
 
 __Example Request__
 
 ```javascript
-GET /api/jobs/eeeb309a-00db-40a2-966e-504c39f853eb?token=2lkj1325098ek12lg98231
+GET /api/jobs/eeeb309a-00db-40a2-966e-504c39f853eb
 ```
 
 __Example Return__  
@@ -487,8 +483,8 @@ __Resource Name:__  PUT /jobs/:id
 Update the status of a job, pausing, resuming, or shutting it down.
 
 __Arguments:__  
-+ token: [string] -  User authentication token. 
-+ jobid: [string] – ID of the Job
+
++ id: [string] – ID of the Job
 + action: [string] - What should we change this job to?  Should be pause, stop, or resume
 
 __Return Value__  
@@ -502,7 +498,6 @@ __Example Request__
 PUT /api/jobs/72fd24ca-e529-4b38-b70d-2ad566de7e49
 
 {
-  "token": "2ldljk120o89fgh31wlk12",
   "id":"b762b17a-c324-4385-8629-a829e1bc4395",
   "name":"Beta Gecko Films",
   "status":"paused",
@@ -533,8 +528,7 @@ Delete a job from the queue.
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
-+ jobid: [string] – ID of the Job
++ id: [string] – ID of the Job
  
 __Return Value__  
 
@@ -546,9 +540,6 @@ __Example Request__
 ```javascript
 DELETE /api/jobs/72fd24ca-e529-4b38-b70d-2ad566de7e49
 
-{
-  "token": "2ldljk120o89fgh31wlk12",
-}
 ```
 
 __Example Return__  
@@ -570,7 +561,6 @@ List all resources currently configured within the Queue
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
  
 __Return Value__  
 
@@ -586,7 +576,7 @@ __Return Value__
 __Example Request__
 
 ```javascript
-GET /api/resources?token=ld91209ugfelk212lkj2
+GET /api/resources
 ```
 
 __Example Return__  
@@ -597,44 +587,50 @@ __Example Return__
   "message": "OK",
   "resources": [
     {
-      "resourceid": "2390309g1kdlk12109ge1209u13",
+      "id": "2390309g1kdlk12109ge1209u13",
       "status": "running",
       "name": "McAtee's Massive Magical Manipulator",
       "address": "192.168.1.1",
-      "tools": {
-        "63ee8045-966f-449e-9839-58e7e0586f3c": {
-          "name": "Hashcat",
-          "version": "1.3.3", 
+      "tools": [
+        {
+          "id":"63ee8045-966f-449e-9839-58e7e0586f3c",
+          "name":"Hashcat",
+          "version":"1.3.3"
         },
-        "8d660ce9-f15d-40a3-a997-a4e8867cb802": {
-          "name": "John the Ripper",
-          "version": "1.7.9", 
+        {
+          "id":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
+          "name":"John the Ripper",
+          "version":"1.7.9"
         },
-        "8d660ce9-f15d-328b-a997-39dl10d012ld": {
-          "name": "John the Ripper",
-          "version": "1.8.0", 
+        {
+          "id":"1cee8439-7f22-457c-84b8-5a8b04414090",
+          "name":"John the Ripper",
+          "version":"1.8.0"
         }
-      }
+      ]
     },
     {
-      "resourceid": "2390309g1kdlk12109ge1209u13",
+      "id": "2390309g1kdlk12109ge1209u13",
       "status": "paused",
       "name": "Lucas' Lovely Logistical Loader",
       "address": "10.0.0.1",
-      "tools": {
-        "63ee8045-966f-449e-9839-58e7e0586f3c": {
-            "name": "Hashcat",
-            "version": "1.3.3", 
+      "tools": [
+        {
+          "id":"63ee8045-966f-449e-9839-58e7e0586f3c",
+          "name":"Hashcat",
+          "version":"1.3.3"
         },
-        "8d660ce9-f15d-40a3-a997-a4e8867cb802": {
-          "name": "John the Ripper",
-          "version": "1.7.9", 
+        {
+          "id":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
+          "name":"John the Ripper",
+          "version":"1.7.9"
         },
-        "8d660ce9-f15d-328b-a997-39dl10d012ld": {
-          "name": "John the Ripper",
-          "version": "1.8.0", 
+        {
+          "id":"1cee8439-7f22-457c-84b8-5a8b04414090",
+          "name":"John the Ripper",
+          "version":"1.8.0"
         }
-      }
+      ]
     }
   ]
 }  
@@ -647,7 +643,6 @@ Connect a resource to the queue for use.  This works by providing the IP address
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 + key: [string] - Connection key configured on the resource.  Note: This is only used during initial connection, not to secure the ongoing connection.
 + name: [string] - A friendly name for the resource.
 + address: [string] - The IP address or hostname to connect to.
@@ -663,7 +658,6 @@ __Example Request__
 POST /api/resources
 
 {
-  "token":"dk239e09dk12lkjfge",
   "key":"supers3cretk3y",
   "address": "192.168.1.2",
   "name": "GPU Cracker 1",
@@ -686,26 +680,23 @@ Get all information about a resource.
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 + id: [string] – ID of the resource.
-+ name: [string] - Friendly name of the resource.
-+ address: [string] - IP address or hostname of the resource.
  
 __Return Value__  
 
 + status: [int] - The return code for our function, see [[API-Status-Codes]].
 + message: [string] - A message based on the return code.
-+ hardware: [array] - This is an array of the hardware values. These are arbitrary, but should be somewhat descriptive in their name.
-+ tools [array] - This is a map of the tools available with the tool UUID being the key.
++ resource: [object] - An object representing the data from the resource: 
+  + name: [string] - Friendly name of the resource.
+  + address: [string] - IP address or DNS name of the resource
+  + tools: [array] - An array of objects containing the tools currently configured on the resource: 
+    + 
 
 __Example Request__
 
 ```javascript
 GET /api/resources/1116814b-7c59-4b5d-87b6-fabaa5f594d1
 
-{
-  "token":"dk239e09dk12lkjfge",
-}
 ```
 
 __Example Return__  
@@ -717,21 +708,23 @@ __Example Return__
   "resource": {
     "name": "GPU Cracker 1",
     "address": "10.0.0.1",
-    "hardware": ["gpu","cpu"],
     "tools": [
-      "63ee8045-966f-449e-9839-58e7e0586f3c": {
-        "name": "Hashcat",
-        "version": "1.3.3", 
+      {
+        "id":"63ee8045-966f-449e-9839-58e7e0586f3c",
+        "name":"Hashcat",
+        "version":"1.3.3"
+      },
+      {
+        "id":"8d660ce9-f15d-40a3-a997-a4e8867cb802",
+        "name":"John the Ripper",
+        "version":"1.7.9"
+      },
+      {
+        "id":"1cee8439-7f22-457c-84b8-5a8b04414090",
+        "name":"John the Ripper",
+        "version":"1.8.0"
       }
-      "8d660ce9-f15d-40a3-a997-a4e8867cb802": {
-        "name": "John the Ripper",
-        "version": "1.7.9", 
-      }
-      "8d660ce9-f15d-328b-a997-39dl10d012ld": {
-        "name": "John the Ripper",
-        "version": "1.8.0", 
-      }
-    ]
+    ],
     "status": "running",
   }
 }  
@@ -744,7 +737,6 @@ Update the status of the resource to either shut it down or pause all jobs on it
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 + id: [string] – ID of the resource
 + status [string] - A string representing the status that is either resume, pause or shutdown.
  
@@ -759,7 +751,6 @@ __Example Request__
 PUT /api/resources/1116814b-7c59-4b5d-87b6-fabaa5f594d1
 
 {
-  "token":"dk239e09dk12lkjfge",
   "status": "paused"
 }
 ```
@@ -781,8 +772,7 @@ Completely delete a resource from our system, stopping all jobs, deleting all da
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
-+ resourceid: [string] – ID of the Job
++ id: [string] – ID of the Job
  
 __Return Value__  
 
@@ -793,11 +783,6 @@ __Example Request__
 
 ```javascript
 DELETE /api/resources/1116814b-7c59-4b5d-87b6-fabaa5f594d1
-
-{
-  "token":"dk239e09dk12lkjfge",
-}
-
 ```
 
 __Example Return__  
@@ -817,7 +802,6 @@ Take the listing of jobs within the queue and reorder the stack or pause an indi
 
 __Arguments:__  
 
-+ token: [string] -  User authentication token. 
 + joborder: [array] - An array, in order, of job IDs based on their priority in the queue.
 
 __Return Value__  
@@ -831,7 +815,6 @@ __Example Request__
 PUT /api/queue/
 
 {
-  "token": "2ldljk120o89fgh31wlk12",
   "joborder": [
     "72fd24ca-e529-4b38-b70d-2ad566de7e49",
     "786c4f68-1b7f-46e0-b5bd-75090d78b25c",
