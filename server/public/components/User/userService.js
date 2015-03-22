@@ -1,13 +1,25 @@
 cracklord.service('UserSession', function() {
 	this.create  = function(userToken, userName, userRole) {
-		this.token = userToken;
+		this.token = userToken
+		sessionStorage.setItem('usertoken', userToken);
 		this.name = userName;
+		sessionStorage.setItem('username', userName);
 		this.role = userRole;
+		sessionStorage.setItem('userrole', userRole);
 	}
 	this.destroy = function() {
-		this.token = null;
+		this.token = null
+		sessionStorage.removeItem('usertoken');
 		this.name = null;
+		sessionStorage.removeItem('username');
 		this.role = null;
+		sessionStorage.removeItem('userrole');
+	}
+	this.initCookies = function() {
+		this.token = sessionStorage.getItem('usertoken');
+		this.name = sessionStorage.getItem('username');
+		this.role = sessionStorage.getItem('userrole');
+		return this.token;
 	}
 	return this;
 });
@@ -31,11 +43,31 @@ cracklord.factory('AuthService', function($http, UserSession) {
 		return (authService.isAuthenticated() && allowedRoles.indexOf(UserSession.role) !== -1);
 	};
 
-	authService.logout = function(token) {
-		return $http.get('/api/logout?token='+token);
+	authService.logout = function() {
+		return $http.get('/api/logout?token='+UserSession.getToken());
 	};
 
 	return authService;
+});
+
+cracklord.factory('userTokenHttpInterceptor', function($q, UserSession) {
+	return {
+		request: function(req) {
+			if(req.url.startsWith('/api')) {
+				if(req.url !== '/api/login') {
+					req.headers = req.headers || {};
+					if(UserSession.token) {
+						req.headers.AuthorizationToken = UserSession.token;
+					}
+				}	
+			}
+			return req;
+		}
+	}
+});
+
+cracklord.config(function($httpProvider) {
+	$httpProvider.interceptors.push('userTokenHttpInterceptor');
 });
 
 cracklord.run(function($rootScope, $state, AuthService, growl) {
@@ -51,4 +83,4 @@ cracklord.run(function($rootScope, $state, AuthService, growl) {
 			}
 		}
 	})
-})
+});

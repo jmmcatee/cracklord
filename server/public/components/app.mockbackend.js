@@ -96,6 +96,7 @@ angular.module('cracklord').run(function($httpBackend, UserDataModel, JobsDataMo
         }
     });    
 
+    $httpBackend.whenGET('/api/queue').passThrough();
     $httpBackend.whenGET(/components/).passThrough();
 });
 

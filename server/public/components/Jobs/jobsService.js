@@ -18,3 +18,14 @@ cracklord.factory('JobsService', function ($resource) {
       }
    });
 });
+
+cracklord.factory('QueueService', function($http) {
+   return {
+      reorder: function(jobs) {
+          data = {};
+          data.joborder = jobs;
+          return $http.put('api/queue', data);
+      }
+   };
+});
+

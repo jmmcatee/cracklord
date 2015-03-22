@@ -9,7 +9,7 @@ cracklord.controller('UserController', function UserController($state, $scope, U
 	}
 
 	$scope.userLogout = function() {
-		AuthService.logout(UserSession.token)
+		AuthService.logout()
 			.success(function(data, status, headers, config) {
 					$scope.currentUser = null;
 					UserSession.destroy();
