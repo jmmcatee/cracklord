@@ -158,15 +158,13 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the tools list from the Queue
-	var tmap = APITools{}
 	for _, t := range a.Q.Tools() {
-		tmap[t.UUID] = APITool{Name: t.Name, Version: t.Version}
+		resp.Tools = append(resp.Tools, APITool{t.UUID, t.Name, t.Version})
 	}
 
 	// Build response
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
-	resp.Tools = tmap
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
@@ -217,7 +215,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	// We need to split the response from the tool into Form and Schema
 	var form common.ToolJSONForm
-	log.Printf("Tool Params: %+v\n", tool.Parameters)
+
 	jsonBuf := bytes.NewBuffer([]byte(tool.Parameters))
 	err := json.NewDecoder(jsonBuf).Decode(&form)
 	if err != nil {
@@ -233,10 +231,11 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	// We found the tools so return it in the resp structure
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
-	resp.Name = tool.Name
-	resp.Version = tool.Version
-	resp.Form = &form.Form
-	resp.Schema = &form.Schema
+	resp.Tool.ID = tool.UUID
+	resp.Tool.Name = tool.Name
+	resp.Tool.Version = tool.Version
+	resp.Tool.Form = &form.Form
+	resp.Tool.Schema = &form.Schema
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
@@ -266,14 +265,16 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 	for _, j := range a.Q.AllJobs() {
 		var job APIJob
 
-		job.JobID = j.UUID
+		job.ID = j.UUID
 		job.Name = j.Name
-		job.JobStatus = j.Status
+		job.Status = j.Status
+		job.ResourceID = j.ResAssigned
 		job.Owner = j.Owner
 		job.StartTime = j.StartTime
 		job.CrackedHashes = j.CrackedHashes
 		job.TotalHashes = j.TotalHashes
-		job.Percentage = j.Percentage
+		job.Progress = j.Progress
+		job.ToolID = j.ToolUUID
 
 		resp.Jobs = append(resp.Jobs, job)
 	}
@@ -335,6 +336,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 
 	err = a.Q.AddJob(job)
 	if err != nil {
+		log.Println(err.Error())
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = RESP_CODE_BADREQ_T
 
@@ -381,17 +383,21 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	// Build the response structure
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
-	resp.JobID = job.UUID
-	resp.Name = job.Name
-	resp.JobStatus = job.Status
-	resp.Owner = job.Owner
-	resp.StartTime = job.StartTime
-	resp.CrackedHashes = job.CrackedHashes
-	resp.TotalHashes = job.TotalHashes
-	resp.Percentage = job.Percentage
-	resp.Performance = job.Performance
-	resp.PerformanceTitle = job.PerformanceTitle
-	resp.Output = job.Output
+	resp.Job.ID = job.UUID
+	resp.Job.Name = job.Name
+	resp.Job.Status = job.Status
+	resp.Job.ResourceID = job.ResAssigned
+	resp.Job.Owner = job.Owner
+	resp.Job.StartTime = job.StartTime
+	resp.Job.CrackedHashes = job.CrackedHashes
+	resp.Job.TotalHashes = job.TotalHashes
+	resp.Job.Progress = job.Progress
+	resp.Job.Params = job.Parameters
+	resp.Job.ToolID = job.ToolUUID
+	resp.Job.PerformanceTitle = job.PerformanceTitle
+	resp.Job.PerformanceData = job.PerformanceData
+	resp.Job.OutputTitles = job.OutputTitles
+	resp.Job.OutputData = job.OutputData
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
@@ -475,14 +481,16 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
-	resp.Job.JobID = j.UUID
+	resp.Job.ID = j.UUID
 	resp.Job.Name = j.Name
-	resp.Job.JobStatus = j.Status
+	resp.Job.Status = j.Status
+	resp.Job.ResourceID = j.ResAssigned
 	resp.Job.Owner = j.Owner
 	resp.Job.StartTime = j.StartTime
 	resp.Job.CrackedHashes = j.CrackedHashes
 	resp.Job.TotalHashes = j.TotalHashes
-	resp.Job.Percentage = j.Percentage
+	resp.Job.Progress = j.Progress
+	resp.Job.ToolID = j.ToolUUID
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
@@ -583,9 +591,8 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		}
 		apires.Address = r.Address
 
-		apires.Tools = map[string]APITool{}
 		for _, t := range r.Tools {
-			apires.Tools[t.UUID] = APITool{t.Name, t.Version}
+			apires.Tools = append(apires.Tools, APITool{t.UUID, t.Name, t.Version})
 		}
 
 		resp.Resources = append(resp.Resources, apires)
@@ -720,9 +727,8 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 				resp.Resource.Status = "running"
 			}
 
-			resp.Resource.Tools = map[string]APITool{}
 			for _, t := range r.Tools {
-				resp.Resource.Tools[t.UUID] = APITool{t.Name, t.Version}
+				resp.Resource.Tools = append(resp.Resource.Tools, APITool{t.UUID, t.Name, t.Version})
 			}
 		}
 	}

@@ -89,8 +89,11 @@ func (q *Queue) ResourceHardware(rpc common.RPCCall, hw *map[string]bool) error 
 }
 
 func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
+	log.Printf("JobAdded: %+v\n\n", rpc.Job)
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
+		log.Printf("\nToken:%s\nReq:%+v\n\n", q.authToken, rpc)
 		return errors.New(ERROR_AUTH)
 	}
 

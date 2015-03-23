@@ -84,6 +84,8 @@ func (q *Queue) AddJob(j common.Job) error {
 					Job:  j,
 				}
 
+				log.Printf("%+v\n", addJob)
+
 				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &j)
 				if err != nil {
 					return err

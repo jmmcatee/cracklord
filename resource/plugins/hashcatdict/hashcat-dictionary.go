@@ -244,7 +244,6 @@ func (h *hashcatDictTooler) Parameters() string {
 	params := `
 {
 "form": [
-  "name",
   "algorithm",
   "dictionaries",
   "rules",
@@ -301,7 +300,7 @@ func (h *hashcatDictTooler) Parameters() string {
       ]
     },
     "rules": {
-      "title": "Select dictionary to use",
+      "title": "Select rule file to use",
       "type": "string",
       "enum": [`
 

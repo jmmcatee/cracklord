@@ -70,14 +70,14 @@ type SimpleTimer struct {
 
 func (t *SimpleTimer) Status() common.Job {
 	if t.j.Status == common.STATUS_PAUSED {
-		t.j.Output["TimeLeft"] = strconv.Itoa(int(t.r))
+		t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.r))
 	}
 
 	if t.j.Status == common.STATUS_RUNNING {
 		if t.r == 0 {
-			t.j.Output["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s)))
+			t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s)))
 		} else {
-			t.j.Output["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s) - t.r))
+			t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s) - t.r))
 		}
 
 	}

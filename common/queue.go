@@ -20,7 +20,7 @@ type Queue interface {
 	Quit() []Job
 	StackReorder(uuids []string) []error
 
-	AddResource(addr string, auth string) error
+	AddResource(addr, name, auth string) error
 	GetResources() []Resource
 	PauseResource(resUUID string) error
 	ResumeResource(resUUID string) error

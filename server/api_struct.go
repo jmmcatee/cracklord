@@ -27,39 +27,63 @@ type LogoutResp struct {
 
 // Tool API structure
 type APITool struct {
+	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
-type APITools map[string]APITool
-
-// Tools List Response Structure
-type ToolsResp struct {
-	Status  int      `json:"status"`
-	Message string   `json:"message"`
-	Tools   APITools `json:"tools"`
-}
-
-// Get Tools structures
-type ToolsGetResp struct {
-	Status  int              `json:"status"`
-	Message string           `json:"message"`
+type APIToolDetail struct {
+	ID      string           `json:"id"`
 	Name    string           `json:"name"`
 	Version string           `json:"version"`
 	Form    *json.RawMessage `json:"form"`
 	Schema  *json.RawMessage `json:"schema"`
 }
 
+// Tools List Response Structure
+type ToolsResp struct {
+	Status  int       `json:"status"`
+	Message string    `json:"message"`
+	Tools   []APITool `json:"tools"`
+}
+
+// Get Tools structures
+type ToolsGetResp struct {
+	Status  int           `json:"status"`
+	Message string        `json:"message"`
+	Tool    APIToolDetail `json:"tool"`
+}
+
 // API Jobs structure
 type APIJob struct {
-	JobID         string    `json:"jobid"`
+	ID            string    `json:"id"`
 	Name          string    `json:"name"`
-	JobStatus     string    `json:"jobstatus"`
+	Status        string    `json:"status"`
+	ResourceID    string    `json:"resourceid"`
 	Owner         string    `json:"owner"`
 	StartTime     time.Time `json:"starttime"`
 	CrackedHashes int64     `json:"crackedhashes"`
 	TotalHashes   int64     `json:"totalhashes"`
-	Percentage    int       `json:"percentage"`
+	Progress      int       `json:"progress"`
+	ToolID        string    `json:"toolid"`
+}
+
+type APIJobDetail struct {
+	ID               string            `json:"id"`
+	Name             string            `json:"name"`
+	Status           string            `json:"status"`
+	ResourceID       string            `json:"resourceid"`
+	Owner            string            `json:"owner"`
+	StartTime        time.Time         `json:"starttime"`
+	CrackedHashes    int64             `json:"crackedhashes"`
+	TotalHashes      int64             `json:"totalhashes"`
+	Progress         int               `json:"progress"`
+	Params           map[string]string `json:"params"`
+	ToolID           string            `json:"toolid"`
+	PerformanceTitle string            `json:"performancetitle"`
+	PerformanceData  map[string]string `json:"performancedata"`
+	OutputTitles     []string          `json:"outputtitles"`
+	OutputData       map[string]string `json:"outputdata"`
 }
 
 // Get Jobs structure
@@ -85,12 +109,9 @@ type JobCreateResp struct {
 
 // Read Job resposne
 type JobReadResp struct {
-	Status           int               `json:"status"`
-	Message          string            `json:"message"`
-	Performance      map[string]string `json:"performance"`
-	PerformanceTitle string            `json:"performancetitle"`
-	Output           map[string]string `json:"output"`
-	APIJob
+	Status  int          `json:"status"`
+	Message string       `json:"message"`
+	Job     APIJobDetail `json:"job"`
 }
 
 // Update Job Request
@@ -113,11 +134,11 @@ type JobDeleteResp struct {
 
 // Resource API structure
 type APIResource struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Address string   `json:"address"`
-	Status  string   `json:"status"`
-	Tools   APITools `json:"tools"`
+	ID      string    `json:"id"`
+	Name    string    `json:"name"`
+	Address string    `json:"address"`
+	Status  string    `json:"status"`
+	Tools   []APITool `json:"tools"`
 }
 
 // List resource structs

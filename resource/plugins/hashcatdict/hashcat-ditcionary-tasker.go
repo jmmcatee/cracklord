@@ -5,11 +5,13 @@ import (
 	"errors"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
+	"strings"
 	"time"
 )
 
@@ -60,6 +62,7 @@ func init() {
 
 type hascatTasker struct {
 	job        common.Job
+	wd         string
 	cmd        exec.Cmd
 	start      []string
 	resume     []string
@@ -77,8 +80,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h.job = j
 
 	// Build a working directory for this job
-	wd := filepath.Join(config.WorkDir, h.job.UUID)
-	err := os.Mkdir(wd, 700)
+	h.wd = filepath.Join(config.WorkDir, h.job.UUID)
+	err := os.Mkdir(h.wd, 700)
 	if err != nil {
 		// Couldn't make a directory so kill the job
 		return &hascatTasker{}, errors.New("Could not create a working directory.")
@@ -93,7 +96,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		return &hascatTasker{}, errors.New("Could not find the algorithm provided.")
 	}
 
-	args = append(args, "-m "+htype)
+	args = append(args, "-m", htype)
 
 	// Add the rule file to use if one was given
 	ruleKey, ok := h.job.Parameters["rules"]
@@ -102,16 +105,18 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		if ruleKey != "" {
 			rulePath, ok := config.Rules[ruleKey]
 			if ok {
-				args = append(args, "-r "+rulePath)
+				args = append(args, "-r", rulePath)
 			}
 		}
 	}
 
+	args = append(args, "--force")
+
 	// Add an output file
-	args = append(args, "-o "+filepath.Join(config.WorkDir, "hashes-output.txt"))
+	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt"))
 
 	// Take the hashes given and create a file
-	hashFile, err := os.Create(filepath.Join(config.WorkDir, "hashes.txt"))
+	hashFile, err := os.Create(filepath.Join(h.wd, "hashes.txt"))
 	if err != nil {
 		return &hascatTasker{}, err
 	}
@@ -119,7 +124,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	hashFile.WriteString(h.job.Parameters["hashes"])
 
 	// Append that file to the arguments
-	args = append(args, filepath.Join(config.WorkDir, "hashes.txt"))
+	args = append(args, filepath.Join(h.wd, "hashes.txt"))
 
 	// Check for dictionary given
 	dictKey, ok := h.job.Parameters["dictionaries"]
@@ -135,6 +140,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Add dictionary to arguments
 	args = append(args, dictPath)
 
+	log.Printf("Arguments: %v\n", args)
+
 	// Get everything except the session identifier because the Resume command will be different
 	h.start = append(h.start, "--session="+h.job.UUID)
 	h.resume = append(h.resume, "--session="+h.job.UUID)
@@ -142,6 +149,10 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 
 	h.start = append(h.start, args...)
 	h.resume = append(h.resume, args...)
+
+	// Configure the return values
+	h.job.PerformanceTitle = "MH/sec"
+	h.job.OutputTitles = []string{"Hash", "Plaintext"}
 
 	return &h, nil
 }
@@ -158,87 +169,83 @@ func (v *hascatTasker) Status() common.Job {
 	status := v.stdout.String()
 
 	statFound := regStatus.FindAllString(status, -1)
-	if len(statFound) != 0 {
-		v.job.Output["Status"] = statFound[len(statFound)-1]
-	}
+	log.Println(statFound)
+	// if len(statFound) != 0 {
+	// 	v.job.Output["Status"] = statFound[len(statFound)-1]
+	// }
 
 	progFound := regProgress.FindAllString(status, -1)
-	if len(progFound) != 0 {
-		v.job.Output["Progress"] = progFound[len(progFound)-1]
-	}
+	log.Println(progFound)
 
 	progRecovered := regRecovered.FindAllString(status, -1)
-	if len(progRecovered) != 0 {
-		v.job.Output["Recovered"] = progRecovered[len(progRecovered)-1]
-	}
+	log.Println(progRecovered)
 
-	v.job.CrackedHashes, err = strconv.ParseInt(regGetNumerator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
-	if err != nil {
-		v.job.Output["Errors"] += ";" + err.Error()
-	}
+	// v.job.CrackedHashes, err = strconv.ParseInt(regGetNumerator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
+	// if err != nil {
+	// 	v.job.Output["Errors"] += ";" + err.Error()
+	// }
 
-	v.job.TotalHashes, err = strconv.ParseInt(regGetDenominator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
-	if err != nil {
-		v.job.Output["Errors"] += ";" + err.Error()
-	}
+	// v.job.TotalHashes, err = strconv.ParseInt(regGetDenominator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
+	// if err != nil {
+	// 	v.job.Output["Errors"] += ";" + err.Error()
+	// }
 
 	progRejected := regRejected.FindAllString(status, -1)
-	if len(progRejected) != 0 {
-		v.job.Output["Rejected"] = progRejected[len(progRejected)-1]
-	}
+	log.Println(progRejected)
 
 	progHashTarget := regHashTarget.FindAllString(status, -1)
-	if len(progHashTarget) != 0 {
-		v.job.Output["HashTarget"] = progHashTarget[len(progHashTarget)-1]
-	}
+	log.Println(progHashTarget)
 
 	progHashType := regHashType.FindAllString(status, -1)
-	if len(progHashType) != 0 {
-		v.job.Output["HashType"] = progHashType[len(progHashType)-1]
-	}
+	log.Println(progHashType)
 
 	progInputMode := regInputMode.FindAllString(status, -1)
-	if len(progInputMode) != 0 {
-		v.job.Output["InputMode"] = progInputMode[len(progInputMode)-1]
-	}
+	log.Println(progInputMode)
 
 	progRuleType := regRuleType.FindAllString(status, -1)
-	if len(progRuleType) != 0 {
-		v.job.Output["RuleType"] = progRuleType[len(progRuleType)-1]
-	}
+	log.Println(progRuleType)
 
 	progTimeEst := regTimeEstimated.FindAllString(status, -1)
-	if len(progTimeEst) != 0 {
-		v.job.Output["TimeEstimate"] = progTimeEst[len(progTimeEst)-1]
-	}
+	log.Println(progTimeEst)
 
 	progTimeStart := regTimeStarted.FindAllString(status, -1)
-	if len(progTimeStart) != 0 {
-		v.job.Output["TimeStarted"] = progTimeStart[len(progTimeStart)-1]
-	}
+	log.Println(progTimeStart)
 
-	progGPUHWMon := regGPUHWMon.FindAllString(status, -1)
-	if len(progGPUHWMon) != 0 {
-		numGPUs := regGetGPUCount.FindString(progGPUHWMon[len(progGPUHWMon)-1])
-		numGPUsInt, err := strconv.Atoi(numGPUs)
-		if err == nil {
-			for i := numGPUsInt; i > 0; i-- {
-				s := strconv.Itoa(i)
-				x := numGPUsInt - 1
-				v.job.Output["HWMon.GPU.#"+s] = progGPUHWMon[len(progGPUHWMon)-(x-i)]
-			}
-		}
-	}
+	// progGPUHWMon := regGPUHWMon.FindAllString(status, -1)
+	// if len(progGPUHWMon) != 0 {
+	// 	numGPUs := regGetGPUCount.FindString(progGPUHWMon[len(progGPUHWMon)-1])
+	// 	numGPUsInt, err := strconv.Atoi(numGPUs)
+	// 	if err == nil {
+	// 		for i := numGPUsInt; i > 0; i-- {
+	// 			s := strconv.Itoa(i)
+	// 			x := numGPUsInt - 1
+	// 			v.job.Output["HWMon.GPU.#"+s] = progGPUHWMon[len(progGPUHWMon)-(x-i)]
+	// 		}
+	// 	}
+	// }
 
-	progGPUSpeed := regGPUSpeed.FindAllString(status, -1)
-	if len(progGPUSpeed) != 0 {
-		numGPUs := regGetGPUCount.FindString(progGPUSpeed[len(progGPUSpeed)-1])
-		numGPUsInt, err := strconv.Atoi(numGPUs)
-		if err == nil {
-			for i := numGPUsInt; i > 0; i-- {
-				s := strconv.Itoa(i)
-				x := numGPUsInt - 1
-				v.job.Output["HWMon.GPU.#"+s] = progGPUSpeed[len(progGPUSpeed)-(x-i)]
+	// progGPUSpeed := regGPUSpeed.FindAllString(status, -1)
+	// if len(progGPUSpeed) != 0 {
+	// 	numGPUs := regGetGPUCount.FindString(progGPUSpeed[len(progGPUSpeed)-1])
+	// 	numGPUsInt, err := strconv.Atoi(numGPUs)
+	// 	if err == nil {
+	// 		for i := numGPUsInt; i > 0; i-- {
+	// 			s := strconv.Itoa(i)
+	// 			x := numGPUsInt - 1
+	// 			v.job.Output["HWMon.GPU.#"+s] = progGPUSpeed[len(progGPUSpeed)-(x-i)]
+	// 		}
+	// 	}
+	// }
+
+	// Get the output results
+	file, err := ioutil.ReadFile(filepath.Join(v.wd, "hashes-output.txt"))
+	if err != nil {
+		log.Println(err.Error())
+	} else {
+		content := strings.Split(string(file), ":")
+		if len(content) > 1 {
+			for _, s := range content[1:] {
+				v.job.OutputData[content[0]] += s
 			}
 		}
 	}
@@ -253,10 +260,29 @@ func (v *hascatTasker) Status() common.Job {
 
 	// Run finished script
 	if done {
+		v.job.Status = common.STATUS_DONE
+
+		// wait for file to finish writing possible
+		<-time.After(10 * time.Millisecond)
+		file, err := ioutil.ReadFile(filepath.Join(v.wd, "hashes-output.txt"))
+		log.Println(string(file))
+		if err != nil {
+			log.Println(err.Error())
+		} else {
+			content := strings.Split(string(file), ":")
+			if len(content) > 1 {
+				for _, s := range content[1:] {
+					v.job.OutputData[content[0]] += s
+				}
+			}
+		}
+
 		return v.job
 	}
 
-	return common.Job{}
+	log.Printf("Job: %+v\n", v.job)
+
+	return v.job
 }
 
 func (v *hascatTasker) Run() error {
@@ -302,8 +328,11 @@ func (v *hascatTasker) Run() error {
 		v.cmd = *exec.Command(config.BinPath, v.resume...)
 	}
 
+	v.cmd.Dir = v.wd
+
 	// Start the command
 	err = v.cmd.Start()
+	v.job.StartTime = time.Now()
 	if err != nil {
 		// We had an error starting to return that and quit the job
 		v.job.Status = common.STATUS_FAILED
