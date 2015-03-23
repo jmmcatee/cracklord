@@ -44,7 +44,7 @@ cracklord.factory('AuthService', function($http, UserSession) {
 	};
 
 	authService.logout = function() {
-		return $http.get('/api/logout?token='+UserSession.getToken());
+		return $http.get('/api/logout');
 	};
 
 	return authService;

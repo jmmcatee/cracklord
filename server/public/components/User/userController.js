@@ -13,9 +13,10 @@ cracklord.controller('UserController', function UserController($state, $scope, U
 			.success(function(data, status, headers, config) {
 					$scope.currentUser = null;
 					UserSession.destroy();
-//					$state.go('login');
+					$state.go('login');
 			})
 			.error(function (data, status, headers, config) {
+				growl.error('An error occured while trying to log you out.');
 			});
 	}
 });
