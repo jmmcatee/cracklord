@@ -30,3 +30,4 @@ _testmain.go
 server/cracklord.ini
 *.sublime-project
 sublimetext.sublime-workspace
+*.ini

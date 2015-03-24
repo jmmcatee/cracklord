@@ -50,7 +50,7 @@ cracklord.factory('AuthService', function($http, UserSession) {
 	return authService;
 });
 
-cracklord.factory('userTokenHttpInterceptor', function($q, UserSession) {
+cracklord.factory('userTokenHttpInterceptor', function($q, $state, UserSession) {
 	return {
 		request: function(req) {
 			if(req.url.startsWith('/api')) {
@@ -62,6 +62,13 @@ cracklord.factory('userTokenHttpInterceptor', function($q, UserSession) {
 				}	
 			}
 			return req;
+		},
+		responseError: function(response) {
+			if(response.status === 401) {
+				$state.go('login');
+				growl.warning("You need to login first.");
+			}
+			return $q.reject(response);
 		}
 	}
 });
