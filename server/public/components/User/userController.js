@@ -1,4 +1,4 @@
-cracklord.controller('UserController', function UserController($state, $scope, USER_ROLES, AuthService, UserSession) {
+cracklord.controller('UserController', ['$state', '$scope', 'USER_ROLES', 'AuthService', 'UserSession', function UserController($state, $scope, USER_ROLES, AuthService, UserSession) {
 	$scope.user = {}
 	$scope.user.current = null;
 	$scope.user.allroles = USER_ROLES;
@@ -19,9 +19,9 @@ cracklord.controller('UserController', function UserController($state, $scope, U
 				growl.error('An error occured while trying to log you out.');
 			});
 	}
-});
+}]);
 
-cracklord.controller('LoginFormController', function LoginFormController($state, $scope, AuthService, growl, UserSession) {
+cracklord.controller('LoginFormController', ['$state', '$scope', 'AuthService', 'growl', 'UserSession', function LoginFormController($state, $scope, AuthService, growl, UserSession) {
 	$scope.login = {};
 	$scope.login.failed = false;
 
@@ -42,5 +42,5 @@ cracklord.controller('LoginFormController', function LoginFormController($state,
 				growl.error("Login failed.");
 			});
 	};
-});
+}]);
 

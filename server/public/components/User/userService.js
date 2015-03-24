@@ -24,7 +24,7 @@ cracklord.service('UserSession', function() {
 	return this;
 });
 
-cracklord.factory('AuthService', function($http, UserSession) {
+cracklord.factory('AuthService', ['$http', 'UserSession', function($http, UserSession) {
 	var authService = {};
 
 	authService.login = function(creds) {
@@ -48,9 +48,9 @@ cracklord.factory('AuthService', function($http, UserSession) {
 	};
 
 	return authService;
-});
+}]);
 
-cracklord.factory('userTokenHttpInterceptor', function($q, UserSession, $injector) {
+cracklord.factory('userTokenHttpInterceptor', ['$q', 'UserSession', '$injector', 'growl', function($q, UserSession, $injector, growl) {
 	return {
 		request: function(req) {
 			if(req.url.startsWith('/api')) {
@@ -71,13 +71,13 @@ cracklord.factory('userTokenHttpInterceptor', function($q, UserSession, $injecto
 			return $q.reject(res);
 		}
 	}
-});
+}]);
 
-cracklord.config(function($httpProvider) {
+cracklord.config(['$httpProvider', function($httpProvider) {
 	$httpProvider.interceptors.push('userTokenHttpInterceptor');
-});
+}]);
 
-cracklord.run(function($rootScope, $state, AuthService, growl) {
+cracklord.run(['$rootScope', '$state', 'AuthService', 'growl', function($rootScope, $state, AuthService, growl) {
 	$rootScope.$on('$stateChangeStart', function(event, next) {
 		if(next.data.authorizedRoles.length) {
 			if(!AuthService.isAuthorized(next.data.authorizedRoles)) {
@@ -90,4 +90,4 @@ cracklord.run(function($rootScope, $state, AuthService, growl) {
 			}
 		}
 	})
-});
+}]);
