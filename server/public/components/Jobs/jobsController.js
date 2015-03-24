@@ -1,4 +1,4 @@
-cracklord.controller('JobsController', function JobsController($scope, JobsService, growl) {
+cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', function JobsController($scope, JobsService, growl) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);
 	$scope.jobactions = {};
@@ -45,9 +45,9 @@ cracklord.controller('JobsController', function JobsController($scope, JobsServi
 		$scope.jobs = jobs;
 	}
 	$scope.loadJobs();
-});
+}]);
 
-cracklord.directive('jobDetail', function jobDetail(JobsService, growl) {
+cracklord.directive('jobDetail', ['JobsService', 'growl', function jobDetail(JobsService, growl) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
@@ -115,9 +115,9 @@ cracklord.directive('jobDetail', function jobDetail(JobsService, growl) {
 			});
 		},
 	}
-});
+}]);
 
-cracklord.controller('CreateJobController', function CreateJobController($scope, $state, ToolsService, JobsService, growl) {
+cracklord.controller('CreateJobController', ['$scope', '$state', 'ToolsService', 'JobsService', 'growl', function CreateJobController($scope, $state, ToolsService, JobsService, growl) {
 	$scope.formData = {};
 	$scope.formData.params = {};
 
@@ -156,4 +156,4 @@ cracklord.controller('CreateJobController', function CreateJobController($scope,
 			}
 		);
 	}	
-});
+}]);

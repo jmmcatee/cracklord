@@ -1,4 +1,4 @@
-cracklord.factory('ResourceService', function ($resource) {
+cracklord.factory('ResourceService', ['$resource', function ($resource) {
    return $resource('/api/resources/:id', {id: '@id'}, {
    	query: {
    		isArray: true,
@@ -17,4 +17,4 @@ cracklord.factory('ResourceService', function ($resource) {
          }
       }
    });
-});
+}]);

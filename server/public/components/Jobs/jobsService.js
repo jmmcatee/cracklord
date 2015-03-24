@@ -1,4 +1,4 @@
-cracklord.factory('JobsService', function ($resource) {
+cracklord.factory('JobsService', ['$resource', function ($resource) {
    return $resource('/api/jobs/:id', {id: '@id'}, {
    	query: {
    		isArray: true,
@@ -17,9 +17,9 @@ cracklord.factory('JobsService', function ($resource) {
          }
       }
    });
-});
+}]);
 
-cracklord.factory('QueueService', function($http) {
+cracklord.factory('QueueService', ['$http', function($http) {
    return {
       reorder: function(jobs) {
           data = {};
@@ -27,5 +27,5 @@ cracklord.factory('QueueService', function($http) {
           return $http.put('api/queue', data);
       }
    };
-});
+}]);
 

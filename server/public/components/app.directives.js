@@ -31,7 +31,7 @@ cracklord.directive("confirmPopover", function() {
     };
 });
 
-cracklord.directive('playbutton', function splaybutton(growl, AuthService, USER_ROLES) {
+cracklord.directive('playbutton', ['growl', 'AuthService', 'USER_ROLES', function splaybutton(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E',
         replace: true,
@@ -84,9 +84,9 @@ cracklord.directive('playbutton', function splaybutton(growl, AuthService, USER_
             }
         }
     };
-});
+}]);
 
-cracklord.directive('stopbutton', function stopbutton(growl, AuthService, USER_ROLES) {
+cracklord.directive('stopbutton', ['growl', 'AuthService', 'USER_ROLES', function stopbutton(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E', 
         replace: true,
@@ -114,9 +114,9 @@ cracklord.directive('stopbutton', function stopbutton(growl, AuthService, USER_R
             }
         }
     };
-});
+}]);
 
-cracklord.directive('trashbutton', function trashbutton(growl, AuthService, USER_ROLES) {
+cracklord.directive('trashbutton', ['growl', 'AuthService', 'USER_ROLES', function trashbutton(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E',
         replace: true,
@@ -150,9 +150,9 @@ cracklord.directive('trashbutton', function trashbutton(growl, AuthService, USER
             }   
         }
     };
-});
+}]);
 
-cracklord.directive('reloadbutton', function jobsReloadButton(growl) {
+cracklord.directive('reloadbutton', ['growl', function jobsReloadButton(growl) {
     return {
         restrict: 'E',
         scope: {
@@ -166,9 +166,9 @@ cracklord.directive('reloadbutton', function jobsReloadButton(growl) {
             });
         }   
     }
-});
+}]);
 
-cracklord.directive('draghandle', function draghandle(growl, AuthService, USER_ROLES) {
+cracklord.directive('draghandle', ['growl', 'AuthService', 'USER_ROLES', function draghandle(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E',
         replace: true,
@@ -179,7 +179,7 @@ cracklord.directive('draghandle', function draghandle(growl, AuthService, USER_R
             }   
         }
     };
-});
+}]);
 
 
 cracklord.directive('rcSubmit', ['$parse', function ($parse) {

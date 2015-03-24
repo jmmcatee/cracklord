@@ -1,4 +1,4 @@
-cracklord.config(function($stateProvider, $urlRouterProvider, USER_ROLES) {
+cracklord.config(['$stateProvider', '$urlRouterProvider', 'USER_ROLES', function($stateProvider, $urlRouterProvider, USER_ROLES) {
 	$urlRouterProvider.otherwise('/jobs');
 	$stateProvider
 		.state('jobs', {
@@ -51,4 +51,4 @@ cracklord.config(function($stateProvider, $urlRouterProvider, USER_ROLES) {
 				authorizedRoles: []
 			}
 		});
-});
+}]);

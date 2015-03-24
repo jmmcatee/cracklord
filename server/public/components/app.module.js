@@ -42,9 +42,6 @@ cracklord.config(["$httpProvider", function($httpProvider) {
    });
 }]);
 
-
-
-
 cracklord.constant('USER_ROLES', {
 	admin: 'Administrator',
 	standard: 'Standard User',

@@ -1,4 +1,4 @@
-cracklord.controller('ResourcesController', function ResourcesController($scope, ResourceService, growl) {
+cracklord.controller('ResourcesController', ['$scope', 'ResourceService', 'growl', function ResourcesController($scope, ResourceService, growl) {
 	$scope.loadServers = function() {
 		var servers = ResourceService.query(
 			function(data) {
@@ -16,9 +16,9 @@ cracklord.controller('ResourcesController', function ResourcesController($scope,
 		$scope.resources = servers;
 	}
 	$scope.loadServers();
-});
+}]);
 
-cracklord.controller('ConnectResourceController', function CreateJobController($scope, $state, ResourceService, growl) {
+cracklord.controller('ConnectResourceController', ['$scope', '$state', 'ResourceService', 'growl', function CreateJobController($scope, $state, ResourceService, growl) {
 	$scope.formData = {};
 
 	$scope.processResourceConnectForm = function() {
@@ -43,4 +43,4 @@ cracklord.controller('ConnectResourceController', function CreateJobController($
 			}
 		);
 	}	
-});
+}]);

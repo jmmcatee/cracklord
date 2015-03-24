@@ -1,4 +1,4 @@
-cracklord.controller('ToolsController', function ToolsController($scope, ToolsService) {
+cracklord.controller('ToolsController', ['$scope', 'ToolsService', function ToolsController($scope, ToolsService) {
 	this.loadTools = function() {
 		var tools = ToolsService.query(
 			//Our success handler
@@ -23,4 +23,4 @@ cracklord.controller('ToolsController', function ToolsController($scope, ToolsSe
 	};
 
 	this.loadTools();
-});
+}]);
