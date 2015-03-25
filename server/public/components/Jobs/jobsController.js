@@ -29,7 +29,6 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', functi
 				for(var i = 0; i < $scope.jobs.length; i++) {
 					$scope.jobs[i].expanded = false;
 				}
-				growl.success("Jobs successfully loaded.");
 			},
 			//Our error handler
 			function(error) {

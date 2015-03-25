@@ -2,7 +2,6 @@ cracklord.controller('ResourcesController', ['$scope', 'ResourceService', 'growl
 	$scope.loadServers = function() {
 		var servers = ResourceService.query(
 			function(data) {
-				growl.success("Resources successfully loaded.");
 			}, 
 			function(error) {
 				switch (error.status) {
