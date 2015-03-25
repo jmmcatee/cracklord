@@ -6,6 +6,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"log"
 	"net/rpc"
+	"strings"
 	"sync"
 	"time"
 )
@@ -632,6 +633,13 @@ func (q *Queue) Tools() map[string]common.Tool {
 func (q *Queue) AddResource(addr, name, auth string) error {
 	// Create empty resource
 	res := NewResource()
+
+	//Check to see if we have a port, otherwise use the default 9443
+	if !strings.Contains(addr, ":") {
+		addr += ":9443"
+	}
+
+	log.Printf("Connecting to resource %s\n", addr)
 
 	// Build the RPC client for the resource
 	var err error
