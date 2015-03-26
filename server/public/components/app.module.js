@@ -35,9 +35,24 @@ function convertDateStringsToDates(input) {
       }
    }
 }
+function sortEnumInJSON(input) {
+   for(var key in input) {
+      if(!input.hasOwnProperty(key)) continue;
+
+      var value = input[key];
+      var type = Object.prototype.toString.call(value);
+      if((key === 'enum') && (type === '[object Array]')) {
+         value.sort();
+      } else if (typeof value === "object") {
+         sortEnumInJSON(value);
+      }
+   }
+}
+
 cracklord.config(["$httpProvider", function($httpProvider) {
    $httpProvider.defaults.transformResponse.push(function(resData) {
       convertDateStringsToDates(resData);
+      sortEnumInJSON(resData);
       return resData;
    });
 }]);
