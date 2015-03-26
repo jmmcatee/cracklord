@@ -451,7 +451,7 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 	jobid := mux.Vars(r)["id"]
 
 	// Get the action requested
-	switch req.Action {
+	switch req.Status {
 	case "pause":
 		// Pause the job
 		err = a.Q.PauseJob(jobid)
@@ -463,7 +463,7 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 			respJSON.Encode(resp)
 			return
 		}
-	case "stop":
+	case "quit":
 		// Stop the job
 		err = a.Q.QuitJob(jobid)
 		if err != nil {

@@ -11,7 +11,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -110,7 +112,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		}
 	}
 
-	args = append(args, "--force")
+	args = append(args, "--status", "--status-timer=10", "--force")
 
 	// Add an output file
 	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt"))
@@ -160,13 +162,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 func (v *hascatTasker) Status() common.Job {
 	var err error
 
-	// Update job internals
-	io.WriteString(v.stdinPipe, "s")
-
-	// Wait a few microseconds
-	<-time.After(10 * time.Microsecond)
-
 	status := v.stdout.String()
+	log.Printf("\nStatus:\n%s\n", status)
 
 	statFound := regStatus.FindAllString(status, -1)
 	log.Println(statFound)
@@ -307,8 +304,8 @@ func (v *hascatTasker) Run() error {
 		return err
 	}
 
-	v.stderr = bytes.NewBuffer([]byte{})
-	v.stdout = bytes.NewBuffer([]byte{})
+	v.stderr = bytes.NewBuffer([]byte(""))
+	v.stdout = bytes.NewBuffer([]byte(""))
 
 	go func() {
 		for {
@@ -360,9 +357,10 @@ func (v *hascatTasker) Pause() error {
 
 	// Because this is queue managed, we should just need to kill the process.
 	// It will be resumed automatically
-	_, err := io.WriteString(v.stdinPipe, "q")
-	if err != nil {
-		return err
+	if runtime.GOOS == "windows" {
+		v.cmd.Process.Kill()
+	} else {
+		v.cmd.Process.Signal(syscall.SIGINT)
 	}
 
 	// Change status to pause
@@ -375,7 +373,11 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
-	io.WriteString(v.stdinPipe, "q")
+	if runtime.GOOS == "windows" {
+		v.cmd.Process.Kill()
+	} else {
+		v.cmd.Process.Signal(syscall.SIGINT)
+	}
 
 	v.job.Status = common.STATUS_QUIT
 

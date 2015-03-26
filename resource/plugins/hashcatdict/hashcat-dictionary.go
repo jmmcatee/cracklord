@@ -241,30 +241,28 @@ func (h *hashcatDictTooler) SetUUID(s string) {
 }
 
 func (h *hashcatDictTooler) Parameters() string {
-	params := `
-{
-"form": [
-  "algorithm",
-  "dictionaries",
-  "rules",
-  {
-    "key": "hashes",
-    "type": "textarea",
-    "placeholder": "Add in Hashcat required format"
-  }
-],
-"schema": {
-"type": "object",
-  "properties": {
-    "name": {
-      "title": "Name",
-      "type": "string"
-    },
-    "algorithm": {
-      "title": "Select hash type to attack",
-      "type": "string",
-      "enum": [
-        `
+	params := `{
+		"form": [
+		  "algorithm",
+		  "dictionaries",
+		  "rules",
+		  {
+		    "key": "hashes",
+		    "type": "textarea",
+		    "placeholder": "Add in Hashcat required format"
+		  }
+		],
+		"schema": {
+		"type": "object",
+		  "properties": {
+		    "name": {
+		      "title": "Name",
+		      "type": "string"
+		    },
+		    "algorithm": {
+		      "title": "Select hash type to attack",
+		      "type": "string",
+		      "enum": [ `
 	var first = true
 	for key, _ := range supportedHash {
 		if !first {
@@ -277,13 +275,12 @@ func (h *hashcatDictTooler) Parameters() string {
 	}
 
 	params += `
-]
-   },
-    "dictionaries": {
-      "title": "Select dictionary to use",
-      "type": "string",
-      "enum": [
-`
+		]
+	   },
+	    "dictionaries": {
+	      "title": "Select dictionary to use",
+	      "type": "string",
+	      "enum": [ `
 
 	first = true
 	for key, _ := range config.Dictionaries {
@@ -302,7 +299,7 @@ func (h *hashcatDictTooler) Parameters() string {
     "rules": {
       "title": "Select rule file to use",
       "type": "string",
-      "enum": [`
+      "enum": [ `
 
 	first = true
 	for key, _ := range config.Rules {
@@ -315,23 +312,20 @@ func (h *hashcatDictTooler) Parameters() string {
 		first = false
 	}
 
-	params += `
-      ]
-    },
-    "hashes": {
-      "title": "Hashes",
-      "type": "string"
-    }
-  },
-  "required": [
-    "name",
-    "algorithm",
-    "dictionaries",
-    "hashes"
-  ]
-}
-}
-	`
+	params += ` ]
+	    },
+	    "hashes": {
+	      "title": "Hashes",
+	      "type": "string"
+	    }
+	  },
+	  "required": [
+	    "name",
+	    "algorithm",
+	    "dictionaries",
+	    "hashes"
+	  ]
+	} } `
 
 	return params
 }

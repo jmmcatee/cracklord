@@ -116,7 +116,7 @@ type JobReadResp struct {
 
 // Update Job Request
 type JobUpdateReq struct {
-	Action string `json:"action"`
+	APIJob
 }
 
 // Update Job Response
