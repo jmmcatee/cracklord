@@ -508,7 +508,32 @@ func (q *Queue) keeper() {
 
 								s := q.stack[ji].Status
 
-								startable := s == common.STATUS_CREATED || s == common.STATUS_PAUSED
+								startable := s == common.STATUS_CREATED
+								resumable := s == common.STATUS_PAUSED
+
+								if requirement == r && resumable && ok {
+									// The job is paused so let's see if the resource that is free is the one the job needs
+									if q.stack[ji].ResAssigned == i {
+										// We have the resource the job needs so resume it
+										log.Println("Resuming a job on:" + i)
+
+										resumeJob := common.RPCCall{
+											Auth: q.pool[i].RPCCall.Auth,
+											Job:  q.stack[ji],
+										}
+
+										err := q.pool[i].Client.Call("Queue.TaskRun", resumeJob, &q.stack[ji])
+										if err != nil {
+											// We had an error resuming the job
+											log.Println("Resource Error: " + err.Error())
+										} else {
+											// No errors so mark the resource as used
+											q.pool[i].Hardware[r] = false
+											break
+										}
+									}
+								}
+
 								if requirement == r && startable && ok {
 									// Found a task that can be started and needs this resource
 									// Build the call

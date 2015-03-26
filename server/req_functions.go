@@ -670,11 +670,9 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
-	var req ResReadReq
 	var resp ResReadResp
 
 	// JSON Encoder and Decoder
-	reqJSON := json.NewDecoder(r.Body)
 	respJSON := json.NewEncoder(rw)
 
 	// Get the authorization header
@@ -696,17 +694,6 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
-		respJSON.Encode(resp)
-		return
-	}
-
-	// Decode the request
-	err := reqJSON.Decode(&req)
-	if err != nil {
-		resp.Status = RESP_CODE_BADREQ
-		resp.Message = RESP_CODE_BADREQ_T
-
-		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
 		return
 	}

@@ -161,10 +161,6 @@ type ResCreateResp struct {
 }
 
 // Read a resource struct
-type ResReadReq struct {
-	Token string `json:"token"`
-}
-
 type ResReadResp struct {
 	Status   int         `json:"status"`
 	Message  string      `json:"message"`
