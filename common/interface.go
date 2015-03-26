@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	STATUS_CREATED = "Created"
-	STATUS_RUNNING = "Running"
-	STATUS_PAUSED  = "Paused"
-	STATUS_DONE    = "Done"
-	STATUS_FAILED  = "Failed"
-	STATUS_QUIT    = "Quit"
+	STATUS_CREATED = "created"
+	STATUS_RUNNING = "running"
+	STATUS_PAUSED  = "paused"
+	STATUS_DONE    = "done"
+	STATUS_FAILED  = "failed"
+	STATUS_QUIT    = "quit"
 
 	RES_CPU = "cpu"
 	RES_GPU = "gpu"
@@ -53,7 +53,7 @@ type Job struct {
 	Parameters       map[string]string // Parameters returned to the tool
 	PerformanceData  map[string]string // Some performance status map[timestamp]perf#
 	PerformanceTitle string            // Title of the perf #
-	OutputData       map[string]string // A 2D array of rows for output values
+	OutputData       [][]string        // A 2D array of rows for output values
 	OutputTitles     []string          // The headers for the 2D array of rows above
 }
 
@@ -66,7 +66,6 @@ func NewJob(tooluuid string, name string, owner string, params map[string]string
 		Owner:           owner,
 		Parameters:      params,
 		PerformanceData: make(map[string]string),
-		OutputData:      make(map[string]string),
 	}
 }
 

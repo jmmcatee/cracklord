@@ -116,6 +116,19 @@ cracklord.directive('jobDetail', ['JobsService', 'growl', function jobDetail(Job
 	}
 }]);
 
+cracklord.filter('currentJobs', ['JOB_STATUS_RUNNING', 'JOB_STATUS_COMPLETED', function(JOB_STATUS_RUNNING, JOB_STATUS_COMPLETED) {
+	return function(items) {
+		var filtered = [];
+		for (var i = 0; i < items.length; i++) {
+			var item = angularjs.copy(items[i]);
+			if(JOB_STATUS_RUNNING.indexOf(item.status)) {
+				filtered.push(item);
+			}
+		}
+		return filtered;
+	};
+}]);
+
 cracklord.controller('CreateJobController', ['$scope', '$state', 'ToolsService', 'JobsService', 'growl', function CreateJobController($scope, $state, ToolsService, JobsService, growl) {
 	$scope.formData = {};
 	$scope.formData.params = {};

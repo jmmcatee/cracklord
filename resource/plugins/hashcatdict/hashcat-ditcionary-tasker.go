@@ -1,11 +1,11 @@
 package hashcatdict
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -235,15 +235,13 @@ func (v *hascatTasker) Status() common.Job {
 	// }
 
 	// Get the output results
-	file, err := ioutil.ReadFile(filepath.Join(v.wd, "hashes-output.txt"))
+	file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt"))
 	if err != nil {
 		log.Println(err.Error())
 	} else {
-		content := strings.Split(string(file), ":")
-		if len(content) > 1 {
-			for _, s := range content[1:] {
-				v.job.OutputData[content[0]] += s
-			}
+		linescanner := bufio.NewScanner(file)
+		for linescanner.Scan() {
+			v.job.OutputData = append(v.job.OutputData, strings.Split(linescanner.Text(), ":"))
 		}
 	}
 
@@ -258,22 +256,6 @@ func (v *hascatTasker) Status() common.Job {
 	// Run finished script
 	if done {
 		v.job.Status = common.STATUS_DONE
-
-		// wait for file to finish writing possible
-		<-time.After(10 * time.Millisecond)
-		file, err := ioutil.ReadFile(filepath.Join(v.wd, "hashes-output.txt"))
-		log.Println(string(file))
-		if err != nil {
-			log.Println(err.Error())
-		} else {
-			content := strings.Split(string(file), ":")
-			if len(content) > 1 {
-				for _, s := range content[1:] {
-					v.job.OutputData[content[0]] += s
-				}
-			}
-		}
-
 		return v.job
 	}
 

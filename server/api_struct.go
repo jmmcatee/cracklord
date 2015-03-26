@@ -83,7 +83,7 @@ type APIJobDetail struct {
 	PerformanceTitle string            `json:"performancetitle"`
 	PerformanceData  map[string]string `json:"performancedata"`
 	OutputTitles     []string          `json:"outputtitles"`
-	OutputData       map[string]string `json:"outputdata"`
+	OutputData       [][]string        `json:"outputdata"`
 }
 
 // Get Jobs structure

@@ -62,3 +62,27 @@ cracklord.constant('USER_ROLES', {
 	standard: 'Standard User',
 	read: 'Read-Only'
 });
+
+cracklord.constant('JOB_STATUS_RUNNING', {
+   running: 'running',
+   paused: 'paused',
+   created: 'created'
+});
+
+cracklord.constant('JOB_STATUS_COMPLETED', {
+   done: 'done',
+   failed: 'failed',
+   quit: 'quit'
+});
+
+cracklord.constant('QUEUE_STATUS', {
+   empty: 'empty',
+   running: 'running',
+   paused: 'paused',
+   exhaused: 'exhausted'
+});
+
+cracklord.constant('RESOURCE_STATUS', {
+   running: 'running',
+   paused: 'paused'
+});
