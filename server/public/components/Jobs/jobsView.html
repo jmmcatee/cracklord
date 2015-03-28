@@ -18,11 +18,12 @@
 				<thead>
 					<tr>
 						<th class="">&nbsp;</th>
+						<th class="">&nbsp;</th>
 						<th class="">Name</th>
 						<th class="">Owner</th>
 						<th class="">Status</th>
 						<th class="">Time Running</th>
-						<th class="">Cracked</th>
+						<th class="">Completed</th>
 						<th class=""></th>
 					</tr>
 				</thead>
@@ -32,9 +33,9 @@
 							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
 							<a ng-if="!job.expanded" ng-click="job.expanded = true" aria-label="detail"><i class="fa fa-plus fa-1x"></i></a>
 						</td>
+						<td class="status {{job.status}}"><span ng-if="job.status == 'running'"><i class="fa fa-play"></i></td>
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
-						<td class="status {{job.status}}">{{job.status}}</td>
 						<td class="time">{{now - job.starttime | readableTime}}</td>
 						<td class="jobprogress">
 							<div class="progress job-cracked">
@@ -45,9 +46,7 @@
 						</td>
 						<td class="actions">
 							<div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">
-								<playbutton target="job"></playbutton>	
 								<stopbutton target="job"></stopbutton>
-								<trashbutton target="job" targetlist="jobs"></trashbutton>
 								<draghandle></draghandle>
 							</div>
 						</td>

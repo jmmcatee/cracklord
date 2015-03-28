@@ -46,7 +46,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', functi
 	$scope.loadJobs();
 }]);
 
-cracklord.directive('jobDetail', ['JobsService', 'growl', function jobDetail(JobsService, growl) {
+cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsService', 'growl', function jobDetail(JobsService, ResourceService, ToolsService, growl) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
@@ -93,6 +93,16 @@ cracklord.directive('jobDetail', ['JobsService', 'growl', function jobDetail(Job
 				if(newval === true) {
 					JobsService.get({id: $scope.jobid}, 
 						function success(data) {
+							ResourceService.get({id: data.job.resourceid}, 
+								function resourcesuccess(data) {
+									$scope.resource = data.resource;
+								}
+							);
+							ToolsService.get({id: data.job.toolid}, 
+								function toolsuccess(data) {
+									$scope.tool = data.tool;
+								}
+							);
 							$scope.detail = data.job;
 							$scope.processDonut();
 							$scope.processLine();
