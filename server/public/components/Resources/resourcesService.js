@@ -19,17 +19,18 @@ cracklord.factory('ResourceService', ['$resource', function ($resource) {
    });
 }]);
 
-cracklord.service('Resources', ['ResourceService', function(ResourceService) {
-   this.list = null;
+cracklord.service('ResourceList', ['ResourceService', function(ResourceService) {
+   var list = null;
+   var promise = ResourceService.query(
+      function(data) {
+         list = data;
+      }
+   );
 
-   this.promise = function () {
-      var servers = ResourceService.query(
-         function(data) {
-            this.list = data;
-         }
-      );
-   }
-
-   this.reloadList();
-   return this;
+   return { 
+      promise: promise, 
+      getList: function() {
+         return list;
+      }
+   };
 }]);

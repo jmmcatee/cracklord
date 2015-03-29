@@ -1,3 +1,7 @@
+cracklord.controller('ResourcesController', ['$scope', 'ResourceList', function ResourceController($scope, ResourceList) {
+	$scope.resources = ResourceList.getList();
+}]);
+
 cracklord.controller('ConnectResourceController', ['$scope', '$state', 'ResourceService', 'growl', function CreateJobController($scope, $state, ResourceService, growl) {
 	$scope.formData = {};
 

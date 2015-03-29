@@ -12,10 +12,9 @@ cracklord.config(['$stateProvider', '$urlRouterProvider', 'USER_ROLES', function
 			url:'/resources',
 			templateUrl: 'components/Resources/resourcesView.html',
 			resolve: {
-				resources: 'Resources',
-			},
-			controller: function($scope, resources) {
-				$scope.resources = resources.list;
+				'ResourceList': function(ResourceList) {
+					return ResourceList.promise;
+				}
 			},
 			data: {
 				authorizedRoles: [USER_ROLES.admin, USER_ROLES.standard, USER_ROLES.read]
