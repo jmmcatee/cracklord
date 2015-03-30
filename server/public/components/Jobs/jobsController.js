@@ -53,7 +53,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'Resou
 	$scope.loadJobs();
 }]);
 
-cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsService', 'growl', function jobDetail(JobsService, ResourceService, ToolsService, growl) {
+cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsService', 'growl', 'ResourceList', function jobDetail(JobsService, ResourceService, ToolsService, growl, ResourceList) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
@@ -65,14 +65,13 @@ cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsServic
 			// Mmmmmmmm.... Donut.
 			$scope.processDonut = function() {
 				$scope.donut = {};
-				$scope.donut.labels = ['Cracked', 'Processed', 'Total'];
+				$scope.donut.labels = ['Processed', 'Total'];
 
-				var cracked = $scope.detail.crackedhashes;
-				var processed = $scope.detail.totalhashes * $scope.detail.progress - cracked;
+				var processed = $scope.detail.totalhashes * $scope.detail.progress;
 				var total = $scope.detail.totalhashes - processed;
-				$scope.donut.data = [cracked, processed, total];
+				$scope.donut.data = [processed, total];
 
-				$scope.donut.colors = [ '#5cb85c', '#337ab7', '#aaaaaa' ];
+				$scope.donut.colors = [ '#337ab7', '#aaaaaa' ];
 			};
 
 			$scope.processLine = function() {
@@ -100,19 +99,19 @@ cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsServic
 				if(newval === true) {
 					JobsService.get({id: $scope.jobid}, 
 						function success(data) {
-							ResourceService.get({id: data.job.resourceid}, 
-								function resourcesuccess(data) {
-									$scope.resource = data.resource;
-								}
-							);
 							ToolsService.get({id: data.job.toolid}, 
 								function toolsuccess(data) {
 									$scope.tool = data.tool;
 								}
 							);
 							$scope.detail = data.job;
+
+							var resource = ResourceList.get(data.job.resourceid);
+							$scope.detail.resourcename = resource.name;
+
 							$scope.processDonut();
 							$scope.processLine();
+
 							$element.parent().show();
 							$element.find('.slider').slideDown();
 						},

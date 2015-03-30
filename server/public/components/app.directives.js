@@ -180,8 +180,46 @@ cracklord.directive('draghandle', ['growl', 'AuthService', 'USER_ROLES', functio
         }
     };
 }]);
+/*
+cracklord.directive('runningtime', [function runningtime() {
+    return {
+        replace: true,
+        scope: {
+            time: '='
+        },
+        template: '<td class="time">{{output}}</td>',
+        link: function($scope, $element, $attrs) {
+            var current = new Date($scope.time);
+            var now = new Date();
+            var delta = now - current;
+            var numberEnding  = function(number) {
+                return (number > 1) ? 's' : '';
+            }
 
+            var temp = Math.floor(milliseconds / 1000);
+            var years = Math.floor(temp / 31536000);
+            var days = Math.floor((temp %= 31536000) / 86400);
+            var hours = Math.floor((temp %= 86400) / 3600);
+            var minutes = Math.floor((temp %= 3600) / 60);
+            var seconds = temp % 60;
 
+            if (years) {
+                $scope.output =  years + ' year' + numberEnding(years);
+            } else if (days) {
+                $scope.output =  days + ' day' + numberEnding(days);
+            } else if (hours) {
+                $scope.output =  hours + ' hour' + numberEnding(hours);
+            } else if (minutes) {
+                $scope.output =  minutes + ' minute' + numberEnding(minutes);
+            } else if (seconds) {
+                $scope.output =  seconds + ' second' + numberEnding(seconds);
+            } else {
+                $scope.output =  'less than a second';
+            }
+        }
+    }
+}]);
+*/
 cracklord.directive('rcSubmit', ['$parse', function ($parse) {
     return {
         restrict: 'A',

@@ -41,31 +41,31 @@ var regGetDenominator *regexp.Regexp
 var regGetPercent *regexp.Regexp
 
 var speedMagH = map[string]float64{
-	"H/s":  1,
-	"kH/s": 1000,
-	"MH/s": 1000000,
-	"GH/s": 1000000000,
+	"Hashes per sec.":          1,
+	"Thousand hashes per sec.": 1000,
+	"Million hashes per sec.":  1000000,
+	"Billion hashes per sec.":  1000000000,
 }
 
 var speedMagK = map[string]float64{
-	"H/s":  1 / 1000,
-	"kH/s": 1,
-	"MH/s": 1000,
-	"GH/s": 1000000,
+	"Hashes per sec.":          1 / 1000,
+	"Thousand hashes per sec.": 1,
+	"Million hashes per sec.":  1000,
+	"Billion hashes per sec.":  1000000,
 }
 
 var speedMagM = map[string]float64{
-	"H/s":  1 / 1000000,
-	"kH/s": 1 / 1000,
-	"MH/s": 1,
-	"GH/s": 1000,
+	"Hashes per sec.":          1 / 1000000,
+	"Thousand hashes per sec.": 1 / 1000,
+	"Million hashes per sec.":  1,
+	"Billion hashes per sec.":  1000,
 }
 
 var speedMagG = map[string]float64{
-	"H/s":  1 / 1000000000,
-	"kH/s": 1 / 1000000,
-	"MH/s": 1 / 1000,
-	"GH/s": 1,
+	"Hashes per sec.":          1 / 1000000000,
+	"Thousand hashes per sec.": 1 / 1000000,
+	"Million hashes per sec.":  1 / 1000,
+	"Billion hashes per sec.":  1,
 }
 
 func init() {
