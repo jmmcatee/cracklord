@@ -107,7 +107,9 @@ cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsServic
 							$scope.detail = data.job;
 
 							var resource = ResourceList.get(data.job.resourceid);
-							$scope.detail.resourcename = resource.name;
+							if(resource) {
+								$scope.detail.resourcename = resource.name;
+							}
 
 							$scope.processDonut();
 							$scope.processLine();
