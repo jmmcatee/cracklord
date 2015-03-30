@@ -22,7 +22,6 @@
 					<li><a ng-if="currentUser" ui-sref="jobs"><i class="fa fa-stack-overflow"></i> Jobs</a></li>
 					<li><a ng-if="user.checkrole(user.allroles.admin)" ui-sref="resources"><i class="fa fa-server"></i> Resources</a></li>
 					<li><a ng-if="currentUser" ng-click="userLogout()" href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
-					<li><a href="https://github.com/jmmcatee/cracklord"><i class="fa fa-github"></i> Github</a></li>
 				</ul>
 			</div>
 		</div>
@@ -33,8 +32,11 @@
 	</div>
 	<footer class="footer navbar-fixed-bottom">
 		<div class="col-md-6 col-md-offset-4">
-		<p class="navbar-text">Copyright &copy; 2015</p>
-		<p class="navbar-text license">This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions; </p>
+			<p class="navbar-text">Copyright &copy; 2015</p>
+			<p class="navbar-text license">This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions; </p>
+		</div>
+		<div class="col md-1 pull-right github">
+			<a href="https://github.com/jmmcatee/cracklord"><i class="fa fa-github"></i> Github</a>
 		</div>
 	</footer>
 	<script type="text/javascript" src="./libs/jquery-2.1.3.min.js"></script>
