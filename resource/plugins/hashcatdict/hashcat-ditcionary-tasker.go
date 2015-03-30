@@ -4,15 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -36,18 +40,46 @@ var regGetNumerator *regexp.Regexp
 var regGetDenominator *regexp.Regexp
 var regGetPercent *regexp.Regexp
 
+var speedMagH = map[string]float64{
+	"H/s":  1,
+	"kH/s": 1000,
+	"MH/s": 1000000,
+	"GH/s": 1000000000,
+}
+
+var speedMagK = map[string]float64{
+	"H/s":  1 / 1000,
+	"kH/s": 1,
+	"MH/s": 1000,
+	"GH/s": 1000000,
+}
+
+var speedMagM = map[string]float64{
+	"H/s":  1 / 1000000,
+	"kH/s": 1 / 1000,
+	"MH/s": 1,
+	"GH/s": 1000,
+}
+
+var speedMagG = map[string]float64{
+	"H/s":  1 / 1000000000,
+	"kH/s": 1 / 1000000,
+	"MH/s": 1 / 1000,
+	"GH/s": 1,
+}
+
 func init() {
 	var err error
-	regLastStatusIndex, err = regexp.Compile(`Session\.Name\.\.\.\:\s+oclHashcat`)
-	regStatus, err = regexp.Compile(`(Status)\.\.\.\.\.\.\.\.\.\:\s+(\w+)`)
-	regRuleType, err = regexp.Compile(`(Rules\.Type)\.\.\.\.\.\:\s+(\w+)\s+\((.+)\)`)
-	regInputMode, err = regexp.Compile(`(Input\.Mode)\.\.\.\.\.\:\s+(\w+)\s+\((.+)\)`)
-	regHashTarget, err = regexp.Compile(`(Hash\.Target)\.\.\.\.\:\s+([0-9a-fA-F]+)`)
-	regHashType, err = regexp.Compile(`(Hash\.Type)\.\.\.\.\.\.\:\s+(\w+)`)
-	regTimeStarted, err = regexp.Compile(`(Time\.Started)\.\.\.\:\s+(.+\(.+\))`)
-	regTimeEstimated, err = regexp.Compile(`(Time\.Estimated)\.\:\s+(.+\(.+\))`)
-	regGPUSpeed, err = regexp.Compile(`(Speed\.GPU\.#.+)\.\.\.\:\s+(.+)`)
-	regRecovered, err = regexp.Compile(`(Recovered)\.\.\.\.\.\.\:\s+0\/1\s+(.+)`)
+	regLastStatusIndex, err = regexp.Compile(`Session\.Name\.\.\.\:`)
+	regStatus, err = regexp.Compile(`Status\.\.\.\.\.\.\.\.\.\:\s+(\w+)`)
+	regRuleType, err = regexp.Compile(`Rules\.Type\.\.\.\.\.\:\s+(\w+)\s+\((.+)\)`)
+	regInputMode, err = regexp.Compile(`Input\.Mode\.\.\.\.\.\:\s+(\w+)\s+\((.+)\)`)
+	regHashTarget, err = regexp.Compile(`Hash\.Target\.\.\.\.\:\s+([0-9a-fA-F]+)`)
+	regHashType, err = regexp.Compile(`Hash\.Type\.\.\.\.\.\.\:\s+(\w+)`)
+	regTimeStarted, err = regexp.Compile(`Time\.Started\.\.\.\:\s+(.+)\(.+\)`)
+	regTimeEstimated, err = regexp.Compile(`Time\.Estimated\.\:\s+(.+)\(.+\)`)
+	regGPUSpeed, err = regexp.Compile(`Speed\.GPU\.#([\d|\*]+)\.\.\.\:\s+(\d+\.\d+)\s+(.H/s)`)
+	regRecovered, err = regexp.Compile(`Recovered\.+:\s+(\d+)\/(\d+)`)
 	regProgress, err = regexp.Compile(`(Progress)\.\.\.\.\.\.\.\:\s+(\d+\/\d+.+)`)
 	regRejected, err = regexp.Compile(`(Rejected)\.\.\.\.\.\.\.\:\s+(\d+\/\d+.+)`)
 	regGPUHWMon, err = regexp.Compile(`(HWMon\.GPU\.#\d+)\.\.\.\:\s+(.+)`)
@@ -73,7 +105,9 @@ type hascatTasker struct {
 	stderrPipe io.ReadCloser
 	stdoutPipe io.ReadCloser
 	stdinPipe  io.WriteCloser
-	done       chan bool
+
+	mux  sync.Mutex
+	done bool
 }
 
 func newHashcatTask(j common.Job) (common.Tasker, error) {
@@ -125,6 +159,14 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 
 	hashFile.WriteString(h.job.Parameters["hashes"])
 
+	var lines int64
+	linescanner := bufio.NewScanner(file)
+	for linescanner.Scan() {
+		lines++
+	}
+
+	h.job.TotalHashes = lines
+
 	// Append that file to the arguments
 	args = append(args, filepath.Join(h.wd, "hashes.txt"))
 
@@ -153,114 +195,160 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h.resume = append(h.resume, args...)
 
 	// Configure the return values
-	h.job.PerformanceTitle = "MH/sec"
 	h.job.OutputTitles = []string{"Hash", "Plaintext"}
 
 	return &h, nil
 }
 
 func (v *hascatTasker) Status() common.Job {
-	var err error
+	v.mux.Lock()
 
-	status := v.stdout.String()
-	log.Printf("\nStatus:\n%s\n", status)
+	index := regLastStatusIndex.FindAllStringIndex(v.stdout.String(), -1)
+	if len(index) >= 1 {
+		// We found a status so start processing the last status in Stdout
+		status := string(v.stdout.Bytes()[index[len(index)-1][0]:])
 
-	statFound := regStatus.FindAllString(status, -1)
-	log.Println(statFound)
-	// if len(statFound) != 0 {
-	// 	v.job.Output["Status"] = statFound[len(statFound)-1]
-	// }
+		// Get start and estimated times
+		sStartTime := regTimeStarted.FindStringSubmatch(status)
+		sEstimateTime := regTimeEstimated.FindStringSubmatch(status)
 
-	progFound := regProgress.FindAllString(status, -1)
-	log.Println(progFound)
+		if len(sStartTime) == 1 && len(sEstimateTime) == 1 {
+			log.Printf("StartTime: %s\nEstimateTime: %s\n", sStartTime[0], sEstimateTime[0])
 
-	progRecovered := regRecovered.FindAllString(status, -1)
-	log.Println(progRecovered)
+			tStartTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sStartTime[0])
+			tEstimateTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sEstimateTime[0])
 
-	// v.job.CrackedHashes, err = strconv.ParseInt(regGetNumerator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
-	// if err != nil {
-	// 	v.job.Output["Errors"] += ";" + err.Error()
-	// }
+			// See if we have ever set the start time and set it if we have not
+			if v.job.StartTime.IsZero() && err == nil {
+				v.job.StartTime = tStartTime
+			}
 
-	// v.job.TotalHashes, err = strconv.ParseInt(regGetDenominator.FindString(progRecovered[len(progRecovered)-1]), 0, 64)
-	// if err != nil {
-	// 	v.job.Output["Errors"] += ";" + err.Error()
-	// }
+			// Get the time estimate to finish and change into a progress in %
+			if err == nil {
+				maxTime := tEstimateTime.Sub(tStartTime).Seconds()
+				runTime := tEstimateTime.Sub(time.Now()).Seconds()
 
-	progRejected := regRejected.FindAllString(status, -1)
-	log.Println(progRejected)
+				runPercent := runTime / maxTime * 100
 
-	progHashTarget := regHashTarget.FindAllString(status, -1)
-	log.Println(progHashTarget)
+				v.job.Progress = int(math.Floor(runPercent))
 
-	progHashType := regHashType.FindAllString(status, -1)
-	log.Println(progHashType)
+				log.Printf("RunPercent: %f\n", runPercent)
+			}
+		}
 
-	progInputMode := regInputMode.FindAllString(status, -1)
-	log.Println(progInputMode)
+		// Get the speed of one or more GPUs
+		speeds := regGPUSpeed.FindAllStringSubmatch(status, -1)
+		log.Printf("GPU Speeds: %v\n", speeds)
+		if len(speeds) > 1 {
+			// We have more than one GPU so loop through and find the combined total
+			for _, speedString := range speeds {
+				if speedString[1] == "*" && len(speedString) == 4 {
+					// We have the total so grab the pieces
+					timestamp := fmt.Sprintf("%d", time.Now().Unix())
 
-	progRuleType := regRuleType.FindAllString(status, -1)
-	log.Println(progRuleType)
+					// Check if we have a performance unit yet
+					if v.job.PerformanceTitle == "" {
+						// We don't so just take the one provided
+						v.job.PerformanceTitle = speedString[3]
 
-	progTimeEst := regTimeEstimated.FindAllString(status, -1)
-	log.Println(progTimeEst)
+						v.job.PerformanceData[timestamp] = speedString[2]
+					} else {
+						// See what we need to do with the number to match our
+						// original units
+						var mag float64
+						switch v.job.PerformanceTitle {
+						case "H/s":
+							mag = speedMagH[speedString[3]]
+						case "kH/s":
+							mag = speedMagK[speedString[3]]
+						case "MH/s":
+							mag = speedMagM[speedString[3]]
+						case "GH/s":
+							mag = speedMagG[speedString[3]]
+						}
 
-	progTimeStart := regTimeStarted.FindAllString(status, -1)
-	log.Println(progTimeStart)
+						// Convert our string into a float
+						speed, err := strconv.ParseFloat(speedString[2], 64)
+						if err == nil {
+							// change magnitude and save as string
+							v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
+						}
+					}
+				}
+			}
+		} else if len(speeds) == 1 {
+			// We have just one GPU
+			speedString := speeds[0]
+			if speedString[1] == "1" && len(speedString) == 4 {
+				// We have the total so grab the pieces
+				timestamp := fmt.Sprintf("%d", time.Now().Unix())
 
-	// progGPUHWMon := regGPUHWMon.FindAllString(status, -1)
-	// if len(progGPUHWMon) != 0 {
-	// 	numGPUs := regGetGPUCount.FindString(progGPUHWMon[len(progGPUHWMon)-1])
-	// 	numGPUsInt, err := strconv.Atoi(numGPUs)
-	// 	if err == nil {
-	// 		for i := numGPUsInt; i > 0; i-- {
-	// 			s := strconv.Itoa(i)
-	// 			x := numGPUsInt - 1
-	// 			v.job.Output["HWMon.GPU.#"+s] = progGPUHWMon[len(progGPUHWMon)-(x-i)]
-	// 		}
-	// 	}
-	// }
+				// Check if we have a performance unit yet
+				if v.job.PerformanceTitle == "" {
+					// We don't so just take the one provided
+					v.job.PerformanceTitle = speedString[3]
 
-	// progGPUSpeed := regGPUSpeed.FindAllString(status, -1)
-	// if len(progGPUSpeed) != 0 {
-	// 	numGPUs := regGetGPUCount.FindString(progGPUSpeed[len(progGPUSpeed)-1])
-	// 	numGPUsInt, err := strconv.Atoi(numGPUs)
-	// 	if err == nil {
-	// 		for i := numGPUsInt; i > 0; i-- {
-	// 			s := strconv.Itoa(i)
-	// 			x := numGPUsInt - 1
-	// 			v.job.Output["HWMon.GPU.#"+s] = progGPUSpeed[len(progGPUSpeed)-(x-i)]
-	// 		}
-	// 	}
-	// }
+					v.job.PerformanceData[timestamp] = speedString[2]
+				} else {
+					// See what we need to do with the number to match our
+					// original units
+					var mag float64
+					switch v.job.PerformanceTitle {
+					case "H/s":
+						mag = speedMagH[speedString[3]]
+					case "kH/s":
+						mag = speedMagK[speedString[3]]
+					case "MH/s":
+						mag = speedMagM[speedString[3]]
+					case "GH/s":
+						mag = speedMagG[speedString[3]]
+					}
+
+					// Convert our string into a float
+					speed, err := strconv.ParseFloat(speedString[2], 64)
+					if err == nil {
+						// change magnitude and save as string
+						v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
+					}
+				}
+			}
+		}
+
+		// Check for number of recovered hashes
+		recovered := regRecovered.FindStringSubmatch(status)
+		log.Printf("Recovered Hashes: %v\n", recovered)
+		if len(recovered) == 3 {
+			if r, err := strconv.ParseInt(recovered[1], 10, 64); err == nil {
+				v.job.CrackedHashes = r
+			}
+
+			if r, err := strconv.ParseInt(recovered[2], 10, 64); err == nil {
+				v.job.TotalHashes = r
+			}
+		}
+	}
 
 	// Get the output results
-	file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt"))
-	if err != nil {
-		log.Println(err.Error())
-	} else {
+	if file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt")); err == nil {
 		linescanner := bufio.NewScanner(file)
 		for linescanner.Scan() {
 			v.job.OutputData = append(v.job.OutputData, strings.Split(linescanner.Text(), ":"))
 		}
 	}
 
-	// Check if we are done
-	done := false
-	select {
-	case <-v.done:
-		done = true
-	default:
-	}
+	v.stdout.Reset()
 
 	// Run finished script
-	if done {
+	if v.done {
 		v.job.Status = common.STATUS_DONE
+
+		v.mux.Unlock()
 		return v.job
 	}
 
 	log.Printf("Job: %+v\n", v.job)
 
+	v.mux.Unlock()
 	return v.job
 }
 
@@ -276,6 +364,15 @@ func (v *hascatTasker) Run() error {
 		// Job already running so return no errors
 		return nil
 	}
+
+	// Set commands for restore or start
+	if v.job.Status == common.STATUS_CREATED {
+		v.cmd = *exec.Command(config.BinPath, v.start...)
+	} else {
+		v.cmd = *exec.Command(config.BinPath, v.resume...)
+	}
+
+	v.cmd.Dir = v.wd
 
 	// Assign the stderr, stdout, stdin pipes
 	var err error
@@ -300,15 +397,6 @@ func (v *hascatTasker) Run() error {
 		}
 	}()
 
-	// Set commands for restore or start
-	if v.job.Status == common.STATUS_CREATED {
-		v.cmd = *exec.Command(config.BinPath, v.start...)
-	} else {
-		v.cmd = *exec.Command(config.BinPath, v.resume...)
-	}
-
-	v.cmd.Dir = v.wd
-
 	// Start the command
 	err = v.cmd.Start()
 	v.job.StartTime = time.Now()
@@ -321,12 +409,13 @@ func (v *hascatTasker) Run() error {
 	v.job.Status = common.STATUS_RUNNING
 
 	// Build goroutine to alert that the job has finished
-	v.done = make(chan bool)
 	go func() {
 		// Listen on commmand wait and then send signal when finished
 		// This will be read on the Status() function
 		v.cmd.Wait()
-		v.done <- true
+		v.mux.Lock()
+		v.done = true
+		v.mux.Unlock()
 	}()
 
 	return nil
