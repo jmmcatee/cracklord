@@ -160,7 +160,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	hashFile.WriteString(h.job.Parameters["hashes"])
 
 	var lines int64
-	linescanner := bufio.NewScanner(file)
+	linescanner := bufio.NewScanner(hashFile)
 	for linescanner.Scan() {
 		lines++
 	}
