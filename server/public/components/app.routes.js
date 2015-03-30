@@ -4,6 +4,11 @@ cracklord.config(['$stateProvider', '$urlRouterProvider', 'USER_ROLES', function
 		.state('jobs', {
 			url:'/jobs',
 			templateUrl: 'components/Jobs/jobsView.html',
+			resolve: {
+				'ResourceList': function(ResourceList) {
+					return ResourceList.promise;
+				}
+			},
 			data: {
 				authorizedRoles: [USER_ROLES.admin, USER_ROLES.standard, USER_ROLES.read]
 			}

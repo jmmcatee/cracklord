@@ -20,7 +20,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr ng-repeat="res in resources">
+					<tr ng-repeat="res in resources" style="background-color: rgb({{res.color.r}}, {{res.color.g}}, {{res.color.b}});">
 						<td class="name">{{res.name}}</td>
 						<td class="address">{{res.address}}</td>
 						<td class="status {{res.status}}">{{res.status}}</td>

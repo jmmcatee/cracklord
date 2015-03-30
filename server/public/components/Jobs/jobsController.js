@@ -1,7 +1,8 @@
-cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', function JobsController($scope, JobsService, growl) {
+cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'ResourceList', function JobsController($scope, JobsService, growl, ResourceList) {
 	$scope.listreordered = false;
 	$scope.now = Math.floor(Date.now() / 1000);
 	$scope.jobactions = {};
+
 
 	$scope.sortableOptions = {
 		handle: '.draghandle',
@@ -25,10 +26,17 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', functi
 		var jobs = JobsService.query(
 			//Our success handler
 			function(data) {
+				$scope.jobs = data;
+
 				$scope.listreordered = false;
 				for(var i = 0; i < $scope.jobs.length; i++) {
+					var resource = ResourceList.get($scope.jobs[i].resourceid);
+					if(resource) {
+						$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
+					}
 					$scope.jobs[i].expanded = false;
 				}
+
 			},
 			//Our error handler
 			function(error) {
@@ -41,7 +49,6 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', functi
 				}
 			}
 		);
-		$scope.jobs = jobs;
 	}
 	$scope.loadJobs();
 }]);
