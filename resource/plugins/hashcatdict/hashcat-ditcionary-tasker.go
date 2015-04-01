@@ -117,7 +117,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 
 	// Build a working directory for this job
 	h.wd = filepath.Join(config.WorkDir, h.job.UUID)
-	err := os.Mkdir(h.wd, 700)
+	err := os.Mkdir(h.wd, 0700)
 	if err != nil {
 		// Couldn't make a directory so kill the job
 		return &hascatTasker{}, errors.New("Could not create a working directory.")
