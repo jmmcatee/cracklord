@@ -1,4 +1,4 @@
-cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', function JobsController($scope, JobsService, growl, ResourceList) {
+cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', function JobsController($scope, JobsService, QueueService, growl, ResourceList) {
 	$scope.listreordered = false;
 	$scope.jobactions = {};
 
@@ -17,7 +17,8 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 				$scope.listreordered = false;
 				for(var i = 0; i < $scope.jobs.length; i++) {
 					if($scope.jobs[i].resourceid) {
-						var resource = ResourceList.get($scope.jobs[i].resourceid);
+						var id = $scope.jobs[i].resourceid;
+						var resource = ResourceList.get(id);
 						if(resource) {
 							$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
 						}
@@ -78,7 +79,7 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 
 			$scope.reorderCancel = function() {
 				$scope.dragstatus = false;
-				$scope.$apply($scope.reload);
+				$scope.reload();
 				growl.info("Reordering of jobs cancelled.")
 			}
 		}
