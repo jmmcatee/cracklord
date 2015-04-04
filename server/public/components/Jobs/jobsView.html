@@ -4,9 +4,7 @@
 			<button class="btn btn-default disabled">Actions</button>
 			<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
 			<reloadbutton datareload="loadJobs()"></reloadbutton>	
-			<button class="btn btn-default disabled" ng-show="listreordered">Confirm<br>Reorder</button>
-			<button class="btn btn-success" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-up"></i><br><div class="btnwrd">Confirm</div></button>
-			<button class="btn btn-warning" ng-click="reorderCancel()" ng-show="listreordered"><i class="fa fa-2x fa-thumbs-down"></i><br><div class="btnwrd">Cancel</div></button>
+			<job-reorder-confirm reload="loadJobs()" jobs="jobs" dragstatus="listreordered" ng-show="listreordered"></job-reorder-confirm>
 			<button class="btn btn-default disabled"> </button>
   		</div>
 	</div>

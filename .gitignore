@@ -31,3 +31,4 @@ server/cracklord.ini
 *.sublime-project
 sublimetext.sublime-workspace
 *.ini
+server/public/sftp-config.json

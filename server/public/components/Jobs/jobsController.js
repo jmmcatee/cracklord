@@ -1,8 +1,6 @@
-cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'ResourceList', function JobsController($scope, JobsService, growl, ResourceList) {
+cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', function JobsController($scope, JobsService, growl, ResourceList) {
 	$scope.listreordered = false;
-	$scope.now = Math.floor(Date.now() / 1000);
 	$scope.jobactions = {};
-
 
 	$scope.sortableOptions = {
 		handle: '.draghandle',
@@ -12,22 +10,10 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'Resou
 		}
 	};
 
-	$scope.reorderConfirm = function() {
-
-	}
-
-	$scope.reorderCancel = function() {
-		$scope.listreordered = false;
-		$scope.loadJobs();
-		growl.info("Job reorder was cancelled.")
-	}
-
 	$scope.loadJobs = function() {
 		var jobs = JobsService.query(
 			//Our success handler
 			function(data) {
-				$scope.jobs = data;
-
 				$scope.listreordered = false;
 				for(var i = 0; i < $scope.jobs.length; i++) {
 					var resource = ResourceList.get($scope.jobs[i].resourceid);
@@ -50,11 +36,54 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'Resou
 				}
 			}
 		);
+		$scope.jobs = jobs;
 	}
 	$scope.loadJobs();
 }]);
 
-cracklord.directive('jobDetail', ['JobsService', 'ResourceService', 'ToolsService', 'growl', 'ResourceList', function jobDetail(JobsService, ResourceService, ToolsService, growl, ResourceList) {
+cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobReorderConfirm(QueueService, growl) {
+	return {
+		restrict: 'E',
+		templateUrl: 'components/Jobs/jobsReorderConfirm.html', 
+		replace: true,
+		scope: {
+			reload: "&",
+			jobs: "=",
+			dragstatus: "="
+		},
+		controller: function($scope) {
+			$scope.reorderConfirm = function() {
+				var ids = $scope.jobs.map(function (job) {
+					if(job) {
+						return job.id;
+					}
+				});
+
+				QueueService.reorder(ids)
+					.success(function(data, status, headers, config) {
+						growl.success("Job data reordered successfully.");
+					})
+					.error(function(data, status, headers, config) {
+						switch (status) {
+							case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
+							case 403: growl.warning("You're not allowed to do that..."); break;
+							case 404: growl.error("Somehow the queue object was not found... this is bad."); break;
+							case 409: growl.error("The request could not be completed because there was a conflict."); break;
+							case 500: growl.error("An internal server error occured while trying to reorder the queue."); break;
+						}
+					});
+			}
+
+			$scope.reorderCancel = function() {
+				$scope.dragstatus = false;
+				$scope.$apply($scope.reload);
+				growl.info("Reordering of jobs cancelled.")
+			}
+		}
+	}
+}]);
+
+cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'ResourceList', function jobDetail(JobsService, ToolsService, growl, ResourceList) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
