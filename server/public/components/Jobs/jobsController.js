@@ -16,9 +16,11 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 			function(data) {
 				$scope.listreordered = false;
 				for(var i = 0; i < $scope.jobs.length; i++) {
-					var resource = ResourceList.get($scope.jobs[i].resourceid);
-					if(resource) {
-						$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
+					if($scope.jobs[i].resourceid) {
+						var resource = ResourceList.get($scope.jobs[i].resourceid);
+						if(resource) {
+							$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
+						}
 					}
 					$scope.jobs[i].starttime = new Date($scope.jobs[i].starttime);
 					$scope.jobs[i].expanded = false;
