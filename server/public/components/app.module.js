@@ -6,6 +6,7 @@ var cracklord = angular.module('cracklord', [
    'angular-growl',
    'ngAnimate',
    'ngCsv',
+   'relativeDate',
    'chart.js'
 ]);
 

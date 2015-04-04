@@ -34,6 +34,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'growl', 'Resou
 					if(resource) {
 						$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
 					}
+					$scope.jobs[i].starttime = new Date($scope.jobs[i].starttime);
 					$scope.jobs[i].expanded = false;
 				}
 

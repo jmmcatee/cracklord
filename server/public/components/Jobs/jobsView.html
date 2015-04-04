@@ -20,7 +20,7 @@
 						<th class="">&nbsp;</th>
 						<th class="">Name</th>
 						<th class="">Owner</th>
-						<th class="">Time Running</th>
+						<th class="">Start Time</th>
 						<th class="">Completed</th>
 						<th class=""></th>
 					</tr>
@@ -39,9 +39,9 @@
 						</td>
 						<td class="name">{{job.name}}</td>
 						<td class="owner">{{job.owner}}</td>
-						<td class="time">{{job.starttime}}</td>
+						<td class="time"><span ng-if="job.status != 'created'">{{job.starttime | relativeDate}}</span></td>
 						<td class="jobprogress">
-							<div class="progress job-cracked">
+							<div class="progress job-cracked" ng-if="job.status != 'created'">
 								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
 								</div>
 								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
