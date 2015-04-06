@@ -3,8 +3,8 @@ package resource
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"errors"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
-	"log"
 	"net"
 	"net/rpc"
 	"sync"
@@ -27,7 +27,7 @@ func StartResource(addr string, q *Queue) chan bool {
 
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("An error occured while trying to listen on %s: %v", addr, err)
 	}
 
 	quit := make(chan bool)
@@ -35,7 +35,7 @@ func StartResource(addr string, q *Queue) chan bool {
 		// Accept and server a limited number of times
 		conn, err := l.Accept()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("An error occured while trying to accept a connection: %v", err)
 		}
 
 		res.ServeConn(conn)
@@ -56,6 +56,7 @@ type Queue struct {
 }
 
 func NewResourceQueue(token string) Queue {
+	log.Printf("")
 	return Queue{
 		stack:     map[string]common.Tasker{},
 		tools:     []common.Tooler{},
