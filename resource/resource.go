@@ -22,13 +22,20 @@ const (
 // This can be used to quit the application or simply restart the server for the next
 // master to connect.
 func StartResource(addr string, q *Queue) chan bool {
+
 	res := rpc.NewServer()
 	res.Register(q)
 
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("An error occured while trying to listen on %s: %v", addr, err)
+		log.WithFields(log.Fields{
+			"addr": addr,
+		}).Fatalf("An error occured while trying to listen to port: %v", err)
 	}
+
+	log.WithFields(log.Fields{
+		"addr": addr,
+	}).Debug("Binding to server and port")
 
 	quit := make(chan bool)
 	go func() {
@@ -37,6 +44,8 @@ func StartResource(addr string, q *Queue) chan bool {
 		if err != nil {
 			log.Fatalf("An error occured while trying to accept a connection: %v", err)
 		}
+
+		log.Infof("Accepting connection from %s", conn.RemoteAddr().String())
 
 		res.ServeConn(conn)
 
@@ -56,7 +65,9 @@ type Queue struct {
 }
 
 func NewResourceQueue(token string) Queue {
-	log.Printf("")
+	log.WithFields(log.Fields{
+		"token": token,
+	}).Info("New resource queue created.")
 	return Queue{
 		stack:     map[string]common.Tasker{},
 		tools:     []common.Tooler{},
