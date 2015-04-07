@@ -1,9 +1,13 @@
 package log_file
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"os"
+	"path"
+	"runtime"
+	"sort"
 )
 
 type fileHook struct {
@@ -21,19 +25,34 @@ func NewFileHook(location string) (*fileHook, error) {
 }
 
 func (hook *fileHook) Fire(entry *logrus.Entry) error {
-	line, err := entry.String()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to read log entry for writing: %v", err)
-		return err
+	b := &bytes.Buffer{}
+	fmt.Fprintf(b, "[%-39s %5s]", entry.Time.String(), entry.Level.String())
+
+	_, file, line, ok := runtime.Caller(4)
+	if ok {
+		fmt.Fprintf(b, " (%s:%d)", path.Base(file), line)
 	}
 
-	num, err := hook.Writer.WriteString(line + "\n")
-	if err != nil {
-		return err
-	}
-	num++
-	return nil
+	fmt.Fprintf(b, " %s", entry.Message)
 
+	for i := b.Len(); i < 140; i++ {
+		b.WriteByte(' ')
+	}
+
+	var keys []string = make([]string, 0, len(entry.Data))
+	for k := range entry.Data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := entry.Data[k]
+		fmt.Fprintf(b, " %s=%v", k, v)
+	}
+
+	b.WriteByte('\n')
+
+	_, err := hook.Writer.WriteString(b.String())
+	return err
 }
 
 func (hook *fileHook) Levels() []logrus.Level {
