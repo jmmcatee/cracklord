@@ -2,6 +2,7 @@ package hashcatdict
 
 import (
 	"errors"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 type hcConfig struct {
 	BinPath      string
 	WorkDir      string
+	Arguments    string
 	Dictionaries map[string]string
 	Rules        map[string]string
 	HashTypes    map[string]string
@@ -18,6 +20,7 @@ type hcConfig struct {
 var config = hcConfig{
 	BinPath:      "",
 	WorkDir:      "",
+	Arguments:    "",
 	Dictionaries: map[string]string{},
 	Rules:        map[string]string{},
 	HashTypes:    map[string]string{},
@@ -174,6 +177,7 @@ var supportedHash = map[string]string{
 	Read the hascatdict init file to setup hashcatdict
 */
 func Setup(path string) error {
+	log.Debug("Setting up hashcatdict tool")
 	// Join the path provided
 	fullpath := filepath.Join(path, "hashcatdict.ini")
 	confFile, err := ini.LoadFile(fullpath)
@@ -189,14 +193,26 @@ func Setup(path string) error {
 	}
 	config.BinPath = basic["binPath"]
 	config.WorkDir = basic["workingdir"]
+	config.Arguments = basic["arguments"]
+
+	log.WithFields(log.Fields{
+		"binpath":   config.BinPath,
+		"WorkDir":   config.WorkDir,
+		"Arguments": config.Arguments,
+	}).Debug("Basic configuration complete")
 
 	// Get the dictionary section
 	dicts := confFile.Section("Dictionaries")
 	if len(dicts) == 0 {
 		// Nothing retrieved, so return error
+		log.Debug("No 'dictionaries' configuration section.")
 		return errors.New("No \"Dictionaries\" configuration section.")
 	}
 	for key, value := range dicts {
+		log.WithFields(log.Fields{
+			"name": key,
+			"path": value,
+		}).Debug("Added dictionary")
 		config.Dictionaries[key] = value
 	}
 
@@ -204,14 +220,21 @@ func Setup(path string) error {
 	rules := confFile.Section("Rules")
 	if len(dicts) == 0 {
 		// Nothing retrieved, so return error
+		log.Debug("No 'rules' configuration section.")
 		return errors.New("No \"Rules\" configuration section.")
 	}
 	for key, value := range rules {
+		log.WithFields(log.Fields{
+			"name": key,
+			"path": value,
+		}).Debug("Added rule")
 		config.Rules[key] = value
 	}
 
 	// Setup the hashes
 	config.HashTypes = supportedHash
+
+	log.Info("Hashcatdict tool successfully setup")
 
 	return nil
 }

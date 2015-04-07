@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
-	"log"
 	"math"
 	"os"
 	"os/exec"
@@ -120,8 +120,13 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	err := os.Mkdir(h.wd, 0700)
 	if err != nil {
 		// Couldn't make a directory so kill the job
+		log.WithFields(log.Fields{
+			"path":  h.wd,
+			"error": err.Error(),
+		}).Error("hashcatdict could not create a working directory")
 		return &hascatTasker{}, errors.New("Could not create a working directory.")
 	}
+	log.WithField("path", h.wd).Debug("Working directory created")
 
 	// Build the arguements for hashcat
 	args := []string{}
@@ -129,8 +134,13 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Get the hash type and add an argument
 	htype, ok := config.HashTypes[h.job.Parameters["algorithm"]]
 	if !ok {
+		log.WithFields(log.Fields{
+			"algoritm": htype,
+			"err":      ok,
+		}).Error("Could not find the algorithm provided")
 		return &hascatTasker{}, errors.New("Could not find the algorithm provided.")
 	}
+	log.WithField("algorithm", htype).Debug("Added algorithm")
 
 	args = append(args, "-m", htype)
 
@@ -145,17 +155,26 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 			}
 		}
 	}
+	log.WithField("rules", ruleKey).Debug("Added rules")
 
 	args = append(args, "--status", "--status-timer=10", "--force")
 
 	// Add an output file
 	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt"))
 
+	//Append config file arguments
+	args = append(args, config.Arguments)
+
 	// Take the hashes given and create a file
 	hashFile, err := os.Create(filepath.Join(h.wd, "hashes.txt"))
 	if err != nil {
+		log.WithFields(log.Fields{
+			"file":  hashFile,
+			"error": err.Error(),
+		}).Error("Unable to create hash file")
 		return &hascatTasker{}, err
 	}
+	log.WithField("hashfile", hashFile).Debug("Created hashfile")
 
 	hashFile.WriteString(h.job.Parameters["hashes"])
 
@@ -173,18 +192,21 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Check for dictionary given
 	dictKey, ok := h.job.Parameters["dictionaries"]
 	if !ok {
+		log.Error("No dictionary was provided.")
 		return &hascatTasker{}, errors.New("No dictionary provided.")
 	}
 
 	dictPath, ok := config.Dictionaries[dictKey]
 	if !ok {
+		log.Error("Dictionary key provided was not present")
 		return &hascatTasker{}, errors.New("Dictionary key provided was not present.")
 	}
+	log.WithField("dictionary", dictPath).Debug("Dictionary added")
 
 	// Add dictionary to arguments
 	args = append(args, dictPath)
 
-	log.Printf("Arguments: %v\n", args)
+	log.WithField("arguments", args).Debug("Arguments complete")
 
 	// Get everything except the session identifier because the Resume command will be different
 	h.start = append(h.start, "--session="+h.job.UUID)
@@ -201,6 +223,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 }
 
 func (v *hascatTasker) Status() common.Job {
+	log.WithField("task", v.job.UUID).Debug("Gathering task details")
 	v.mux.Lock()
 
 	index := regLastStatusIndex.FindAllStringIndex(v.stdout.String(), -1)
@@ -213,7 +236,10 @@ func (v *hascatTasker) Status() common.Job {
 		sEstimateTime := regTimeEstimated.FindStringSubmatch(status)
 
 		if len(sStartTime) == 1 && len(sEstimateTime) == 1 {
-			log.Printf("StartTime: %s\nEstimateTime: %s\n", sStartTime[0], sEstimateTime[0])
+			log.WithFields(log.Fields{
+				"starttime":    sStartTime[0],
+				"estimatetime": sEstimateTime[0],
+			}).Debug("Time processing")
 
 			tStartTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sStartTime[0])
 			tEstimateTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sEstimateTime[0])
@@ -232,13 +258,13 @@ func (v *hascatTasker) Status() common.Job {
 
 				v.job.Progress = int(math.Floor(runPercent))
 
-				log.Printf("RunPercent: %f\n", runPercent)
+				log.WithField("runpercent", runPercent).Debug("Run percentage calculated")
 			}
 		}
 
 		// Get the speed of one or more GPUs
 		speeds := regGPUSpeed.FindAllStringSubmatch(status, -1)
-		log.Printf("GPU Speeds: %v\n", speeds)
+		log.WithField("speeds", speeds).Debug("GPU speed processed")
 		if len(speeds) > 1 {
 			// We have more than one GPU so loop through and find the combined total
 			for _, speedString := range speeds {
@@ -272,6 +298,10 @@ func (v *hascatTasker) Status() common.Job {
 						if err == nil {
 							// change magnitude and save as string
 							v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
+							log.WithFields(log.Fields{
+								"speed": speed,
+								"mag":   mag,
+							}).Debug("Speed calculated.")
 						}
 					}
 				}
@@ -309,6 +339,10 @@ func (v *hascatTasker) Status() common.Job {
 					if err == nil {
 						// change magnitude and save as string
 						v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
+						log.WithFields(log.Fields{
+							"speed": speed,
+							"mag":   mag,
+						}).Debug("Speed calculated.")
 					}
 				}
 			}
@@ -316,7 +350,7 @@ func (v *hascatTasker) Status() common.Job {
 
 		// Check for number of recovered hashes
 		recovered := regRecovered.FindStringSubmatch(status)
-		log.Printf("Recovered Hashes: %v\n", recovered)
+		log.WithField("recovered", recovered).Debug("Recovered hashes.")
 		if len(recovered) == 3 {
 			if r, err := strconv.ParseInt(recovered[1], 10, 64); err == nil {
 				v.job.CrackedHashes = r
@@ -330,6 +364,7 @@ func (v *hascatTasker) Status() common.Job {
 
 	// Get the output results
 	if file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt")); err == nil {
+		log.Debug("Checking hashes-output file")
 		linescanner := bufio.NewScanner(file)
 		for linescanner.Scan() {
 			v.job.OutputData = append(v.job.OutputData, strings.Split(linescanner.Text(), ":"))
@@ -343,6 +378,7 @@ func (v *hascatTasker) Status() common.Job {
 		v.job.Status = common.STATUS_DONE
 
 		v.mux.Unlock()
+		log.WithField("jobid", v.job.UUID).Debug("Job done.")
 		return v.job
 	}
 
@@ -356,12 +392,14 @@ func (v *hascatTasker) Run() error {
 	// Check that we have not already finished this job
 	done := v.job.Status == common.STATUS_DONE || v.job.Status == common.STATUS_QUIT || v.job.Status == common.STATUS_FAILED
 	if done {
+		log.Error("Unable to start hashcatdict job, it has already finished")
 		return errors.New("Job already finished.")
 	}
 
 	// Check if this job is running
 	if v.job.Status == common.STATUS_RUNNING {
 		// Job already running so return no errors
+		log.Debug("hashcatdict job already running, doing nothing")
 		return nil
 	}
 
@@ -371,6 +409,10 @@ func (v *hascatTasker) Run() error {
 	} else {
 		v.cmd = *exec.Command(config.BinPath, v.resume...)
 	}
+	log.WithFields(log.Fields{
+		"status": v.job.Status,
+		"dir":    v.cmd.Dir,
+	}).Debug("Setup exec.command")
 
 	v.cmd.Dir = v.wd
 
@@ -399,10 +441,12 @@ func (v *hascatTasker) Run() error {
 
 	// Start the command
 	err = v.cmd.Start()
+	log.Debugf("Running command %v", v.start)
 	v.job.StartTime = time.Now()
 	if err != nil {
 		// We had an error starting to return that and quit the job
 		v.job.Status = common.STATUS_FAILED
+		log.Errorf("There was an error starting the job: %v", err)
 		return err
 	}
 
@@ -423,6 +467,8 @@ func (v *hascatTasker) Run() error {
 
 // Pause the hashcat run
 func (v *hascatTasker) Pause() error {
+	log.WithField("task", v.job.UUID).Debug("Attempting to pause hashcatdict task")
+
 	// Call status to update the job internals before pausing
 	v.Status()
 
@@ -437,10 +483,14 @@ func (v *hascatTasker) Pause() error {
 	// Change status to pause
 	v.job.Status = common.STATUS_PAUSED
 
+	log.WithField("task", v.job.UUID).Debug("Task paused successfully")
+
 	return nil
 }
 
 func (v *hascatTasker) Quit() common.Job {
+	log.WithField("task", v.job.UUID).Debug("Attempting to quit hashcatdict task")
+
 	// Call status to update the job internals before quiting
 	v.Status()
 
@@ -451,6 +501,8 @@ func (v *hascatTasker) Quit() common.Job {
 	}
 
 	v.job.Status = common.STATUS_QUIT
+
+	log.WithField("task", v.job.UUID).Debug("Task quit successfully")
 
 	return v.job
 }

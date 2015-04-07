@@ -22,6 +22,7 @@ const (
 // This can be used to quit the application or simply restart the server for the next
 // master to connect.
 func StartResource(addr string, q *Queue) chan bool {
+	log.Debug("Starting resource")
 
 	res := rpc.NewServer()
 	res.Register(q)
