@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/codegangsta/negroni"
 	"github.com/jmmcatee/cracklord/queue"
 	"github.com/unrolled/secure"
@@ -35,19 +37,50 @@ func main() {
 
 	// Check for errors
 	if confErr != nil {
-		println("Error in configuration read:")
-		println("\t" + confErr.Error())
+		println("ERROR: Unable to " + confError.Error())
+		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
 		return
 	}
+
+	genAuth := confFile.Section("General")
+	switch genConf["LogLevel"] {
+	case "Debug":
+		log.SetLevel(log.DebugLevel)
+	case "Info":
+		log.SetLevel(log.InfoLevel)
+	case "Warn":
+		log.SetLevel(log.WarnLevel)
+	case "Error":
+		log.SetLevel(log.ErrorLevel)
+	case "Fatal":
+		log.SetLevel(log.FatalLevel)
+	case "Panic":
+		log.SetLevel(log.PanicLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
+
+	if resConf["LogFile"] != "" {
+		hook, err := log_file.NewFileHook(resConf["LogFile"])
+		if err != nil {
+			println("ERROR: Unable to open log file: " + err.Error())
+		} else {
+			log.AddHook(hook)
+		}
+	}
+
+	log.WithFields(log.Fields{
+		"ip"   : *runIP,
+		"port" : *runPort,
+	}).Info("Starting queue server up.")
 
 	// Get the Authentication configuration
 	confAuth := confFile.Section("Authentication")
 	if confAuth == nil {
-		println("No authentication configuration!")
+		println("Error: Authentication configuration is required.")
+		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
 		return
 	}
-
-	fmt.Printf("%+v\n", confAuth)
 
 	// Check for type of authentication and set conf
 	switch confAuth["type"] {
@@ -59,35 +92,29 @@ func main() {
 
 		au, ok := confAuth["adminuser"]
 		if !ok {
-			println("Admin user not present...")
-			return
+			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		ap := confAuth["adminpass"]
 		if !ok {
-			println("Admin password not present...")
-			return
+			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 
 		su, ok := confAuth["standarduser"]
 		if !ok {
-			println("Standard user not present...")
-			return
+			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		sp := confAuth["standarduser"]
 		if !ok {
-			println("Standard password not present...")
-			return
+			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 
 		ru, ok := confAuth["readonlyuser"]
 		if !ok {
-			println("ReadOnly user not present...")
-			return
+			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		rp := confAuth["readonlypass"]
 		if !ok {
-			println("ReadOnly password not present...")
-			return
+			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 
 		umap[au] = ap
@@ -104,31 +131,29 @@ func main() {
 		i.Setup(umap, gmap)
 
 		server.Auth = &i
+
+		log.Info("INI authentication setup complete.")
 	case "ActiveDirectory":
 		var ad ADAuth
 
 		realm, ok := confAuth["realm"]
 		if !ok {
-			println("AD Auth chosen and no Realm given...")
-			return
+			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		ad.Realm = realm
 
 		gmap := map[string]string{}
 		ro, ok := confAuth["ReadOnlyGroup"]
 		if !ok {
-			println("No ReadOnly group provided...")
-			return
+			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		st, ok := confAuth["StandardGroup"]
 		if !ok {
-			println("No Standard group provided...")
-			return
+			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 		admin, ok := confAuth["AdminGroup"]
 		if !ok {
-			println("No Administrator group provided")
-			return
+			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
 
 		gmap[ReadOnly] = ro
@@ -138,6 +163,11 @@ func main() {
 		ad.Setup(gmap)
 
 		server.Auth = &ad
+		log.WithFields(log.Fields{
+			"readonly" : ro,
+			"standard" : st,
+			"admin"    : admin,
+		}).Info("Active directory authentication configured successfully.")
 	}
 
 	// Configure the TokenStore
@@ -159,16 +189,17 @@ func main() {
 	n := negroni.Classic()
 	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
 	n.UseHandler(server.Router())
+	log.Debug("Negroni handler started.")
 
 	// Check for given certs and generate a new one if none exist
 	var cFile, kFile string
 	if *certPath == "" || *keyPath == "" {
+		log.Info("No certificate provided, generating self-signed certificates")
 		// We need to create certs
 		err := genNewCert("") // Gen file in local directory
 
 		if err != nil {
-			println("Error generating TLS certs...")
-			return
+			log.Fatal("An error occured while attempting to generate certificates")
 		}
 
 		cFile = "cert.pem"
@@ -176,6 +207,10 @@ func main() {
 	} else {
 		cFile = *certPath
 		kFile = *keyPath
+		log.WithFields(log.Fields{
+			"public-cert" : *certPath,
+			"private-key" : *keyPath,
+		}).Info("Utilizing provided certificates")
 	}
 
 	//server.Q.AddResource("localhost:9443", "f2j983jfn293uihfnj23u9in")

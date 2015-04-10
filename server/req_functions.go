@@ -6,6 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/gorilla/mux"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/queue"
@@ -48,6 +50,8 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/jobs/{id}").Methods("PUT").HandlerFunc(a.UpdateJob)
 	r.Path("/api/jobs/{id}").Methods("DELETE").HandlerFunc(a.DeleteJob)
 
+	log.Debug("Application router handlers configured.")
+
 	return r
 }
 
@@ -67,9 +71,10 @@ func (a *AppController) Login(rw http.ResponseWriter, r *http.Request) {
 		resp.Message = RESP_CODE_BADREQ_T
 		resp.Token = ""
 
-		// TODO: Eventually need to log this error
+		log.Error("Unable to decode login information provided.")
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
+
 		return
 	}
 
@@ -80,6 +85,8 @@ func (a *AppController) Login(rw http.ResponseWriter, r *http.Request) {
 		resp.Status = RESP_CODE_UNAUTHORIZED
 		resp.Message = RESP_CODE_UNAUTHORIZED_T
 		resp.Token = ""
+
+		log.WithField("username", req.Username).Warn("Login failed.")
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
@@ -104,6 +111,7 @@ func (a *AppController) Login(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+	log.WithField("username", req.Username).Info("User successfully logged in")
 }
 
 // Logout endpoint (POST - /api/logout)
@@ -117,6 +125,7 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 	// Get the authorization header
 	token := r.Header.Get("AuthorizationToken")
 
+	u := a.T.GetUser(token)
 	a.T.RemoveToken(token)
 
 	resp.Status = RESP_CODE_OK
@@ -124,6 +133,7 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+	log.WithField("username", u.Username).Info("User successfully logged out.")
 }
 
 // List Tools endpoint (GET - /api/tools)
@@ -143,6 +153,7 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("token", token).Warn("An unknown user token attempted to list tools.")
 		return
 	}
 
@@ -154,12 +165,18 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("user", user.Username).Warn("An unauthorized user token attempted to list tools.")
 		return
 	}
 
 	// Get the tools list from the Queue
 	for _, t := range a.Q.Tools() {
 		resp.Tools = append(resp.Tools, APITool{t.UUID, t.Name, t.Version})
+		log.WithFields(log.Fields{
+			"uuid" : t.UUID,
+			"name" : t.Name,
+			"ver"  : t.Version,
+		}).Debug("Gathered tool")
 	}
 
 	// Build response
@@ -168,6 +185,7 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+	log.Info("Provided a tool listing to API")
 }
 
 // Get Tool Endpoint (GET - /api/tools/{id})
@@ -187,6 +205,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("token", token).Warn("An unknown user token attempted to get tool details.")
 		return
 	}
 
@@ -198,6 +217,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("user", user.Username).Warn("An unauthorized user token attempted to get tool details.")
 		return
 	}
 
@@ -239,6 +259,11 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"name": tool.Name,
+		"ver" : tool.Version,
+	}).Info("Detailed information on tool sent to API")
 }
 
 // Get Job list (GET - /api/jobs)
@@ -258,6 +283,7 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("token", token).Warn("An unknown user token attempted to get a job listing")
 		return
 	}
 
@@ -277,6 +303,11 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 		job.ToolID = j.ToolUUID
 
 		resp.Jobs = append(resp.Jobs, job)
+		log.WithFields(log.Fields{
+			"uuid"   : j.UUID,
+			"name"   : j.Name,
+			"status" : j.Status,
+		}).Debug("Gathered job for query listing.")
 	}
 
 	// Return the results
@@ -306,6 +337,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.Warn("An unknown token attempted to create a job.")
 		return
 	}
 
@@ -317,6 +349,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+		log.WithField("user", user.Username).Warn("An unauthorized user attempted to create a job.")
 		return
 	}
 
@@ -352,6 +385,11 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"uuid" : job.UUID, 
+		"name" : job.Name,
+	}).Info("New job created.")
 }
 
 // Read an individual Job (GET - /api/jobs/{id})
@@ -371,6 +409,9 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to read job data.")
+
 		return
 	}
 
@@ -401,6 +442,11 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"uuid" : job.UUID, 
+		"name" : job.Name,
+	}).Info("Job detailed information gathered.")
 }
 
 // Update a job
@@ -422,6 +468,9 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to update job data.")
+
 		return
 	}
 
@@ -433,6 +482,9 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("user", user).Warn("An unauthorized user attempted to update job data.")
+
 		return
 	}
 
@@ -444,6 +496,9 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
+
+		log.Error("An error occured while trying to decode updated job data.")
+
 		return
 	}
 
@@ -494,6 +549,12 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"uuid"   : job.UUID, 
+		"name"   : job.Name,
+		"status" : job.Status,
+	}).Info("Job information updated.")
 }
 
 func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
@@ -512,6 +573,9 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to delete a job.")
+
 		return
 	}
 
@@ -523,6 +587,9 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to delete a job.")
+
 		return
 	}
 
@@ -537,6 +604,12 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"jobid": jobid,
+			"error": err.String(),
+		}).Error("An error occured while trying to delete a job.")
+
 		return
 	}
 
@@ -546,6 +619,10 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"jobid": jobid,
+	}).Info("Job deleted.")
 }
 
 // List Resource API function
@@ -565,6 +642,9 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to list resources.")
+
 		return
 	}
 
@@ -576,6 +656,9 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to list resources.")	
+
 		return
 	}
 
@@ -596,6 +679,13 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		resp.Resources = append(resp.Resources, apires)
+
+		log.WithFields(log.Fields{
+			"id"   : r.UUID, 
+			"name" : r.Name,
+			"addr" : r.Address,
+		}).Debug("Gathered resource information.")
+
 	}
 
 	// Job should now be removed, so return all OK
@@ -604,6 +694,8 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.Info("Listing of resources provided to API.")
 }
 
 func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) {
@@ -624,6 +716,9 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to connect to a resource.")
+
 		return
 	}
 
@@ -635,6 +730,9 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to connect to a resource.")
+
 		return
 	}
 
@@ -646,6 +744,11 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"error": err.String(),
+		}).Error("An error occured while trying to decode resource creation information.")
+
 		return
 	}
 
@@ -657,6 +760,14 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"error": err.String(),
+			"addr" : req.Address,
+			"name" : req.Name,
+			"key"  : req.Key,
+		}).Error("An error occured adding a resource.")
+
 		return
 	}
 
@@ -666,6 +777,8 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithField("name", req.Name).Info("Resource successfully added.")
 }
 
 func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
@@ -684,6 +797,9 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to get resource information.")
+
 		return
 	}
 
@@ -695,6 +811,9 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to get resource information.")
+
 		return
 	}
 
@@ -714,8 +833,19 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 				resp.Resource.Status = "running"
 			}
 
+			log.WithFields(log.Field{
+				"uuid" : r.UUID,
+				"name" : r.Name,
+				"addr" : r.Address,
+			}).Debug("Gathered resource information.")
+
 			for _, t := range r.Tools {
 				resp.Resource.Tools = append(resp.Resource.Tools, APITool{t.UUID, t.Name, t.Version})
+				log.WithFields(log.Field{
+					"uuid" : t.UUID,
+					"name" : t.Name,
+					"ver"  : t.Version,
+				}).Debug("Tool on resource gathered.")
 			}
 		}
 	}
@@ -728,6 +858,8 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithField("name", r.Name).Info("Information gathered on resource.")
 }
 
 func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request) {
@@ -748,6 +880,9 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to update resource information.")
+
 		return
 	}
 
@@ -759,6 +894,9 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("user", user.Username).Warn("An unauthorized user attempted to update resource information.")
+
 		return
 	}
 
@@ -770,6 +908,9 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
+
+		log.WithField("error", error.String()).Error("An error occured while trying to decode resource update data.")
+
 		return
 	}
 
@@ -797,6 +938,12 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 			rw.WriteHeader(RESP_CODE_ERROR)
 			respJSON.Encode(resp)
+
+			log.WithFields(log.Fields{
+				"error"    : err.String(),
+				"resource" : resID,
+			}).Error("An error occured while trying to resume resource.")
+
 			return
 		}
 	}
@@ -809,6 +956,11 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithFields(log.Fields{
+		"resource" : resID,
+		"status"   : req.Status,
+	}).Info("Resource updated.")
 }
 
 func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request) {
@@ -827,6 +979,9 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to delete a resource.")
+
 		return
 	}
 
@@ -838,6 +993,9 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to delete a resource.")
+
 		return
 	}
 
@@ -852,6 +1010,12 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"error"   : err.String(),
+			"resource": resID,
+		}).Error("An error occured while trying to delete a resource.")
+
 		return
 	}
 
@@ -863,4 +1027,6 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
+
+	log.WithField("resource", resID).Info("Resource disconnected.")
 }

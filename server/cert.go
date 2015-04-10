@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	log "github.com/Sirupsen/logrus"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ func genNewCert(path string) error {
 
 	priv, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to generate secure key to create certificate.")
 		return err
 	}
 
@@ -31,6 +33,7 @@ func genNewCert(path string) error {
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 
 	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to properly gather random numbers.")
 		return err
 	}
 
@@ -54,11 +57,13 @@ func genNewCert(path string) error {
 	pub := &priv.PublicKey
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, pub, priv)
 	if err != nil {
+		log.WithField("error", err.Error()).Error("An error occured while creating a certificate.")
 		return err
 	}
 
 	certOut, err := os.Create(filepath.Join(path, "cert.pem"))
 	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to write PEM file for certificate.")
 		return err
 	}
 
@@ -68,11 +73,13 @@ func genNewCert(path string) error {
 
 	keyOut, err := os.OpenFile("cert.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to write private key file.")
 		return err
 	}
 
 	b, err := x509.MarshalECPrivateKey(priv)
 	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to marshal private key.")
 		return err
 	}
 
@@ -80,10 +87,13 @@ func genNewCert(path string) error {
 
 	keyOut.Close()
 
+	log.Debug("Private and public cert files created.")
+
 	return nil
 }
 
 func removeGenCert(path string) {
 	os.Remove(filepath.Join(path, "cert.pem"))
 	os.Remove(filepath.Join(path, "cert.key"))
+	log.Debug("Certificate files deleted.")
 }

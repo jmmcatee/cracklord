@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"github.com/jmckaskill/gokerb"
 	"github.com/jmmcatee/goldap/ad"
+	log "github.com/Sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -18,11 +19,13 @@ type ADAuth struct {
 // constant is expected.
 func (a *ADAuth) Setup(mapping map[string]string) {
 	a.GroupMap = mapping
+	log.Debug("AD authentication setup complete")
 }
 
 // Function to configure the realm of the AD auth
 func (a *ADAuth) SetRealm(realm string) {
 	a.Realm = strings.ToUpper(realm)
+	log.WithField("realm", realm).Debug("AD authentication realm set.")
 }
 
 // Function to log in a user
@@ -34,15 +37,22 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 		Rand: rand.Reader,
 	}
 
+	logger := log.WithFields(log.Fields{
+		"user" : user,
+		"realm": a.Realm,
+	})
+
 	// Verify the validity of user and password
 	creds, err := kerb.NewCredential(user, a.Realm, pass, &credConf)
 	if err != nil {
+		log.Error("Error verifying kerberos credentials.")
 		return User{}, err
 	}
 
 	// Get a ticket to prove the creds are valid
 	_, err = creds.GetTicket("krbtgt/"+a.Realm, nil)
 	if err != nil {
+		log.Error("Error gathering kerberos ticket.")
 		return User{}, err
 	}
 
@@ -57,6 +67,7 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	}
 
 	for _, g := range adUser.Member {
+		log.WithField("group", g).Debug("Checking AD group.")
 		// Check if the AD group has a mapping
 		if clGroup, ok := a.GroupMap[g.String()]; ok {
 			// Group existed so store the result in the User structure

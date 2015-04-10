@@ -140,7 +140,9 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 		log.Warn("An error occured, we could not find the tool requested")
 		return errors.New(ERROR_NO_TOOL)
 	}
-	log.WithField("tasker", tasker).Debug("Tasker created")
+	log.WithFields(log.Fields{
+		"task": rpc.Job.UUID,
+	}).Debug("Tasker created")
 
 	// Looks good so lets add to the stack
 	q.Lock()
@@ -165,7 +167,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 }
 
 func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("job", j).Debug("Attempting to gather task status")
+	log.WithField("task", j.UUID).Debug("Attempting to gather task status")
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		log.Warn("Authentication token was not matched")
@@ -178,7 +180,7 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 
 	// Check for a bad UUID
 	if ok != false {
-		log.WithField("job", j).Debug("Task with UUID provided does not exist.")
+		log.WithField("task", j.UUID).Error("Task with UUID provided does not exist.")
 		errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -190,7 +192,7 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 }
 
 func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("job", j).Debug("Attempting to pause job")
+	log.WithField("task", j.UUID).Debug("Attempting to pause task")
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		return errors.New(ERROR_AUTH)
@@ -202,7 +204,7 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 
 	// Check for a bad UUID
 	if ok {
-		log.WithField("job", j).Debug("Task with UUID provided does not exist.")
+		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
 		errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -218,13 +220,13 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 	*j = q.stack[rpc.Job.UUID].Status()
 	q.Unlock()
 
-	log.WithField("job", j).Debug("Job paused successfully")
+	log.WithField("task", j.UUID).Debug("Task paused successfully")
 
 	return nil
 }
 
 func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("job", j).Debug("Attempting to run job")
+	log.WithField("task", j.UUID).Debug("Attempting to run task")
 
 	// Check authentication token
 	if rpc.Auth != q.authToken {
@@ -237,7 +239,7 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 
 	// Check for a bad UUID
 	if ok != false {
-		log.WithField("job", j).Debug("Task with UUID provided does not exist.")
+		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
 		errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -250,14 +252,14 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 	*j = q.stack[rpc.Job.UUID].Status()
 	q.Unlock()
 
-	log.WithField("job", j).Debug("Job ran successfully")
+	log.WithField("task", j.UUID).Debug("Task ran successfully")
 
 	return nil
 
 }
 
 func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("job", j).Debug("Attempting to quit job")
+	log.WithField("task", j.UUID).Debug("Attempting to quit task")
 
 	// Check authentication token
 	if rpc.Auth != q.authToken {
@@ -270,7 +272,7 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 
 	// Check for a bad UUID
 	if ok != false {
-		log.WithField("job", j).Debug("Task with UUID provided does not exist.")
+		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
 		errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -281,7 +283,7 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	delete(q.stack, rpc.Job.UUID)
 	q.Unlock()
 
-	log.WithField("job", j).Debug("Job ran successfully")
+	log.WithField("task", j.UUID).Debug("Task ran successfully")
 
 	return nil
 }

@@ -378,11 +378,14 @@ func (v *hascatTasker) Status() common.Job {
 		v.job.Status = common.STATUS_DONE
 
 		v.mux.Unlock()
-		log.WithField("jobid", v.job.UUID).Debug("Job done.")
+		log.WithField("jobid", v.job.UUID).Info("Job done.")
 		return v.job
 	}
 
-	log.Printf("Job: %+v\n", v.job)
+	log.WithFields(log.Fields{
+		"task":   v.job.UUID,
+		"status": v.job.Status,
+	}).Info("Ongoing task status")
 
 	v.mux.Unlock()
 	return v.job
@@ -392,7 +395,7 @@ func (v *hascatTasker) Run() error {
 	// Check that we have not already finished this job
 	done := v.job.Status == common.STATUS_DONE || v.job.Status == common.STATUS_QUIT || v.job.Status == common.STATUS_FAILED
 	if done {
-		log.Error("Unable to start hashcatdict job, it has already finished")
+		log.Warn("Unable to start hashcatdict job, it has already finished")
 		return errors.New("Job already finished.")
 	}
 
@@ -441,7 +444,7 @@ func (v *hascatTasker) Run() error {
 
 	// Start the command
 	err = v.cmd.Start()
-	log.Debugf("Running command %v", v.start)
+	log.WithField("argument", v.start).Debug("Running command.")
 	v.job.StartTime = time.Now()
 	if err != nil {
 		// We had an error starting to return that and quit the job
