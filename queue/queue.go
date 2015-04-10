@@ -556,7 +556,6 @@ func (q *Queue) Quit() []common.Job {
 // It will need to aquire a lock each time it does this
 // The q.qk channel needs to be created and maintained outside of this function
 func (q *Queue) keeper() {
-	log.Println("----Keeper has started")
 	go func() {
 	keeperLoop:
 		for {
@@ -565,23 +564,29 @@ func (q *Queue) keeper() {
 
 			select {
 			case <-kTimer:
-				log.Println("----Queue Keeper is running....")
+				log.Info("Updating queue status and keeping jobs.")
 
 				// Get lock
-				log.Println("----Getting Queue Lock")
 				q.Lock()
 
 				// Update all running jobs
-				log.Println("----Updating the the Queue")
 				q.updateQueue()
 
 				// Look for open resources
 				for i, _ := range q.pool {
 					for r, b := range q.pool[i].Hardware {
-						log.Printf("==Res(%s): %s:%b\n", i, r, b)
 						if b {
+							log.WithFields(log.Fields{
+								"resource": q.pool[i].Name,
+								"hardware": r,
+							}).Debug("Found empty resource hardware")
 							// This resource is free, so lets find a job for it
 							for ji, _ := range q.stack {
+								logger := log.WithFields(log.Fields{
+									"resource": q.pool[i].Name,
+									"job":      q.stack[ji].UUID,
+								})
+
 								requirement := q.pool[i].Tools[q.stack[ji].ToolUUID].Requirements
 
 								tool, ok := q.pool[i].Tools[q.stack[ji].ToolUUID]
@@ -593,19 +598,21 @@ func (q *Queue) keeper() {
 
 								if requirement == r && resumable && ok {
 									// The job is paused so let's see if the resource that is free is the one the job needs
+									logger.Debug("Attempting to resume job.")
+
 									if q.stack[ji].ResAssigned == i {
 										// We have the resource the job needs so resume it
-										log.Println("Resuming a job on:" + i)
 
 										resumeJob := common.RPCCall{
 											Auth: q.pool[i].RPCCall.Auth,
 											Job:  q.stack[ji],
 										}
 
+										logger.Debug("Calling Queue.TaskRun to resume job.")
 										err := q.pool[i].Client.Call("Queue.TaskRun", resumeJob, &q.stack[ji])
 										if err != nil {
 											// We had an error resuming the job
-											log.Println("Resource Error: " + err.Error())
+											logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
 										} else {
 											// No errors so mark the resource as used
 											q.pool[i].Hardware[r] = false
@@ -617,7 +624,7 @@ func (q *Queue) keeper() {
 								if requirement == r && startable && ok {
 									// Found a task that can be started and needs this resource
 									// Build the call
-									log.Println("Starting a new job on:" + i)
+									logger.Debug("Attempting to start job.")
 
 									// It is now possible that the job about to be assigned to the resource
 									// actually has a Tool UUID different than the one the Queue has for this
@@ -633,11 +640,12 @@ func (q *Queue) keeper() {
 										Job:  q.stack[ji],
 									}
 
+									logger.Debug("Calling Queue.AddTask to resume job.")
 									err := q.pool[i].Client.Call("Queue.AddTask", startJob, &q.stack[ji])
 									if err != nil {
 										// something went wrong so log it, but the keeper will get this
 										// resource the next time through
-										log.Println(err.Error())
+										logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
 									} else {
 										// there were no errors so lets take up the hardware resource
 										q.stack[ji].ResAssigned = i
@@ -651,14 +659,13 @@ func (q *Queue) keeper() {
 				}
 
 				// Release the Lock
-				log.Println("----Releasing the lock")
 				q.Unlock()
 			case <-q.qk:
-				log.Println("Keeper has been quit.")
+				log.Debug("Keeper has been quit.")
 				break keeperLoop
 			}
 		}
-		log.Println("--------------------Keeper is dead.")
+		log.Info("Queue keeper has successfully stopped.")
 	}()
 }
 
