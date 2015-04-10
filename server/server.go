@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/codegangsta/negroni"
+	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/queue"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
@@ -37,12 +36,12 @@ func main() {
 
 	// Check for errors
 	if confErr != nil {
-		println("ERROR: Unable to " + confError.Error())
+		println("ERROR: Unable to " + confErr.Error())
 		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
 		return
 	}
 
-	genAuth := confFile.Section("General")
+	genConf := confFile.Section("General")
 	switch genConf["LogLevel"] {
 	case "Debug":
 		log.SetLevel(log.DebugLevel)
@@ -60,8 +59,8 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	if resConf["LogFile"] != "" {
-		hook, err := log_file.NewFileHook(resConf["LogFile"])
+	if genConf["LogFile"] != "" {
+		hook, err := log_file.NewFileHook(genConf["LogFile"])
 		if err != nil {
 			println("ERROR: Unable to open log file: " + err.Error())
 		} else {
@@ -70,8 +69,8 @@ func main() {
 	}
 
 	log.WithFields(log.Fields{
-		"ip"   : *runIP,
-		"port" : *runPort,
+		"ip":   *runIP,
+		"port": *runPort,
 	}).Info("Starting queue server up.")
 
 	// Get the Authentication configuration
@@ -164,9 +163,9 @@ func main() {
 
 		server.Auth = &ad
 		log.WithFields(log.Fields{
-			"readonly" : ro,
-			"standard" : st,
-			"admin"    : admin,
+			"readonly": ro,
+			"standard": st,
+			"admin":    admin,
 		}).Info("Active directory authentication configured successfully.")
 	}
 
@@ -208,8 +207,8 @@ func main() {
 		cFile = *certPath
 		kFile = *keyPath
 		log.WithFields(log.Fields{
-			"public-cert" : *certPath,
-			"private-key" : *keyPath,
+			"public-cert": *certPath,
+			"private-key": *keyPath,
 		}).Info("Utilizing provided certificates")
 	}
 

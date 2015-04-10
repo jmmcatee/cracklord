@@ -2,9 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmckaskill/gokerb"
 	"github.com/jmmcatee/goldap/ad"
-	log "github.com/Sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -38,21 +38,21 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	}
 
 	logger := log.WithFields(log.Fields{
-		"user" : user,
+		"user":  user,
 		"realm": a.Realm,
 	})
 
 	// Verify the validity of user and password
 	creds, err := kerb.NewCredential(user, a.Realm, pass, &credConf)
 	if err != nil {
-		log.Error("Error verifying kerberos credentials.")
+		logger.Error("Error verifying kerberos credentials.")
 		return User{}, err
 	}
 
 	// Get a ticket to prove the creds are valid
 	_, err = creds.GetTicket("krbtgt/"+a.Realm, nil)
 	if err != nil {
-		log.Error("Error gathering kerberos ticket.")
+		logger.Error("Error gathering kerberos ticket.")
 		return User{}, err
 	}
 
@@ -67,7 +67,7 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	}
 
 	for _, g := range adUser.Member {
-		log.WithField("group", g).Debug("Checking AD group.")
+		logger.WithField("group", g).Debug("Checking AD group.")
 		// Check if the AD group has a mapping
 		if clGroup, ok := a.GroupMap[g.String()]; ok {
 			// Group existed so store the result in the User structure

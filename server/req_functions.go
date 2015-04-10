@@ -7,11 +7,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/gorilla/mux"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/queue"
-	"log"
 	"net/http"
 )
 
@@ -125,7 +123,7 @@ func (a *AppController) Logout(rw http.ResponseWriter, r *http.Request) {
 	// Get the authorization header
 	token := r.Header.Get("AuthorizationToken")
 
-	u := a.T.GetUser(token)
+	u, _ := a.T.GetUser(token)
 	a.T.RemoveToken(token)
 
 	resp.Status = RESP_CODE_OK
@@ -173,9 +171,9 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	for _, t := range a.Q.Tools() {
 		resp.Tools = append(resp.Tools, APITool{t.UUID, t.Name, t.Version})
 		log.WithFields(log.Fields{
-			"uuid" : t.UUID,
-			"name" : t.Name,
-			"ver"  : t.Version,
+			"uuid": t.UUID,
+			"name": t.Name,
+			"ver":  t.Version,
 		}).Debug("Gathered tool")
 	}
 
@@ -262,7 +260,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	log.WithFields(log.Fields{
 		"name": tool.Name,
-		"ver" : tool.Version,
+		"ver":  tool.Version,
 	}).Info("Detailed information on tool sent to API")
 }
 
@@ -304,9 +302,9 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 
 		resp.Jobs = append(resp.Jobs, job)
 		log.WithFields(log.Fields{
-			"uuid"   : j.UUID,
-			"name"   : j.Name,
-			"status" : j.Status,
+			"uuid":   j.UUID,
+			"name":   j.Name,
+			"status": j.Status,
 		}).Debug("Gathered job for query listing.")
 	}
 
@@ -387,8 +385,8 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	respJSON.Encode(resp)
 
 	log.WithFields(log.Fields{
-		"uuid" : job.UUID, 
-		"name" : job.Name,
+		"uuid": job.UUID,
+		"name": job.Name,
 	}).Info("New job created.")
 }
 
@@ -444,8 +442,8 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	respJSON.Encode(resp)
 
 	log.WithFields(log.Fields{
-		"uuid" : job.UUID, 
-		"name" : job.Name,
+		"uuid": job.UUID,
+		"name": job.Name,
 	}).Info("Job detailed information gathered.")
 }
 
@@ -551,9 +549,9 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 	respJSON.Encode(resp)
 
 	log.WithFields(log.Fields{
-		"uuid"   : job.UUID, 
-		"name"   : job.Name,
-		"status" : job.Status,
+		"uuid":   j.UUID,
+		"name":   j.Name,
+		"status": j.Status,
 	}).Info("Job information updated.")
 }
 
@@ -607,7 +605,7 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 
 		log.WithFields(log.Fields{
 			"jobid": jobid,
-			"error": err.String(),
+			"error": err.Error(),
 		}).Error("An error occured while trying to delete a job.")
 
 		return
@@ -657,7 +655,7 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
 
-		log.WithField("username", user.Username).Warn("An unauthorized user attempted to list resources.")	
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to list resources.")
 
 		return
 	}
@@ -681,9 +679,9 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		resp.Resources = append(resp.Resources, apires)
 
 		log.WithFields(log.Fields{
-			"id"   : r.UUID, 
-			"name" : r.Name,
-			"addr" : r.Address,
+			"id":   r.UUID,
+			"name": r.Name,
+			"addr": r.Address,
 		}).Debug("Gathered resource information.")
 
 	}
@@ -746,7 +744,7 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"error": err.String(),
+			"error": err.Error(),
 		}).Error("An error occured while trying to decode resource creation information.")
 
 		return
@@ -762,10 +760,10 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"error": err.String(),
-			"addr" : req.Address,
-			"name" : req.Name,
-			"key"  : req.Key,
+			"error": err.Error(),
+			"addr":  req.Address,
+			"name":  req.Name,
+			"key":   req.Key,
 		}).Error("An error occured adding a resource.")
 
 		return
@@ -833,18 +831,18 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 				resp.Resource.Status = "running"
 			}
 
-			log.WithFields(log.Field{
-				"uuid" : r.UUID,
-				"name" : r.Name,
-				"addr" : r.Address,
+			log.WithFields(log.Fields{
+				"uuid": r.UUID,
+				"name": r.Name,
+				"addr": r.Address,
 			}).Debug("Gathered resource information.")
 
 			for _, t := range r.Tools {
 				resp.Resource.Tools = append(resp.Resource.Tools, APITool{t.UUID, t.Name, t.Version})
-				log.WithFields(log.Field{
-					"uuid" : t.UUID,
-					"name" : t.Name,
-					"ver"  : t.Version,
+				log.WithFields(log.Fields{
+					"uuid": t.UUID,
+					"name": t.Name,
+					"ver":  t.Version,
 				}).Debug("Tool on resource gathered.")
 			}
 		}
@@ -859,7 +857,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
 
-	log.WithField("name", r.Name).Info("Information gathered on resource.")
+	log.WithField("name", resp.Resource.Name).Info("Information gathered on resource.")
 }
 
 func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request) {
@@ -909,7 +907,7 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
 
-		log.WithField("error", error.String()).Error("An error occured while trying to decode resource update data.")
+		log.WithField("error", err.Error()).Error("An error occured while trying to decode resource update data.")
 
 		return
 	}
@@ -940,8 +938,8 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 			respJSON.Encode(resp)
 
 			log.WithFields(log.Fields{
-				"error"    : err.String(),
-				"resource" : resID,
+				"error":    err.Error(),
+				"resource": resID,
 			}).Error("An error occured while trying to resume resource.")
 
 			return
@@ -958,8 +956,8 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 	respJSON.Encode(resp)
 
 	log.WithFields(log.Fields{
-		"resource" : resID,
-		"status"   : req.Status,
+		"resource": resID,
+		"status":   req.Status,
 	}).Info("Resource updated.")
 }
 
@@ -1012,7 +1010,7 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"error"   : err.String(),
+			"error":    err.Error(),
 			"resource": resID,
 		}).Error("An error occured while trying to delete a resource.")
 

@@ -3,8 +3,8 @@ package queue
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"errors"
-	"github.com/jmmcatee/cracklord/common"
 	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
 	"strings"
 	"sync"
@@ -45,8 +45,8 @@ func NewQueue() Queue {
 // Add a job to the queue at the end of the stack
 func (q *Queue) AddJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
-		"jobid"   : j.UUID,
-		"jobname" : j.Name,
+		"jobid":   j.UUID,
+		"jobname": j.Name,
 	})
 
 	// Lock the queue for the adding work
@@ -82,7 +82,7 @@ func (q *Queue) AddJob(j common.Job) error {
 			if ok {
 				logger.WithFields(log.Fields{
 					"resource": q.pool[i].Name,
-					"tool"    : tool.Name,
+					"tool":     tool.Name,
 				}).Debug("Tool exists on resource.")
 
 				// It is now possible that the job about to be assigned to the resource
@@ -164,7 +164,7 @@ func (q *Queue) JobInfo(jobUUID string) common.Job {
 }
 
 func (q *Queue) PauseJob(jobuuid string) error {
-	log.WithField("job", jobUUID).Info("Attempting to pause job.")
+	log.WithField("job", jobuuid).Info("Attempting to pause job.")
 	q.Lock()
 	defer q.Unlock()
 
@@ -172,8 +172,8 @@ func (q *Queue) PauseJob(jobuuid string) error {
 	for i, _ := range q.stack {
 		if q.stack[i].UUID == jobuuid {
 			log.WithFields(log.Fields{
-				"job"    : jobUUID,
-				"status" : q.stack[i].Status
+				"job":    jobuuid,
+				"status": q.stack[i].Status,
 			}).Debug("Job found in queue.")
 
 			// We have found the job so lets see if it running
@@ -185,11 +185,11 @@ func (q *Queue) PauseJob(jobuuid string) error {
 				}
 
 				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
-				log.WithField("job", jobUUID).Debug("Calling Queue.TaskPause on remote resource.")
+				log.WithField("job", jobuuid).Debug("Calling Queue.TaskPause on remote resource.")
 				if err != nil {
 					log.WithFields(log.Fields{
-						"job"   : jobUUID, 
-						"error" : err.Error(), 
+						"job":   jobuuid,
+						"error": err.Error(),
 					}).Error("An error occurred while trying to pause a remote job.")
 					return err
 				}
@@ -211,7 +211,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 }
 
 func (q *Queue) QuitJob(jobuuid string) error {
-	log.WithField("job", jobUUID).Info("Attempting to pause job.")
+	log.WithField("job", jobuuid).Info("Attempting to pause job.")
 
 	q.Lock()
 	defer q.Unlock()
@@ -220,8 +220,8 @@ func (q *Queue) QuitJob(jobuuid string) error {
 	for i, _ := range q.stack {
 		if q.stack[i].UUID == jobuuid {
 			log.WithFields(log.Fields{
-				"job"    : jobUUID,
-				"status" : q.stack[i].Status
+				"job":    jobuuid,
+				"status": q.stack[i].Status,
 			}).Debug("Job found in queue.")
 
 			// We have found the job so lets check that it isn't already done
@@ -234,11 +234,11 @@ func (q *Queue) QuitJob(jobuuid string) error {
 				}
 
 				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
-				log.WithField("job", jobUUID).Debug("Attempting to call Queue.TaskQuit on remote resource.")
+				log.WithField("job", jobuuid).Debug("Attempting to call Queue.TaskQuit on remote resource.")
 				if err != nil {
 					log.WithFields(log.Fields{
-						"job"   : jobUUID, 
-						"error" : err.Error(), 
+						"job":   jobuuid,
+						"error": err.Error(),
 					}).Error("An error occurred while trying to quit a remote job.")
 					return err
 				}
@@ -268,8 +268,8 @@ func (q *Queue) RemoveJob(jobuuid string) error {
 	for i, _ := range q.stack {
 		if q.stack[i].UUID == jobuuid {
 			log.WithFields(log.Fields{
-				"job"    : jobUUID,
-				"status" : q.stack[i].Status
+				"job":    jobuuid,
+				"status": q.stack[i].Status,
 			}).Debug("Job found in queue.")
 
 			// We have the job so check to make sure it isn't running
@@ -315,9 +315,9 @@ func (q *Queue) PauseResource(resUUID string) error {
 	// Loop through and pause any tasks running on the selected resource
 	for i, _ := range q.stack {
 		log.WithFields(log.Fields{
-			"resource"  : q.stack[i].ResAssigned,
-			"job"       : q.stack[i].UUID,
-			"jobstatus" : q.stack[i].Status,
+			"resource":  q.stack[i].ResAssigned,
+			"job":       q.stack[i].UUID,
+			"jobstatus": q.stack[i].Status,
 		}).Debug("Identifying running jobs on paused resource.")
 
 		if q.stack[i].ResAssigned == resUUID && q.stack[i].Status == common.STATUS_RUNNING {
@@ -385,9 +385,9 @@ func (q *Queue) PauseQueue() []error {
 	for i, _ := range q.stack {
 		if q.stack[i].Status == common.STATUS_RUNNING {
 			joblog := log.WithFields(log.Fields{
-				"resource"  : q.stack[i].ResAssigned,
-				"job"       : q.stack[i].UUID,
-				"jobstatus" : q.stack[i].Status,
+				"resource":  q.stack[i].ResAssigned,
+				"job":       q.stack[i].UUID,
+				"jobstatus": q.stack[i].Status,
 			})
 			joblog.Debug("Found running job, attempting to stop")
 
@@ -499,9 +499,8 @@ func (q *Queue) Quit() []common.Job {
 	// First order of business is to kill the keeper
 	log.Info("Quitting Keeper")
 	if q.qk != nil {
-		log.Info("Sending kill message")
 		q.qk <- true
-		log.Info("Kill message sent")
+		log.Debug("Kill message sent")
 	}
 
 	q.Lock()
@@ -510,16 +509,15 @@ func (q *Queue) Quit() []common.Job {
 	q.qk = nil
 
 	// Now we need to be 100% up-to-date
-	log.Debug("Updating Jobs")
 	q.updateQueue()
 
 	// Loop through and quit any job that is not done, failed, quit
 	log.Debug("Looping through stack")
 	for i, _ := range q.stack {
 		joblog := log.WithFields(log.Fields{
-			"resource"  : q.stack[i].ResAssigned,
-			"job"       : q.stack[i].UUID,
-			"jobstatus" : q.stack[i].Status,
+			"resource":  q.stack[i].ResAssigned,
+			"job":       q.stack[i].UUID,
+			"jobstatus": q.stack[i].Status,
 		})
 		joblog.Debug("Looping through all jobs and quitting.")
 
@@ -533,7 +531,7 @@ func (q *Queue) Quit() []common.Job {
 				Job:  q.stack[i],
 			}
 
-			joblog.Debug("Quiting Task")
+			joblog.Debug("Quiting tasks")
 			err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
 			// Log any errors but we don't care from a flow perspective
 			if err != nil {
@@ -544,7 +542,7 @@ func (q *Queue) Quit() []common.Job {
 
 	// Get rid of all the resource
 	for i, _ := range q.pool {
-		log.WithField("resource", q.pool[i].Name).("Quiting resource.")
+		log.WithField("resource", q.pool[i].Name).Info("Stopping resource.")
 		q.pool[i].Client.Close()
 		delete(q.pool, i)
 	}
