@@ -26,7 +26,7 @@ func main() {
 	var confFile ini.File
 	var confErr error
 	if *confPath == "" {
-		confFile, confErr = ini.LoadFile("./cracklord.ini")
+		confFile, confErr = ini.LoadFile("./queueserver.ini")
 	} else {
 		confFile, confErr = ini.LoadFile(*confPath)
 	}

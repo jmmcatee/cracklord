@@ -42,7 +42,7 @@ func main() {
 	}
 
 	//  Check for auth token
-	resConf := confFile.Section("Resource")
+	resConf := confFile.Section("General")
 	if len(resConf) == 0 {
 		// We do not have configuration data to quit
 		println("ERROR: There was a problem with your configuration file.")
