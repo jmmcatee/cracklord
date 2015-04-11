@@ -30,7 +30,7 @@ func main() {
 	var confFile ini.File
 	var confError error
 	if *confPath == "" {
-		confFile, confError = ini.LoadFile("./resource.ini")
+		confFile, confError = ini.LoadFile("./resourceserver.ini")
 	} else {
 		confFile, confError = ini.LoadFile(*confPath)
 	}
