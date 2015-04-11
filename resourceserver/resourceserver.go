@@ -74,7 +74,7 @@ func main() {
 	}
 
 	if resConf["LogFile"] != "" {
-		hook, err := log_file.NewFileHook(resConf["LogFile"])
+		hook, err := cracklog.NewFileHook(resConf["LogFile"])
 		if err != nil {
 			println("ERROR: Unable to open log file: " + err.Error())
 		} else {

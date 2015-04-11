@@ -60,7 +60,7 @@ func main() {
 	}
 
 	if genConf["LogFile"] != "" {
-		hook, err := log_file.NewFileHook(genConf["LogFile"])
+		hook, err := cracklog.NewFileHook(genConf["LogFile"])
 		if err != nil {
 			println("ERROR: Unable to open log file: " + err.Error())
 		} else {
@@ -185,7 +185,7 @@ func main() {
 	})
 
 	// Build the Negroni handler
-	n := negroni.Classic()
+	n := negroni.New(negroni.NewRecovery(), cracklog.NewNegroniLogger(), negroni.NewStatic(http.Dir("public")))
 	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
 	n.UseHandler(server.Router())
 	log.Debug("Negroni handler started.")
@@ -211,8 +211,6 @@ func main() {
 			"private-key": *keyPath,
 		}).Info("Utilizing provided certificates")
 	}
-
-	//server.Q.AddResource("localhost:9443", "f2j983jfn293uihfnj23u9in")
 
 	http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
 }
