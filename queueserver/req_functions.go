@@ -88,6 +88,8 @@ func (a *AppController) Login(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
 		respJSON.Encode(resp)
+
+		return
 	}
 
 	// Generate token

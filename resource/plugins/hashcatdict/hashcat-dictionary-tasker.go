@@ -41,31 +41,31 @@ var regGetDenominator *regexp.Regexp
 var regGetPercent *regexp.Regexp
 
 var speedMagH = map[string]float64{
-	"Hashes per sec.":          1,
-	"Thousand hashes per sec.": 1000,
-	"Million hashes per sec.":  1000000,
-	"Billion hashes per sec.":  1000000000,
+	"H/s":   1,
+	"kH/s":  1000,
+	"MH/s":  1000000,
+	"GH/s":  1000000000,
 }
 
 var speedMagK = map[string]float64{
-	"Hashes per sec.":          1 / 1000,
-	"Thousand hashes per sec.": 1,
-	"Million hashes per sec.":  1000,
-	"Billion hashes per sec.":  1000000,
+	"H/s":   1 / 1000,
+	"kH/s":  1,
+	"MH/s":  1000,
+	"GH/s":  1000000,
 }
 
 var speedMagM = map[string]float64{
-	"Hashes per sec.":          1 / 1000000,
-	"Thousand hashes per sec.": 1 / 1000,
-	"Million hashes per sec.":  1,
-	"Billion hashes per sec.":  1000,
+	"H/s":   1 / 1000000,
+	"kH/s":  1 / 1000,
+	"MH/s":  1,
+	"GH/s":  1000,
 }
 
 var speedMagG = map[string]float64{
-	"Hashes per sec.":          1 / 1000000000,
-	"Thousand hashes per sec.": 1 / 1000000,
-	"Million hashes per sec.":  1 / 1000,
-	"Billion hashes per sec.":  1,
+	"H/s":   1 / 1000000000,
+	"kH/s":  1 / 1000000,
+	"MH/s":  1 / 1000,
+	"GH/s":  1,
 }
 
 func init() {
@@ -264,7 +264,6 @@ func (v *hascatTasker) Status() common.Job {
 
 		// Get the speed of one or more GPUs
 		speeds := regGPUSpeed.FindAllStringSubmatch(status, -1)
-		log.WithField("speeds", speeds).Debug("GPU speed processed")
 		if len(speeds) > 1 {
 			// We have more than one GPU so loop through and find the combined total
 			for _, speedString := range speeds {
