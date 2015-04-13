@@ -365,8 +365,12 @@ func (v *hascatTasker) Status() common.Job {
 	if file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt")); err == nil {
 		log.Debug("Checking hashes-output file")
 		linescanner := bufio.NewScanner(file)
+		var linetmp [][]string
 		for linescanner.Scan() {
-			v.job.OutputData = append(v.job.OutputData, strings.Split(linescanner.Text(), ":"))
+			linetmp = append(linetmp, strings.Split(linescanner.Text(), ":"))
+		}
+		if len(linetmp) > 0 {
+			v.job.OutputData = linetmp
 		}
 	}
 
