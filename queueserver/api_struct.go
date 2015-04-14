@@ -64,7 +64,7 @@ type APIJob struct {
 	StartTime     time.Time `json:"starttime"`
 	CrackedHashes int64     `json:"crackedhashes"`
 	TotalHashes   int64     `json:"totalhashes"`
-	Progress      int       `json:"progress"`
+	Progress      float64   `json:"progress"`
 	ToolID        string    `json:"toolid"`
 }
 
@@ -77,7 +77,7 @@ type APIJobDetail struct {
 	StartTime        time.Time         `json:"starttime"`
 	CrackedHashes    int64             `json:"crackedhashes"`
 	TotalHashes      int64             `json:"totalhashes"`
-	Progress         int               `json:"progress"`
+	Progress         float64           `json:"progress"`
 	Params           map[string]string `json:"params"`
 	ToolID           string            `json:"toolid"`
 	PerformanceTitle string            `json:"performancetitle"`

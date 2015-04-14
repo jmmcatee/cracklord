@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -233,16 +232,13 @@ func (v *hascatTasker) Status() common.Job {
 
 		//Time to gather the progress
 		progMatch := regProgress.FindStringSubmatch(status)
+		log.WithField("progMatch", progMatch).Debug("Matching progress info")
 
 		if(len(progMatch) == 4) {
-			progLow, err := strconv.ParseFloat(progMatch[1], 64)
-			progHigh, err := strconv.ParseFloat(progMatch[2], 64)
-			if err != nil {
-				log.WithFields(log.Fields {
-					"low"  : progLow,
-					"high" : progHigh,
-				}).Debug("Calculating progress.")
-				v.job.Progress = int(math.Floor(progLow / progHigh * 100))
+			prog, err := strconv.ParseFloat(progMatch[3], 64)
+			if err == nil {
+				v.job.Progress = prog
+				log.WithField("progress", v.job.Progress).Debug("Job progress updated.")
 			} else {
 				log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
 			}
