@@ -1,4 +1,10 @@
 <div class="row" ng-controller="ConnectResourceController">
+	<div ng-if="displayWait" class="blackout">
+		<div class="spinnercontainer">
+			<div class="spinner"><i class="fa fa-server fa-5x"></i></div>
+			<div class="message">Please wait while connecting...</div>
+		</div>
+	</div>
 	<div class="col-sm-8 col-sm-offset-2">
 		<div id="form-container">
 			<div class="page-header text-center">

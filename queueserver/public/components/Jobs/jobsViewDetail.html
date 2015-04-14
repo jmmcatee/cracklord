@@ -46,6 +46,9 @@
 						</tr>
 					</thead>
 					<tbody>
+						<tr ng-hide="detail.outputdata.length">
+							<td colspan={{detail.outputtitles.length}}>No results at this time.</td>
+						</tr>
 						<tr ng-repeat="row in detail.outputdata">
 							<td ng-repeat="cell in row">{{cell}}</td>
 						</tr>

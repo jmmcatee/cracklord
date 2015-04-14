@@ -98,7 +98,7 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 			// Mmmmmmmm.... Donut.
 			$scope.processDonut = function() {
 				$scope.donut = {};
-				$scope.donut.labels = ['Processed', 'Total'];
+				$scope.donut.labels = ['Processed', 'Remaining'];
 
 				var total = 100 - $scope.detail.progress;
 				$scope.donut.data = [$scope.detail.progress, total];
