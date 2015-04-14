@@ -117,5 +117,7 @@ func main() {
 
 	res.ServeConn(conn)
 
+	log.Info("Connection closed, stopping resource server.")
+
 	listen.Close()
 }

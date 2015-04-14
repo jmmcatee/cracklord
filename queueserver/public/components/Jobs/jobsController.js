@@ -100,9 +100,8 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 				$scope.donut = {};
 				$scope.donut.labels = ['Processed', 'Total'];
 
-				var processed = $scope.detail.totalhashes * $scope.detail.progress;
-				var total = $scope.detail.totalhashes - processed;
-				$scope.donut.data = [processed, total];
+				var total = $scope.detail.progress - 100;
+				$scope.donut.data = [$scope.detail.progress, total];
 
 				$scope.donut.colors = [ '#337ab7', '#aaaaaa' ];
 			};

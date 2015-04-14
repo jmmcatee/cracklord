@@ -80,7 +80,7 @@ func init() {
 	regTimeEstimated, err = regexp.Compile(`Time\.Estimated\.\:\s+(.+)\(.+\)`)
 	regGPUSpeed, err = regexp.Compile(`Speed\.GPU\.#([\d|\*]+)\.\.\.\:\s+(\d+\.\d+)\s+(.H/s)`)
 	regRecovered, err = regexp.Compile(`Recovered\.+:\s+(\d+)\/(\d+)`)
-	regProgress, err = regexp.Compile(`(Progress)\.\.\.\.\.\.\.\:\s+(\d+\/\d+.+)`)
+	regProgress, err = regexp.Compile(`Progress\.{7}: (\d*)/(\d*) \((\d{1,3}\.\d{2})%\)`)
 	regRejected, err = regexp.Compile(`(Rejected)\.\.\.\.\.\.\.\:\s+(\d+\/\d+.+)`)
 	regGPUHWMon, err = regexp.Compile(`(HWMon\.GPU\.#\d+)\.\.\.\:\s+(.+)`)
 
@@ -231,34 +231,20 @@ func (v *hascatTasker) Status() common.Job {
 		// We found a status so start processing the last status in Stdout
 		status := string(v.stdout.Bytes()[index[len(index)-1][0]:])
 
-		// Get start and estimated times
-		sStartTime := regTimeStarted.FindStringSubmatch(status)
-		sEstimateTime := regTimeEstimated.FindStringSubmatch(status)
+		//Time to gather the progress
+		progMatch := regProgress.FindStringSubmatch(status)
 
-		if len(sStartTime) == 1 && len(sEstimateTime) == 1 {
-			log.WithFields(log.Fields{
-				"starttime":    sStartTime[0],
-				"estimatetime": sEstimateTime[0],
-			}).Debug("Time processing")
-
-			tStartTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sStartTime[0])
-			tEstimateTime, err := time.Parse("Mon Jan 2 15:04:05 2006", sEstimateTime[0])
-
-			// See if we have ever set the start time and set it if we have not
-			if v.job.StartTime.IsZero() && err == nil {
-				v.job.StartTime = tStartTime
-			}
-
-			// Get the time estimate to finish and change into a progress in %
-			if err == nil {
-				maxTime := tEstimateTime.Sub(tStartTime).Seconds()
-				runTime := tEstimateTime.Sub(time.Now()).Seconds()
-
-				runPercent := runTime / maxTime * 100
-
-				v.job.Progress = int(math.Floor(runPercent))
-
-				log.WithField("runpercent", runPercent).Debug("Run percentage calculated")
+		if(len(progMatch) == 4) {
+			progLow, err := strconv.ParseFloat(progMatch[1], 64)
+			progHigh, err := strconv.ParseFloat(progMatch[2], 64)
+			if err != nil {
+				log.WithFields(log.Fields {
+					"low"  : progLow,
+					"high" : progHigh,
+				}).Debug("Calculating progress.")
+				v.job.Progress = int(math.Floor(progLow / progHigh * 100))
+			} else {
+				log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
 			}
 		}
 

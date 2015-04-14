@@ -49,7 +49,7 @@ type Job struct {
 	ResAssigned      string            // Resource this job is assinged to if any
 	CrackedHashes    int64             // # of hashes cracked
 	TotalHashes      int64             // # of hashes provided
-	Progress         int               // # % of cracked/provided
+	Progress         float64           // # % of cracked/provided
 	Parameters       map[string]string // Parameters returned to the tool
 	PerformanceData  map[string]string // Some performance status map[timestamp]perf#
 	PerformanceTitle string            // Title of the perf #
