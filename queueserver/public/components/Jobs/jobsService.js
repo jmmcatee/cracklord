@@ -22,14 +22,3 @@ cracklord.factory('JobsService', ['$resource', function ($resource) {
     }
   });
 }]);
-
-cracklord.factory('QueueService', ['$http', function($http) {
-  return {
-    reorder: function(jobs) {
-      data = {};
-      data.joborder = jobs;
-      return $http.put('api/queue', data);
-    }
-  };
-}]);
-

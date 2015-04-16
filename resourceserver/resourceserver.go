@@ -93,6 +93,11 @@ func main() {
 
 	//Get the configuration section for plugins
 	pluginConf := confFile.Section("Plugins")
+	if len(pluginConf) == 0 {
+		println("ERROR: No plugin section in the resource server config file.")
+		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		return
+	}
 	if pluginConf["hashcatdict"] != "" {
 		hashcatdict.Setup(pluginConf["hashcatdict"])
 		resQueue.AddTool(hashcatdict.NewTooler())

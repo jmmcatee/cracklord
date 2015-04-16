@@ -48,6 +48,9 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/jobs/{id}").Methods("PUT").HandlerFunc(a.UpdateJob)
 	r.Path("/api/jobs/{id}").Methods("DELETE").HandlerFunc(a.DeleteJob)
 
+	// Queue endpoints
+	r.Path("/api/queue").Methods("PUT").HandlerFunc(a.ReorderQueue)
+
 	log.Debug("Application router handlers configured.")
 
 	return r
@@ -1030,3 +1033,82 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 	log.WithField("resource", resID).Info("Resource disconnected.")
 }
+
+/* 
+	Handler for the PUT /api/queue function in our API that is used, for now to 
+	handle updates to the order of jobs in the queue.
+*/
+func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
+	// Structurs to hold our request and response from Negroni, see api_struct.go
+	var req QueueUpdateReq
+	var resp QueueUpdateResp
+
+	// A decoder to take the JSON information passed by the API and return it
+	reqJSON := json.NewDecoder(r.Body)
+	// An encoder to take our response and give it back to the user
+	respJSON := json.NewEncoder(rw)
+
+	// First, we handle authentication through the header
+	token := r.Header.Get("AuthorizationToken")
+	if !a.T.CheckToken(token) {
+		//If the token is unknown, send back an unauthenticated message
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+
+		log.WithField("token", token).Warn("An unknown user token attempted to reorder the queue.")
+
+		return
+	}
+
+	// Let's then check to make sure the user has the right group, in this case standard
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(StandardUser) {
+		//If not, send back the proper response.
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+
+		log.WithField("username", user.Username).Warn("An unauthorized user attempted to reorder the queue.")
+
+		return
+	}
+
+	// Decode the request data that we recieved into our struct
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		// If there is an error, let the API know via HTTP
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+
+		log.WithField("error", err.Error()).Error("An error occured while trying to decode queue update data.")
+
+		return
+	}
+
+	// Let's try and actually reorder the stack
+	err = a.Q.StackReorder(req.JobOrder)
+	if err != nil {
+		//If there was an error, send the code to the API
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = RESP_CODE_ERROR_T
+
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
+
+		log.WithField("error", err.Error()).Error("An error occured while trying to update the queue order.")
+
+		return
+	}
+
+	// Finally, we did it successfully!
+	log.Info("Queue reodered successfully")
+}
+

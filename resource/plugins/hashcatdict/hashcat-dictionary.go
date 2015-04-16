@@ -5,7 +5,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
-	"path/filepath"
 )
 
 type hcConfig struct {
@@ -179,9 +178,9 @@ var supportedHash = map[string]string{
 func Setup(path string) error {
 	log.Debug("Setting up hashcatdict tool")
 	// Join the path provided
-	fullpath := filepath.Join(path, "hashcatdict.ini")
-	confFile, err := ini.LoadFile(fullpath)
+	confFile, err := ini.LoadFile(path)
 	if err != nil {
+		log.WithField("file", path).Error("Unable to load configuration file.")
 		return err
 	}
 

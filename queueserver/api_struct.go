@@ -182,3 +182,12 @@ type ResDeleteResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
+
+type QueueUpdateReq struct {
+	JobOrder []string `json:"joborder"`
+}
+
+type QueueUpdateResp struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}

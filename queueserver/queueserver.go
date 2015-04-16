@@ -212,5 +212,8 @@ func main() {
 		}).Info("Utilizing provided certificates")
 	}
 
-	http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
+	err := http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
+	if err != nil {
+		log.Fatal("Unable to start up web server: "+err.Error())
+	}
 }

@@ -381,14 +381,18 @@ func (q *Queue) PauseQueue() []error {
 	// Now we need to be 100% up-to-date
 	q.updateQueue()
 
+	log.Debug("Queue update completed.")
+
 	// Loop through and pause all active jobs
 	for i, _ := range q.stack {
+		joblog := log.WithFields(log.Fields{
+			"resource":  q.stack[i].ResAssigned,
+			"job":       q.stack[i].UUID,
+			"jobstatus": q.stack[i].Status,
+		})
+		joblog.Debug("Processing job.")
+
 		if q.stack[i].Status == common.STATUS_RUNNING {
-			joblog := log.WithFields(log.Fields{
-				"resource":  q.stack[i].ResAssigned,
-				"job":       q.stack[i].UUID,
-				"jobstatus": q.stack[i].Status,
-			})
 			joblog.Debug("Found running job, attempting to stop")
 
 			// Get some helpful values
@@ -420,6 +424,7 @@ func (q *Queue) PauseQueue() []error {
 
 	// All jobs/tasks should now be paused so lets set the Queue Status
 	q.status = STATUS_PAUSED
+	log.Debug("Queue paused.")
 
 	return e
 }
@@ -441,14 +446,13 @@ func (q *Queue) ResumeQueue() {
 }
 
 // Given a new slice of the UUIDs for all jobs in order, reorder the stack
-func (q *Queue) StackReorder(uuids []string) []error {
+func (q *Queue) StackReorder(uuids []string) error {
 	q.Lock()
-	defer q.Unlock()
 
 	// Check all the UUIDs before we do anything
 	l := len(uuids)
 	if l != len(q.stack) {
-		return []error{errors.New("The wrong number of UUIDs were provided.")}
+		return errors.New("The wrong number of UUIDs were provided.")
 	}
 
 	// Get the UUIDs in the check map
@@ -460,16 +464,20 @@ func (q *Queue) StackReorder(uuids []string) []error {
 	// Loop through the stack and check for bad UUIDs
 	for i, _ := range q.stack {
 		j := q.stack[i]
-		if _, ok := uuidCheck[j.UUID]; ok {
-			return []error{errors.New("All Job UUIDs must be provided!")}
+		log.WithField("uuid", j.UUID).Debug("Checking UUID on reorder stack.")
+		if _, ok := uuidCheck[j.UUID]; !ok {
+			return errors.New("All Job UUIDs must be provided!")
 		}
 	}
 
 	// UUIDs are good so pause the queue (we will return the errors at the end)
+	q.Unlock()
 	err := q.PauseQueue()
+	q.Lock()
 
 	// Get Job information to build new stack
 	for i, _ := range q.stack {
+		log.WithField("uuid", q.stack[i].UUID).Debug("Building new job stack.")
 		uuidCheck[q.stack[i].UUID] = q.stack[i]
 	}
 
@@ -479,14 +487,18 @@ func (q *Queue) StackReorder(uuids []string) []error {
 	}
 
 	// If no errors were given we now have a new stack so lets assign it and finally unlock the Queue
+	log.Debug("Assigning new stack to queue stack")
 	q.stack = newStack
 
 	// Resume the Queue
+	q.Unlock()
 	q.ResumeQueue()
+	q.Lock()
+	defer q.Unlock()
 
 	// Return the errors from the QueuePause if there were any
 	if err != nil {
-		return err
+		return errors.New("There was an error pausing jobs.")
 	}
 
 	return nil
