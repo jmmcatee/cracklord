@@ -91,17 +91,19 @@ func main() {
 	// Create a resource queue
 	resQueue := resource.NewResourceQueue(authToken)
 
-	// Setup and Add tools
-	if *confPath == "" {
-		hashcatdict.Setup("./")
-	} else {
-		hashcatdict.Setup(*confPath)
+	//Get the configuration section for plugins
+	pluginConf := confFile.Section("Plugins")
+	if pluginConf["hashcatdict"] != "" {
+		hashcatdict.Setup(pluginConf["hashcatdict"])
+		resQueue.AddTool(hashcatdict.NewTooler())
 	}
-
-	resQueue.AddTool(hashcatdict.NewTooler())
 
 	res := rpc.NewServer()
 	res.Register(&resQueue)
+	log.WithFields(log.Fields{
+		"ip":   runIP,
+		"port": runPort,
+	}).Info("Listening for queueserver connection.")
 
 	listen, err := net.Listen("tcp", *runIP+":"+*runPort)
 	if err != nil {
