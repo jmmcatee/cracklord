@@ -217,7 +217,11 @@ hr {
 .listrow {
 	padding: 0 15px;
 }
-.listrow > div {
+.table-head .listrow {
+	font-weight: bold;
+}
+
+.table-body .listrow > div {
 	border-top: 1px solid #ddd;
 	padding: 8px;	
 }
@@ -243,7 +247,7 @@ hr {
 
 .collapser {
 	float: left;
-	width: 20px;
+	width: 44px;
 	padding-left: 5px;
 	padding-right: 5px;
 }
@@ -297,6 +301,10 @@ hr {
 	margin: 10px;
 }
 
+span.status {
+	padding-top: 1px;
+	padding-left: 5px;
+}
 
 /*******************************************************************************
                              LOGIN PAGE SETTINGS

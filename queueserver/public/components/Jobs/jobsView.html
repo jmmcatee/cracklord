@@ -11,9 +11,9 @@
 	<div class="col-md-11 col-md-offset-1 main">
 		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
 		<h2 class="page-header">Current Queue</h2>
-		<div class="">
-			<div class="table">
-				<div class="table-header">
+		<div class="table">
+			<div class="table-head">
+				<div class="listrow">
 					<div class="row">
 						<div class="collapser">&nbsp;</div>
 						<div class="col-sm-4">Name</div>
@@ -23,41 +23,81 @@
 						<div class="col-sm-1"></div>
 					</div>
 				</div>
-				<div class="body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
-					<div ng-repeat="job in jobs" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
-						<div class="row" style="{{job.resourcecolor}}">
-							<div class="collapser">
-								<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
-								<a ng-if="!job.expanded" ng-click="job.expanded = true" aria-label="detail"><i class="fa fa-plus fa-1x"></i></a>
-								<span class="status {{job.status}}" ng-if="job.status == 'running'"><i class="fa fa-play"></i></span>
-								<span class="status {{job.status}}" ng-if="job.status == 'paused'"><i class="fa fa-pause"></i></span>
-							</div>
-							<div class="name col-sm-4">{{job.name}}</div>
-							<div class="owner col-sm-2">{{job.owner}}</div>
-							<div class="time col-sm-2"><span ng-if="job.status != 'created'">{{job.starttime | relativeDate}}</span></div>
-							<div class="jobprogress col-sm-2">
-								<div class="progress job-cracked" ng-if="job.status != 'created'">
-									<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="widdiv: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
-									</div>
-									<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
+			</div>
+			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
+				<div ng-repeat="job in jobs | filter: {status: '!quit'} | filter: {status: '!failed'} | filter: {status: '!done'}" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
+					<div class="row" style="{{job.resourcecolor}}">
+						<div class="collapser">
+							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
+							<a ng-if="!job.expanded" ng-click="job.expanded = true" aria-label="detail"><i class="fa fa-plus fa-1x"></i></a>
+							<span class="status {{job.status}}" ng-if="job.status == 'running'"><i class="fa fa-play"></i></span>
+							<span class="status {{job.status}}" ng-if="job.status == 'paused'"><i class="fa fa-pause"></i></span>
+						</div>
+						<div class="name col-sm-4">{{job.name}}</div>
+						<div class="owner col-sm-2">{{job.owner}}</div>
+						<div class="time col-sm-2"><span ng-if="job.status != 'created'">{{job.starttime | relativeDate}}</span></div>
+						<div class="jobprogress col-sm-2">
+							<div class="progress job-cracked" ng-if="job.status != 'created'">
+								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="widdiv: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
 								</div>
-							</div>
-							<div class="actions col-sm-1 pull-right">
-								<div class="btn-group btn-group-xs" role="group" aria-label="...">
-									<stopbutton target="job"></stopbutton>
-									<draghandle></draghandle>
-								</div>
+								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>
 						</div>
-						<div class="row job-detail">
-							<job-detail jobid="{{job.id}}" visibility="job.expanded"></job-detail>
+						<div class="actions col-sm-1 pull-right">
+							<div class="btn-group btn-group-xs" role="group" aria-label="...">
+								<stopbutton target="job"></stopbutton>
+								<draghandle></draghandle>
+							</div>
 						</div>
+					</div>
+					<div class="row job-detail">
+						<job-detail jobid="{{job.id}}" visibility="job.expanded"></job-detail>
 					</div>
 				</div>
 			</div>
 		</div>
 		<h2 class="page-header">Completed / Stopped Jobs</h2>
-		<div class="">
+		<div class="table">
+			<div class="table-head">
+				<div class="listrow">
+					<div class="row">
+						<div class="collapser">&nbsp;</div>
+						<div class="col-sm-4">Name</div>
+						<div class="col-sm-2">Owner</div>
+						<div class="col-sm-2">Status</div>
+						<div class="col-sm-2">Completed</div>
+						<div class="col-sm-1"></div>
+					</div>
+				</div>
+			</div>
+			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
+				<div ng-repeat="job in jobs | filter: {status: '!running'} | filter: {status: '!paused'} | filter: {status: '!created'}" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
+					<div class="row">
+						<div class="collapser">
+							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
+							<a ng-if="!job.expanded" ng-click="job.expanded = true" aria-label="detail"><i class="fa fa-plus fa-1x"></i></a>
+						</div>
+						<div class="name col-sm-4">{{job.name}}</div>
+						<div class="owner col-sm-2">{{job.owner}}</div>
+						<div class="col-sm-2 status {{job.status}}">{{job.status}}</span></div>
+						<div class="jobprogress col-sm-2">
+							<div class="progress job-cracked" ng-if="job.status != 'created'">
+								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="widdiv: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
+								</div>
+								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
+							</div>
+						</div>
+						<div class="actions col-sm-1 pull-right">
+							<div class="btn-group btn-group-xs" role="group" aria-label="...">
+								<trashbutton targetlist="jobs" target="job"></trashbutton>
+							</div>
+						</div>
+					</div>
+					<div class="row job-detail">
+						<job-detail jobid="{{job.id}}" visibility="job.expanded"></job-detail>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
