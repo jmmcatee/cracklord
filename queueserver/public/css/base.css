@@ -92,10 +92,10 @@ footer p.license {
 	margin-top: 50px;
 }
 
-tr.odd {
+.listrow.odd {
 	background-color: #ffffff;
 } 
-tr.even {
+.listrow.even {
 	background-color: #f9f9f9;
 }
 
@@ -127,6 +127,21 @@ hr {
 .github a:hover {
 	text-decoration: none;
 	color: #aaa;
+}
+.running {
+	color: #00B800;
+}
+.paused {
+	color: #CC9900;
+}
+.quit {
+	color: #888888;
+}
+.created {
+	color: #337ab7;
+}
+.failed {
+	color: #d43f3a;	
 }
 /*******************************************************************************
                              FULL PAGE WAIT / SPINNER
@@ -198,21 +213,19 @@ hr {
 /*******************************************************************************
                           LISTING (JOB/RESOURCE) STYLES
 *******************************************************************************/
-td.running, span.running {
-	color: #00B800;
+
+.listrow {
+	padding: 0 15px;
 }
-td.paused {
-	color: #CC9900;
+.listrow > div {
+	border-top: 1px solid #ddd;
+	padding: 8px;	
 }
-td.quit {
-	color: #888888;
+.listrow .job-detail {
+	padding: 0;
+	background-color: #fff;
 }
-td.created {
-	color: #337ab7;
-}
-td.failed {
-	color: #d43f3a;	
-}
+
 .job-progress, .job-cracked {
 	border: 1px solid #adadad;
 	height: 22px;
@@ -227,14 +240,16 @@ td.failed {
 .popover-content {
 	text-align: center;
 }
-td.collapser > a {
+
+.collapser {
+	float: left;
+	width: 20px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.collapser > a {
 	cursor: pointer;
 }
-
-.job-detail { 
-	background-color: #fff;
-}
-
 .job-detail div.slider {
 	border-top-right-radius: 0px;
 	border-top-left-radius: 0px;

@@ -1,17 +1,16 @@
 cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', function JobsController($scope, JobsService, QueueService, growl, ResourceList) {
 	$scope.listreordered = false;
-	$scope.jobactions = {};
 
 	$scope.sortableOptions = {
 		handle: '.draghandle',
 		axis: 'y',
-		update: function(e, ui) {
+		stop: function(e, ui) {
 			$scope.listreordered = true;
 		}
 	};
 
 	$scope.loadJobs = function() {
-		var jobs = JobsService.query(
+		$scope.jobs = JobsService.query(
 			//Our success handler
 			function(data) {
 				$scope.listreordered = false;
@@ -39,7 +38,6 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 				}
 			}
 		);
-		$scope.jobs = jobs;
 	}
 	$scope.loadJobs();
 }]);
@@ -65,6 +63,8 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 				QueueService.reorder(ids)
 					.success(function(data, status, headers, config) {
 						growl.success("Job data reordered successfully.");
+						$scope.dragstatus = false;
+						$scope.reload();
 					})
 					.error(function(data, status, headers, config) {
 						switch (status) {
@@ -74,6 +74,7 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 							case 409: growl.error("The request could not be completed because there was a conflict."); break;
 							case 500: growl.error("An internal server error occured while trying to reorder the queue."); break;
 						}
+						$scope.dragstatus = false;
 					});
 			}
 
