@@ -116,13 +116,16 @@ func main() {
 		return
 	}
 
-	conn, err := listen.Accept()
-	if err != nil {
-		println("ERROR: Failed to accept connection: " + err.Error())
-		return
-	}
+	// Accept only one connection at a time
+	for {
+		conn, err := listen.Accept()
+		if err != nil {
+			println("ERROR: Failed to accept connection: " + err.Error())
+			return
+		}
 
-	res.ServeConn(conn)
+		res.ServeConn(conn)
+	}
 
 	log.Info("Connection closed, stopping resource server.")
 

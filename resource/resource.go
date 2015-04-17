@@ -89,6 +89,14 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 }
 
 // Task RPC functions
+func (q *Queue) Ping(ping int64, pong *int64) error {
+	q.Lock()
+
+	ping = ping * 2
+
+	q.Unlock()
+	return nil
+}
 
 func (q *Queue) ResourceHardware(rpc common.RPCCall, hw *map[string]bool) error {
 	// Check authentication token

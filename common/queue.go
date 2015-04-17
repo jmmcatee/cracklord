@@ -7,7 +7,7 @@ type Resource struct {
 	Name     string
 	Hardware map[string]bool
 	Tools    map[string]Tool
-	Paused   bool
+	Status   string
 	Address  string
 }
 

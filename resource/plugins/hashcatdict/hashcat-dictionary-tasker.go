@@ -40,31 +40,31 @@ var regGetDenominator *regexp.Regexp
 var regGetPercent *regexp.Regexp
 
 var speedMagH = map[string]float64{
-	"H/s":   1,
-	"kH/s":  1000,
-	"MH/s":  1000000,
-	"GH/s":  1000000000,
+	"H/s":  1,
+	"kH/s": 1000,
+	"MH/s": 1000000,
+	"GH/s": 1000000000,
 }
 
 var speedMagK = map[string]float64{
-	"H/s":   1 / 1000,
-	"kH/s":  1,
-	"MH/s":  1000,
-	"GH/s":  1000000,
+	"H/s":  1 / 1000,
+	"kH/s": 1,
+	"MH/s": 1000,
+	"GH/s": 1000000,
 }
 
 var speedMagM = map[string]float64{
-	"H/s":   1 / 1000000,
-	"kH/s":  1 / 1000,
-	"MH/s":  1,
-	"GH/s":  1000,
+	"H/s":  1 / 1000000,
+	"kH/s": 1 / 1000,
+	"MH/s": 1,
+	"GH/s": 1000,
 }
 
 var speedMagG = map[string]float64{
-	"H/s":   1 / 1000000000,
-	"kH/s":  1 / 1000000,
-	"MH/s":  1 / 1000,
-	"GH/s":  1,
+	"H/s":  1 / 1000000000,
+	"kH/s": 1 / 1000000,
+	"MH/s": 1 / 1000,
+	"GH/s": 1,
 }
 
 func init() {
@@ -234,7 +234,7 @@ func (v *hascatTasker) Status() common.Job {
 		progMatch := regProgress.FindStringSubmatch(status)
 		log.WithField("progMatch", progMatch).Debug("Matching progress info")
 
-		if(len(progMatch) == 4) {
+		if len(progMatch) == 4 {
 			prog, err := strconv.ParseFloat(progMatch[3], 64)
 			if err == nil {
 				v.job.Progress = prog
@@ -397,17 +397,26 @@ func (v *hascatTasker) Run() error {
 	} else {
 		v.cmd = *exec.Command(config.BinPath, v.resume...)
 	}
+
+	v.cmd.Dir = v.wd
+
 	log.WithFields(log.Fields{
 		"status": v.job.Status,
 		"dir":    v.cmd.Dir,
 	}).Debug("Setup exec.command")
 
-	v.cmd.Dir = v.wd
-
 	// Assign the stderr, stdout, stdin pipes
 	var err error
 	v.stderrPipe, err = v.cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
 	v.stdoutPipe, err = v.cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
 	v.stdinPipe, err = v.cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -428,9 +437,8 @@ func (v *hascatTasker) Run() error {
 	}()
 
 	// Start the command
+	log.WithField("argument", v.cmd.Args).Debug("Running command.")
 	err = v.cmd.Start()
-	log.WithField("argument", v.start).Debug("Running command.")
-	v.job.StartTime = time.Now()
 	if err != nil {
 		// We had an error starting to return that and quit the job
 		v.job.Status = common.STATUS_FAILED
@@ -438,6 +446,7 @@ func (v *hascatTasker) Run() error {
 		return err
 	}
 
+	v.job.StartTime = time.Now()
 	v.job.Status = common.STATUS_RUNNING
 
 	// Build goroutine to alert that the job has finished
@@ -470,6 +479,7 @@ func (v *hascatTasker) Pause() error {
 
 	// Change status to pause
 	v.job.Status = common.STATUS_PAUSED
+	v.done = false
 
 	log.WithField("task", v.job.UUID).Debug("Task paused successfully")
 
@@ -489,6 +499,7 @@ func (v *hascatTasker) Quit() common.Job {
 	}
 
 	v.job.Status = common.STATUS_QUIT
+	v.done = false
 
 	log.WithField("task", v.job.UUID).Debug("Task quit successfully")
 

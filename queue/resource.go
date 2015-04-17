@@ -14,7 +14,7 @@ type Resource struct {
 	RPCCall  common.RPCCall
 	Hardware map[string]bool
 	Tools    map[string]common.Tool
-	Paused   bool
+	Status   string // Can be running, paused, quit
 }
 
 func NewResourcePool() ResourcePool {
