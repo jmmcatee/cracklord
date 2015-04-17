@@ -482,8 +482,8 @@ func (q *Queue) StackReorder(uuids []string) error {
 	}
 
 	newStack := []common.Job{}
-	for _, v := range uuidCheck {
-		newStack = append(newStack, v)
+	for _, v := range uuids {
+		newStack = append(newStack, uuidCheck[v])
 	}
 
 	// If no errors were given we now have a new stack so lets assign it and finally unlock the Queue
