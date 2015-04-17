@@ -128,19 +128,22 @@ hr {
 	text-decoration: none;
 	color: #aaa;
 }
-.running {
+.status.running {
 	color: #00B800;
 }
-.paused {
+.status.paused {
 	color: #CC9900;
 }
-.quit {
+.status.quit {
 	color: #888888;
 }
-.created {
+.status.done {
+	color: #00B800;
+}
+.status.created {
 	color: #337ab7;
 }
-.failed {
+.status.failed {
 	color: #d43f3a;	
 }
 /*******************************************************************************
