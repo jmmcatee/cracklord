@@ -670,11 +670,7 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		var apires APIResource
 		apires.ID = r.UUID
 		apires.Name = r.Name
-		if r.Paused {
-			apires.Status = "paused"
-		} else {
-			apires.Status = "running"
-		}
+		apires.Status = r.Status
 		apires.Address = r.Address
 
 		for _, t := range r.Tools {
@@ -830,11 +826,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 			resp.Resource.ID = r.UUID
 			resp.Resource.Name = r.Name
 			resp.Resource.Address = r.Address
-			if r.Paused {
-				resp.Resource.Status = "paused"
-			} else {
-				resp.Resource.Status = "running"
-			}
+			resp.Resource.Status = r.Status
 
 			log.WithFields(log.Fields{
 				"uuid": r.UUID,
@@ -1034,8 +1026,8 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 	log.WithField("resource", resID).Info("Resource disconnected.")
 }
 
-/* 
-	Handler for the PUT /api/queue function in our API that is used, for now to 
+/*
+	Handler for the PUT /api/queue function in our API that is used, for now to
 	handle updates to the order of jobs in the queue.
 */
 func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
@@ -1111,4 +1103,3 @@ func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
 	// Finally, we did it successfully!
 	log.Info("Queue reodered successfully")
 }
-
