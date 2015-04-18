@@ -106,8 +106,8 @@ func main() {
 	res := rpc.NewServer()
 	res.Register(&resQueue)
 	log.WithFields(log.Fields{
-		"ip":   runIP,
-		"port": runPort,
+		"ip":   *runIP,
+		"port": *runPort,
 	}).Info("Listening for queueserver connection.")
 
 	listen, err := net.Listen("tcp", *runIP+":"+*runPort)
