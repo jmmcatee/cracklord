@@ -87,7 +87,7 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 	}
 }]);
 
-cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'ResourceList', function jobDetail(JobsService, ToolsService, growl, ResourceList) {
+cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'ResourceList', '$interval', function jobDetail(JobsService, ToolsService, growl, ResourceList, $interval) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
@@ -97,17 +97,20 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 		},
 		controller: function($scope) {
 			// Mmmmmmmm.... Donut.
-			$scope.processDonut = function() {
+			$scope.processDonut = function(animate) {
 				$scope.donut = {};
 				$scope.donut.labels = ['Processed', 'Remaining'];
 
 				var total = 100 - $scope.detail.progress;
 				$scope.donut.data = [$scope.detail.progress, total];
-
 				$scope.donut.colors = [ '#337ab7', '#aaaaaa' ];
+				$scope.donut.options = {
+					'animateRotate': animate,
+					'animation': animate
+				}
 			};
 
-			$scope.processLine = function() {
+			$scope.processLine = function(animate) {
 				$scope.line = {};
 				$scope.line.series = [ $scope.detail.performancetitle ]; 
 				$scope.line.data = [];
@@ -115,7 +118,8 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 				$scope.line.labels = [];
 				$scope.line.options = {
 					'pointDot': false,
-					'showTooltips': false
+					'showTooltips': false,
+					'animation': animate
 				};
 				$scope.line.colors = [
 					'#d43f3a'
@@ -128,40 +132,61 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 			}
 		},
 		link: function($scope, $element, $attrs) {
+			var timer
+
+			$scope.loadData = function(animate) {
+				JobsService.get({id: $scope.jobid}, 
+					function success(data) {
+						$scope.detail = data.job;
+						$scope.processDonut(animate);
+						$scope.processLine(animate);
+					},
+					function error(error) {
+						growl.error("There was a problem loading job details.")
+						$($element).find('div.slider').slideUp("slow", function() {
+							$element.parent().hide();
+						});
+					}
+				);	
+			}
+
 			$scope.$watch('visibility', function(newval, oldval) {
 				if(newval === true) {
-					JobsService.get({id: $scope.jobid}, 
-						function success(data) {
-							ToolsService.get({id: data.job.toolid}, 
-								function toolsuccess(data) {
-									$scope.tool = data.tool;
-								}
-							);
-							$scope.detail = data.job;
+					$scope.loadData(true);
 
-							var resource = ResourceList.get(data.job.resourceid);
-							if(resource) {
-								$scope.detail.resourcename = resource.name;
-							}
-
-							$scope.processDonut();
-							$scope.processLine();
-
-							$element.parent().show();
-							$element.find('.slider').slideDown();
-						},
-						function error(error) {
-							growl.error("There was a problem loading job details.")
-							$($element).find('div.slider').slideUp("slow", function() {
-								$element.parent().hide();
-							});
+					if($scope.detail) {
+						var resource = ResourceList.get($scope.detail.resourceid);
+						if(resource) {
+							$scope.detail.resourcename = resource.name;
 						}
-					);
+
+						ToolsService.get({id: $scope.detail.toolid}, 
+							function toolsuccess(data) {
+								$scope.tool = data.tool;
+							}
+						);
+					}
+
+					$element.parent().show();
+					$element.find('.slider').slideDown();
+
+					if(!timer) {
+						timer = $interval(function() {
+							//Disable the reload animation at this point
+							$scope.loadData(false);
+						}, 15000);
+					}
 				} else {
+					$interval.cancel(timer)
+					timer = null
 					$($element).find('div.slider').slideUp("slow", function() {
 						$element.parent().hide();
 					});
 				}
+			});
+
+			$scope.$on('$destroy', function() {
+				$interval.cancel(timer)
 			});
 		},
 	}
