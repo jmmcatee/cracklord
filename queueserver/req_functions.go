@@ -173,7 +173,7 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the tools list from the Queue
-	for _, t := range a.Q.Tools() {
+	for _, t := range a.Q.ActiveTools() {
 		resp.Tools = append(resp.Tools, APITool{t.UUID, t.Name, t.Version})
 		log.WithFields(log.Fields{
 			"uuid": t.UUID,
@@ -226,7 +226,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	// Get the tool ID
 	uuid := mux.Vars(r)["id"]
-	tool, ok := a.Q.Tools()[uuid]
+	tool, ok := a.Q.AllTools()[uuid]
 	if !ok {
 		// No tool found, return error
 		resp.Status = RESP_CODE_NOTFOUND

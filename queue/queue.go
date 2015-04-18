@@ -741,13 +741,40 @@ func (q *Queue) Types() []string {
 	return types
 }
 
-func (q *Queue) Tools() map[string]common.Tool {
+// This function allows you to get tools that can actively have jobs created for them
+func (q *Queue) ActiveTools() map[string]common.Tool {
 	q.RLock()
 	defer q.RUnlock()
 
-	// cycle through all the attached resources for unique tools
+	// Cycle through all the attached resources for unique tools
 	var tools = make(map[string]common.Tool)
 	for _, res := range q.pool {
+		// Check if the tool is active for jobs (AKA running or paused)
+		if res.Status != common.STATUS_QUIT {
+			// Resource is paused or running so get the tools it provides
+			for uuid, t := range res.Tools {
+				// Check if tool already exists in the tools map
+				_, ok := tools[uuid]
+				if !ok {
+					// Tool doesn't exit already so add it
+					tools[uuid] = t
+				}
+			}
+		}
+	}
+
+	return tools
+}
+
+// This function is used to get all tools that have ever been available
+func (q *Queue) AllTools() map[string]common.Tool {
+	q.RLock()
+	defer q.RUnlock()
+
+	// Cycle through all the attached resources for unique tools
+	var tools = make(map[string]common.Tool)
+	for _, res := range q.pool {
+		// Get all tools regardless of active resources
 		for uuid, t := range res.Tools {
 			// Check if tool already exists in the tools map
 			_, ok := tools[uuid]
