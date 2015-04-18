@@ -343,7 +343,9 @@ func (q *Queue) PauseResource(resUUID string) error {
 	}
 
 	// All tasks that would be running should now be paused so lets pause the resource
-	q.pool[resUUID].Status = common.STATUS_PAUSED
+	res, _ := q.pool[resUUID]
+	res.Status = common.STATUS_PAUSED
+	q.pool[resUUID] = res
 
 	return nil
 }
@@ -364,7 +366,9 @@ func (q *Queue) ResumeResource(resUUID string) error {
 	}
 
 	// Pool exists so unpause it
-	q.pool[resUUID].Status = common.STATUS_RUNNING
+	res, _ := q.pool[resUUID]
+	res.Status = common.STATUS_RUNNING
+	q.pool[resUUID] = res
 
 	// The keeper will take it from here
 	return nil
@@ -921,11 +925,13 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	q.pool[resUUID].Client.Close()
 
 	// Remove information that might affect additional resource adding
-	q.pool[resUUID].Address = "closed"
+	res, _ := q.pool[resUUID]
+	res.Address = "closed"
+	res.Status = common.STATUS_QUIT
+	q.pool[resUUID] = res
 	for i, _ := range q.pool[resUUID].Hardware {
 		q.pool[resUUID].Hardware[i] = false
 	}
-	q.pool[resUUID].Status = common.STATUS_QUIT
 
 	return nil
 }
