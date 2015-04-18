@@ -829,6 +829,7 @@ func (q *Queue) AddResource(addr, name, auth string) error {
 
 	res.Name = name
 	res.Address = addr
+	res.Status = common.STATUS_RUNNING
 
 	// Add resource to resource pool with generated UUID
 	q.pool[uuid.New()] = res
