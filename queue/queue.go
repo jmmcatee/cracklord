@@ -343,9 +343,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 	}
 
 	// All tasks that would be running should now be paused so lets pause the resource
-	res, _ := q.pool[resUUID]
-	res.Status = common.STATUS_PAUSED
-	q.pool[resUUID] = res
+	q.pool[resUUID].Status = common.STATUS_PAUSED
 
 	return nil
 }
@@ -361,10 +359,12 @@ func (q *Queue) ResumeResource(resUUID string) error {
 		return errors.New("Resource with UUID provided does not exist!")
 	}
 
+	if q.pool[resUUID].Status != common.STATUS_PAUSED {
+		return errors.New("Resource is not paused!")
+	}
+
 	// Pool exists so unpause it
-	res, _ := q.pool[resUUID]
-	res.Status = common.STATUS_RUNNING
-	q.pool[resUUID] = res
+	q.pool[resUUID].Status = common.STATUS_RUNNING
 
 	// The keeper will take it from here
 	return nil
@@ -884,6 +884,9 @@ func (q *Queue) GetResources() []common.Resource {
 	return resources
 }
 
+// RemoveResource closes the resource RPC client, and removes it from service.
+// It does not delete it however, because that information is needed by the API
+// even after it is no longer in service.
 func (q *Queue) RemoveResource(resUUID string) error {
 	// Check for the resource with given UUID
 	_, ok := q.pool[resUUID]
@@ -917,8 +920,12 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	// Close the connection to the client
 	q.pool[resUUID].Client.Close()
 
-	// Remove from pool
-	delete(q.pool, resUUID)
+	// Remove information that might affect additional resource adding
+	q.pool[resUUID].Address = "closed"
+	for i, _ := range q.pool[resUUID].Hardware {
+		q.pool[resUUID].Hardware[i] = false
+	}
+	q.pool[resUUID].Status = common.STATUS_QUIT
 
 	return nil
 }
