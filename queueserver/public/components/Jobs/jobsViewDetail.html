@@ -7,7 +7,7 @@
 			<canvas id="job-chart-progress" class="chart chart-doughnut" data="donut.data" labels="donut.labels" colours="donut.colors" options="donut.options" legend="true"></canvas>
 		</div>
 		<div class="col-sm-4">
-			<div><b><i class="fa fa-server"></i> Resource</b>: {{detail.resourcename || 'Not yet assigned'}}</div>
+			<div><b><i class="fa fa-server"></i> Resource</b>: {{resource.name || 'Not yet assigned'}}</div>
 			<div><b><i class="fa fa-wrench"></i> Tool</b>: {{tool.name}} - {{tool.version}}</div>
 			<hr>
 			<table class="table table-condensed tool-options">

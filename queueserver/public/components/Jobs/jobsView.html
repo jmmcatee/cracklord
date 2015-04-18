@@ -38,7 +38,7 @@
 						<div class="time col-sm-2"><span ng-if="job.status != 'created'">{{job.starttime | relativeDate}}</span></div>
 						<div class="jobprogress col-sm-2">
 							<div class="progress job-cracked" ng-if="job.status != 'created'">
-								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="widdiv: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
+								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
 								</div>
 								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>
@@ -82,7 +82,7 @@
 						<div class="col-sm-2 status {{job.status}}">{{job.status}}</span></div>
 						<div class="jobprogress col-sm-2">
 							<div class="progress job-cracked" ng-if="job.status != 'created'">
-								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="widdiv: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
+								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{ 100 * job.crackedhashes / job.totalhashes }}%;">
 								</div>
 								<span>{{job.crackedhashes}}/{{job.totalhashes}}</span>
 							</div>

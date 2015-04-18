@@ -87,7 +87,7 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 	}
 }]);
 
-cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'ResourceList', '$interval', function jobDetail(JobsService, ToolsService, growl, ResourceList, $interval) {
+cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'ResourceList', '$interval', '$q', function jobDetail(JobsService, ToolsService, growl, ResourceList, $interval, $q) {
 	return {
 		restrict: 'E',
 		templateUrl: 'components/Jobs/jobsViewDetail.html',
@@ -135,47 +135,52 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 			var timer
 
 			$scope.loadData = function(animate) {
-				JobsService.get({id: $scope.jobid}, 
-					function success(data) {
-						$scope.detail = data.job;
-						$scope.processDonut(animate);
-						$scope.processLine(animate);
-					},
-					function error(error) {
-						growl.error("There was a problem loading job details.")
-						$($element).find('div.slider').slideUp("slow", function() {
-							$element.parent().hide();
-						});
-					}
-				);	
+				return $q(function(resolve, reject) {
+					JobsService.get({id: $scope.jobid}, 
+						function success(data) {
+							$scope.detail = data.job;
+							$scope.processDonut(animate);
+							$scope.processLine(animate);
+							resolve();
+						},
+						function error(error) {
+							growl.error("There was a problem loading job details.")
+							$($element).find('div.slider').slideUp("slow", function() {
+								$element.parent().hide();
+							});
+							reject();
+						}
+					);	
+				})
 			}
 
 			$scope.$watch('visibility', function(newval, oldval) {
 				if(newval === true) {
-					$scope.loadData(true);
+					$scope.loadData(true).then(function() {
+						if($scope.detail) {
+							var resource = ResourceList.get($scope.detail.resourceid);
+							if(resource) {
+								$scope.resource = {}
+								$scope.resource.name = resource.name;
+							}
 
-					if($scope.detail) {
-						var resource = ResourceList.get($scope.detail.resourceid);
-						if(resource) {
-							$scope.detail.resourcename = resource.name;
+							ToolsService.get({id: $scope.detail.toolid}, 
+								function toolsuccess(data) {
+									$scope.tool = data.tool;
+								}
+							);
 						}
 
-						ToolsService.get({id: $scope.detail.toolid}, 
-							function toolsuccess(data) {
-								$scope.tool = data.tool;
-							}
-						);
-					}
+						$element.parent().show();
+						$element.find('.slider').slideDown();
 
-					$element.parent().show();
-					$element.find('.slider').slideDown();
-
-					if(!timer) {
-						timer = $interval(function() {
-							//Disable the reload animation at this point
-							$scope.loadData(false);
-						}, 15000);
-					}
+						if(!timer) {
+							timer = $interval(function() {
+								//Disable the reload animation at this point
+								$scope.loadData(false);
+							}, 15000);
+						}
+					})
 				} else {
 					$interval.cancel(timer)
 					timer = null
