@@ -224,6 +224,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 func (v *hascatTasker) Status() common.Job {
 	log.WithField("task", v.job.UUID).Debug("Gathering task details")
 	v.mux.Lock()
+	defer v.mux.Unlock()
 
 	index := regLastStatusIndex.FindAllStringIndex(v.stdout.String(), -1)
 	if len(index) >= 1 {
@@ -358,13 +359,9 @@ func (v *hascatTasker) Status() common.Job {
 
 	v.stdout.Reset()
 
-	// Run finished script
-	v.mux.Lock()
-	defer v.mux.Unlock()
 	if v.done {
 		v.job.Status = common.STATUS_DONE
 
-		v.mux.Unlock()
 		log.WithField("jobid", v.job.UUID).Info("Job done.")
 		return v.job
 	}
@@ -374,7 +371,6 @@ func (v *hascatTasker) Status() common.Job {
 		"status": v.job.Status,
 	}).Info("Ongoing task status")
 
-	v.mux.Unlock()
 	return v.job
 }
 
