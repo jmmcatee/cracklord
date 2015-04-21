@@ -1,4 +1,5 @@
-cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', function JobsController($scope, JobsService, QueueService, growl, ResourceList) {
+cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', '$interval', function JobsController($scope, JobsService, QueueService, growl, ResourceList, $interval) {
+	var timer
 	$scope.listreordered = false;
 
 	$scope.sortableOptions = {
@@ -39,6 +40,40 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 			}
 		);
 	}
+
+	$scope.reloadJobs = function() {
+		JobsService.query(
+			function(data) {
+				for(var i = 0; i < $scope.jobs.length; i++) {
+					var jobid = $scope.jobs[i].id
+
+					for(var j = 0; j < data.length; j++) {
+						if(data[j].id === $scope.jobs[i].id) {
+							for(var prop in data[j]) {
+								if(data[j].hasOwnProperty(prop)) {
+									if(prop == "starttime") {
+										$scope.jobs[i].starttime = new Date(data[j].starttime)
+									} else {
+										$scope.jobs[i][prop] = data[j][prop]
+									}
+								}	
+							}
+						}
+					}
+				}
+			}, 
+			function(error) {
+				growl.error("Unable to automatically update job data.")
+			}
+		)
+	}
+
+	//Setup a timer to refresh the data on a regular basis.
+	timer = $interval(function() {
+		$scope.reloadJobs();
+	}, 15000);
+
+	//Initially we'll also load our data	
 	$scope.loadJobs();
 }]);
 
