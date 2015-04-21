@@ -359,6 +359,8 @@ func (v *hascatTasker) Status() common.Job {
 	v.stdout.Reset()
 
 	// Run finished script
+	v.mux.Lock()
+	defer v.mux.Unlock()
 	if v.done {
 		v.job.Status = common.STATUS_DONE
 
@@ -477,9 +479,15 @@ func (v *hascatTasker) Pause() error {
 		v.cmd.Process.Signal(syscall.SIGINT)
 	}
 
+	// Wait for the program to actually exit
+	v.cmd.Wait()
+
 	// Change status to pause
 	v.job.Status = common.STATUS_PAUSED
+
+	v.mux.Lock()
 	v.done = false
+	v.mux.Unlock()
 
 	log.WithField("task", v.job.UUID).Debug("Task paused successfully")
 
@@ -498,8 +506,14 @@ func (v *hascatTasker) Quit() common.Job {
 		v.cmd.Process.Signal(syscall.SIGINT)
 	}
 
+	// Wait for the program to actually exit
+	v.cmd.Wait()
+
 	v.job.Status = common.STATUS_QUIT
+
+	v.mux.Lock()
 	v.done = false
+	v.mux.Unlock()
 
 	log.WithField("task", v.job.UUID).Debug("Task quit successfully")
 
