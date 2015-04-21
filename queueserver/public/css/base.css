@@ -228,7 +228,7 @@ hr {
 	border-top: 1px solid #ddd;
 	padding: 8px;	
 }
-.listrow .job-detail {
+.table-body .listrow .job-detail {
 	padding: 0;
 	background-color: #fff;
 }
