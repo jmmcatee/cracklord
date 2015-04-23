@@ -300,6 +300,7 @@ func (a *AppController) GetJobs(rw http.ResponseWriter, r *http.Request) {
 		job.ResourceID = j.ResAssigned
 		job.Owner = j.Owner
 		job.StartTime = j.StartTime
+		job.ETC = j.ETC
 		job.CrackedHashes = j.CrackedHashes
 		job.TotalHashes = j.TotalHashes
 		job.Progress = j.Progress
@@ -433,6 +434,7 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	resp.Job.ResourceID = job.ResAssigned
 	resp.Job.Owner = job.Owner
 	resp.Job.StartTime = job.StartTime
+	resp.Job.ETC = job.ETC
 	resp.Job.CrackedHashes = job.CrackedHashes
 	resp.Job.TotalHashes = job.TotalHashes
 	resp.Job.Progress = job.Progress
@@ -545,6 +547,7 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 	resp.Job.ResourceID = j.ResAssigned
 	resp.Job.Owner = j.Owner
 	resp.Job.StartTime = j.StartTime
+	resp.Job.ETC = j.ETC
 	resp.Job.CrackedHashes = j.CrackedHashes
 	resp.Job.TotalHashes = j.TotalHashes
 	resp.Job.Progress = j.Progress

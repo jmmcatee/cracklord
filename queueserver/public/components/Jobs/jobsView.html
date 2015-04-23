@@ -17,7 +17,7 @@
 						<div class="collapser">&nbsp;</div>
 						<div class="col-sm-4">Name</div>
 						<div class="col-sm-2">Owner</div>
-						<div class="col-sm-2">Start Time</div>
+						<div class="col-sm-2">Time To Completion</div>
 						<div class="col-sm-2">Completed</div>
 						<div class="col-sm-1"></div>
 					</div>
@@ -34,7 +34,7 @@
 						</div>
 						<div class="name col-sm-4">{{job.name}}</div>
 						<div class="owner col-sm-2">{{job.owner}}</div>
-						<div class="time col-sm-2"><span ng-if="job.status != 'created'">{{job.starttime | relativeDate}}</span></div>
+						<div class="time col-sm-2"><span ng-if="job.status != 'created'">{{job.etc}}</span></div>
 						<div class="jobprogress col-sm-2">
 							<div class="progress job-cracked" ng-if="job.status != 'created'">
 								<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{job.crackedhashes}}" aria-valuemin="0" aria-valuemax="{{job.totalhashes}}" style="width: {{ 100 * job.crackedhashes / job.totalhashes }}%;">

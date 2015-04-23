@@ -76,7 +76,7 @@ func init() {
 	regHashTarget, err = regexp.Compile(`Hash\.Target\.\.\.\.\:\s+([0-9a-fA-F]+)`)
 	regHashType, err = regexp.Compile(`Hash\.Type\.\.\.\.\.\.\:\s+(\w+)`)
 	regTimeStarted, err = regexp.Compile(`Time\.Started\.\.\.\:\s+(.+)\(.+\)`)
-	regTimeEstimated, err = regexp.Compile(`Time\.Estimated\.\:\s+(.+)\(.+\)`)
+	regTimeEstimated, err = regexp.Compile(`Time\.Estimated\.: .*\((.*?)\)`)
 	regGPUSpeed, err = regexp.Compile(`Speed\.GPU\.#([\d|\*]+)\.\.\.\:\s+(\d+\.\d+)\s+(.H/s)`)
 	regRecovered, err = regexp.Compile(`Recovered\.+:\s+(\d+)\/(\d+)`)
 	regProgress, err = regexp.Compile(`Progress\.{7}: (\d*)/(\d*) \((\d{1,3}\.\d{2})%\)`)
@@ -243,6 +243,12 @@ func (v *hascatTasker) Status() common.Job {
 			} else {
 				log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
 			}
+		}
+
+		etcMatch := regTimeEstimated.FindStringSubmatch(status)
+		log.WithField("etcMatch", etcMatch).Debug("Matching estimated time of completion.")	
+		if len(etcMatch) == 2 {
+			v.job.ETC = etcMatch[1]
 		}
 
 		// Get the speed of one or more GPUs

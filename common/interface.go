@@ -45,6 +45,7 @@ type Job struct {
 	Status           string            // Status of the job
 	Error            string            // Last returned error from the tool
 	StartTime        time.Time         // Start time of the job
+	ETC              string            // The estimated time of completion
 	Owner            string            // Owner provided by the web frontend
 	ResAssigned      string            // Resource this job is assinged to if any
 	CrackedHashes    int64             // # of hashes cracked

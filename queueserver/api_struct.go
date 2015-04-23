@@ -62,6 +62,7 @@ type APIJob struct {
 	ResourceID    string    `json:"resourceid"`
 	Owner         string    `json:"owner"`
 	StartTime     time.Time `json:"starttime"`
+	ETC           string    `json:"etc"`
 	CrackedHashes int64     `json:"crackedhashes"`
 	TotalHashes   int64     `json:"totalhashes"`
 	Progress      float64   `json:"progress"`
@@ -75,6 +76,7 @@ type APIJobDetail struct {
 	ResourceID       string            `json:"resourceid"`
 	Owner            string            `json:"owner"`
 	StartTime        time.Time         `json:"starttime"`
+	ETC              string            `json:"etc"`
 	CrackedHashes    int64             `json:"crackedhashes"`
 	TotalHashes      int64             `json:"totalhashes"`
 	Progress         float64           `json:"progress"`

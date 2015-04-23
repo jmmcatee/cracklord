@@ -23,7 +23,6 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 							$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
 						}
 					}
-					$scope.jobs[i].starttime = new Date($scope.jobs[i].starttime);
 					$scope.jobs[i].expanded = false;
 				}
 
@@ -51,11 +50,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 						if(data[j].id === $scope.jobs[i].id) {
 							for(var prop in data[j]) {
 								if(data[j].hasOwnProperty(prop)) {
-									if(prop == "starttime") {
-										$scope.jobs[i].starttime = new Date(data[j].starttime)
-									} else {
-										$scope.jobs[i][prop] = data[j][prop]
-									}
+									$scope.jobs[i][prop] = data[j][prop]
 								}	
 							}
 						}
