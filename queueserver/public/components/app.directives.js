@@ -95,7 +95,7 @@ cracklord.directive('stopbutton', ['growl', 'AuthService', 'USER_ROLES', functio
     return {
         restrict: 'E', 
         replace: true,
-        template: '<button confirm-popover="doClickConfirm()" aria-label="stop" type="button" class="btn btn-warning"><i class="fa fa-fw fa-stop"></i></button>',
+        template: '<button confirm-popover="doClickConfirm()" aria-label="stop" type="button" class="btn btn-danger"><i class="fa fa-fw fa-stop"></i></button>',
         scope: {
             target: '='
         },

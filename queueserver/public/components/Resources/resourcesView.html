@@ -26,7 +26,8 @@
 						<td class="status {{res.status}}">{{res.status}}</td>
 						<td>
 							<div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">
-								<trashbutton target="res" targetlist="resources"></trashbutton>
+								<playbutton ng-if="res.status != 'quit'" target="res"></playbutton>
+								<stopbutton ng-if="res.status != 'quit'" target="res"></stopbutton>
 							</div>
 						</td>
 					</tr>
