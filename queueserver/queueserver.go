@@ -9,6 +9,7 @@ import (
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
 	"net/http"
+	"strconv"
 )
 
 func main() {
@@ -45,6 +46,7 @@ func main() {
 	switch genConf["LogLevel"] {
 	case "Debug":
 		log.SetLevel(log.DebugLevel)
+		log.Warn("Please note the debug level logs may contain sensitive information!")
 	case "Info":
 		log.SetLevel(log.InfoLevel)
 	case "Warn":
@@ -70,6 +72,29 @@ func main() {
 
 	var statefile string
 	statefile = genConf["StateFile"]
+
+	var updatetime int
+	var resourcetimeout int
+	if genConf["UpdateTime"] != "" {
+		var err error
+		updatetime, err = strconv.Atoi(genConf["UpdateTime"])
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Unable to parse update time in config file.")
+			updatetime = 30
+		}
+	} else {
+		updatetime = 30
+	}
+	if genConf["ResourceTimeout"] != "" {
+		var err error
+		resourcetimeout, err = strconv.Atoi(genConf["ResourceTimeout"])
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Unable to parse resource timeout in config file.")
+			resourcetimeout = 5
+		}
+	} else {
+		resourcetimeout = 5
+	}
 
 	log.WithFields(log.Fields{
 		"ip":   *runIP,
@@ -176,7 +201,7 @@ func main() {
 	server.T = NewTokenStore()
 
 	// Configure the Queue
-	server.Q = queue.NewQueue(statefile)
+	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout)
 
 	// Add some nice security stuff
 	secureMiddleware := secure.New(secure.Options{

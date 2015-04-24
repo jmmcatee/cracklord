@@ -20,8 +20,8 @@ const (
 	STATUS_EXHAUSTED = "Exhausted"
 )
 
-var KeeperDuration = 30 * time.Second
-var NetworkTimeout = 2 * time.Second
+var KeeperDuration time.Duration
+var NetworkTimeout time.Duration
 var StateFileLocation string
 
 type Queue struct {
@@ -38,9 +38,11 @@ type StateFile struct {
 	Pool  ResourcePool  `json:"pool"`
 }
 
-func NewQueue(statefile string) Queue {
+func NewQueue(statefile string, updatetime int, timeout int) Queue {
 	//Setup the options
 	StateFileLocation = statefile
+	KeeperDuration = time.Duration(updatetime) * time.Second
+	NetworkTimeout = time.Duration(timeout) * time.Second
 
 	// Build the queue
 	q := Queue{
