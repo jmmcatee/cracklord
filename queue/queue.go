@@ -2,10 +2,12 @@ package queue
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +22,7 @@ const (
 
 var KeeperDuration = 30 * time.Second
 var NetworkTimeout = 2 * time.Second
+var StateFileLocation string
 
 type Queue struct {
 	status string // Empty, Running, Paused, Exhausted
@@ -30,7 +33,15 @@ type Queue struct {
 	qk chan bool
 }
 
-func NewQueue() Queue {
+type StateFile struct {
+	Stack []common.Job  `json:"stack"`
+	Pool  ResourcePool  `json:"pool"`
+}
+
+func NewQueue(statefile string) Queue {
+	//Setup the options
+	StateFileLocation = statefile
+
 	// Build the queue
 	q := Queue{
 		status: STATUS_EMPTY,
@@ -39,7 +50,76 @@ func NewQueue() Queue {
 		stats:  NewStats(),
 	}
 
+	if _, err := os.Stat(StateFileLocation); err == nil {
+		q.parseState()	
+	}
+
+	log.WithFields(log.Fields{
+		"statefile" : StateFileLocation,
+		"keepertime": KeeperDuration,
+		"nettimeout": NetworkTimeout,
+	}).Debug("Setup a new queue")
+
 	return q
+}
+
+func (q *Queue) writeState() error {
+	var s StateFile
+
+	//Create a state fila in case we are rebooted
+	stateFile, err := os.Create(StateFileLocation)
+	if err != nil {
+		log.WithField("error", err.Error()).Fatal("Unable to write to state file")
+		return err
+	}
+	stateEncoder := json.NewEncoder(stateFile)
+	s.Stack = q.stack
+	s.Pool = q.pool
+
+	stateEncoder.Encode(s)
+	stateFile.Close()
+
+	log.Debug("State file written successfully.")
+
+	return nil
+}
+
+func (q *Queue) parseState() error {
+	var s StateFile
+
+	stateFile, err := os.Open(StateFileLocation)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("An error occured opening the state file.")
+		return err
+	}	
+
+	stateDecoder := json.NewDecoder(stateFile)
+	err  = stateDecoder.Decode(&s)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("An error occured decoding the state file.")
+		return err
+	}
+	stateFile.Close()
+
+	for id, v := range s.Pool {
+		log.WithFields(log.Fields{
+			"name" : v.Name,
+			"id"   : id,
+		}).Debug("Added resource from state file.")
+
+		v.Status = common.STATUS_QUIT
+		q.pool[id] = v
+	}
+	for i, _ := range s.Stack {
+		log.WithFields(log.Fields{
+			"name" : s.Stack[i].Name,
+			"id"   : s.Stack[i].UUID,
+		}).Debug("Added job from state file.")
+		s.Stack[i].Status = common.STATUS_QUIT
+		q.stack = append(q.stack, s.Stack[i])
+	}
+
+	return nil
 }
 
 // Add a job to the queue at the end of the stack
@@ -576,6 +656,7 @@ func (q *Queue) Quit() []common.Job {
 // It will need to aquire a lock each time it does this
 // The q.qk channel needs to be created and maintained outside of this function
 func (q *Queue) keeper() {
+	log.Debug("Starting keeper loop.")
 	go func() {
 	keeperLoop:
 		for {
@@ -586,9 +667,14 @@ func (q *Queue) keeper() {
 			case <-kTimer:
 				log.Info("Updating queue status and keeping jobs.")
 
-				// Get lock
 				q.Lock()
 
+				//Write our state file
+				if StateFileLocation != "" {
+					q.writeState()
+				}
+
+				// Get lock
 				// Update all running jobs
 				q.updateQueue()
 
@@ -610,7 +696,6 @@ func (q *Queue) keeper() {
 									})
 
 									requirement := q.pool[i].Tools[q.stack[ji].ToolUUID].Requirements
-
 									tool, ok := q.pool[i].Tools[q.stack[ji].ToolUUID]
 
 									s := q.stack[ji].Status

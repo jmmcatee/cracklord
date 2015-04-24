@@ -68,6 +68,9 @@ func main() {
 		}
 	}
 
+	var statefile string
+	statefile = genConf["StateFile"]
+
 	log.WithFields(log.Fields{
 		"ip":   *runIP,
 		"port": *runPort,
@@ -173,7 +176,7 @@ func main() {
 	server.T = NewTokenStore()
 
 	// Configure the Queue
-	server.Q = queue.NewQueue()
+	server.Q = queue.NewQueue(statefile)
 
 	// Add some nice security stuff
 	secureMiddleware := secure.New(secure.Options{
