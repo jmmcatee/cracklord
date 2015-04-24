@@ -22,6 +22,24 @@ cracklord.factory('ResourceService', ['$resource', function ($resource) {
 cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$filter', function(ResourceService, ResourceColorizer, $filter) {
    var list = null;
 
+   var reloadList = function() {
+      return ResourceService.query(
+         function(data) {
+            for(var i = 0; i < list.length; i++) {
+               for(var j = 0; j < data.length; j++) {
+                  if(data[j].id === list[i].id) {
+                     for(var prop in data[j]) {
+                        if(data[j].hasOwnProperty(prop)) {
+                           list[i][prop] = data[j][prop]
+                        }  
+                     }
+                  }
+               } 
+            }
+         }
+      );
+   }
+
    var loadList = function() {
       return ResourceService.query(
          function(data) {
@@ -38,7 +56,7 @@ cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$fil
    return { 
       promise: promise, 
       reload: function() {
-         return loadList();
+         return reloadList();
       },
       get: function(id) {
          var found = $filter('filter')(list, {id: id}, true);
