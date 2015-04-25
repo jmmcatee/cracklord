@@ -44,7 +44,7 @@ cracklord.directive('playbutton', ['growl', 'AuthService', 'USER_ROLES', functio
                 if($scope.target.status === 'created' || $scope.target.status === 'running') {
                     $scope.target.status='paused';
                 } else if ($scope.target.status === 'paused') {
-                    $scope.target.status = 'created';
+                    $scope.target.status = 'running';
                 }
                 $scope.target.$update({id: $scope.target.id}, 
                     function success(successResult) {
