@@ -5,8 +5,6 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
-	"net"
-	"net/rpc"
 	"sync"
 )
 
@@ -16,46 +14,6 @@ const (
 	ERROR_AUTH    = "Call to resource did not have the proper authentication token."
 	ERROR_NO_TOOL = "Tool specified does not exit."
 )
-
-// This will need to be called with a WaitGroup to handle other calls without
-// the program closing. A channel is provied to alert when the RPC server is done.
-// This can be used to quit the application or simply restart the server for the next
-// master to connect.
-func StartResource(addr string, q *Queue) chan bool {
-	log.Debug("Starting resource")
-
-	res := rpc.NewServer()
-	res.Register(q)
-
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"addr": addr,
-		}).Fatalf("An error occured while trying to listen to port: %v", err)
-	}
-
-	log.WithFields(log.Fields{
-		"addr": addr,
-	}).Debug("Binding to server and port")
-
-	quit := make(chan bool)
-	go func() {
-		// Accept and server a limited number of times
-		conn, err := l.Accept()
-		if err != nil {
-			log.Fatalf("An error occured while trying to accept a connection: %v", err)
-		}
-
-		log.Infof("Accepting connection from %s", conn.RemoteAddr().String())
-
-		res.ServeConn(conn)
-
-		l.Close()
-		quit <- true
-	}()
-
-	return quit
-}
 
 type Queue struct {
 	stack map[string]common.Tasker
