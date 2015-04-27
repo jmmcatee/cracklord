@@ -1,33 +1,47 @@
+.tool {
+	color: #09b109;
+}
+.resource {
+	color: #dda00c;
+}
+.queue {
+	color: #0c6b8a;
+}
+h1, h2, h3, h4, h5 {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: bold;
+}
+
 ul.nav .active {
 	border-bottom: 3px #fff solid;
 }
 
-.jumbotron {
+.jumbotron.top {
 	margin-top: 100px;
 	margin-bottom: 0px;
 	background-image: url(../img/jumbotronbackground.jpg);
 	background-position: 0% 25%;
 	background-size: cover;
 	background-repeat: no-repeat;
+	position: relative;
 	color: white;
 	height: 400px;
-	position: relative;
 }
 
-.jumbotron h1 {
+.jumbotron.top h1 {
 	font-family: 'Shadows Into Light', cursive;
-	color: #4298B5;
+	color: #0c6b8a;
 	text-shadow: #fff 0px 0px 8px;
 	font-size: 5em;
 }
 
-.jumbotron p {
+.jumbotron.top p {
 	font-family: 'Open Sans', sans-serif;
-	color: #ADC4CC;
+	color: #DAE9EE;
 	text-shadow: #ddd 1px 1px 0.1em;
 }
 
-.jumbotron .links {
+.jumbotron.top .links {
 	margin-top: 40px;
 }
 
@@ -38,11 +52,18 @@ ul.nav .active {
 	width: 190px;
 	margin: 5px 20px;
 	padding: 10px;
-	font-size: 1.1em;
+	font-size: 1.em;
 }
 
 .jumbotron .btn:hover {
 	background: rgba(255, 255, 255, 0.2);
+}
+
+.jumbotron.sub {
+	background-color: #277D99;
+	color: #DAE9EE;
+	text-shadow: #000 1px 1px 2px;
+	font-family: 'Open Sans', sans-serif;
 }
 
 .feature .icon {
@@ -56,3 +77,10 @@ ul.nav .active {
 	text-decoration: underline;
 }
 
+footer {
+  height: 60px;
+  background-color: #f5f5f5;
+}
+footer .text-muted {
+	margin: 20px 0;
+}
