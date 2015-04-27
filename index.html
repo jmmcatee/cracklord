@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>CrackLord</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700|Shadows+Into+Light' rel='stylesheet' type='text/css'>
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="css/base.css" rel="stylesheet">
+  </head>
+
+  <body data-spy="scoll" data-target="#navbar">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#install">Install</a></li>
+            <li><a href="#configure">Configure</a></li>
+            <li><a href="#plugins">Plugins</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="jumbotron">
+        <div class="row">
+          <div class="col-md-6">
+            <h1>CrackLord</h1>
+            <p>Distributed system for management and execution of resource intensive tasks, such as password cracking and data processing.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3 pull-right">
+            <a class="btn btn-lg btn-default" href="https://www.github.com/jmmcatee/cracklord" role="button"><i class="fa fa-github"></i> View on GitHub</a>
+            <a class="btn btn-lg btn-default" href="https://github.com/jmmcatee/cracklord/archive/master.zip" role="button"><i class="fa fa-download"></i> Get Source</a>
+          </div>
+        </div>
+      </div>
+      <div class="row" id="features">
+        <div class="col-md-12">
+          <h1>What Is It?</h1>
+          <p>Over the past several years the world of password cracking has exploded with new tools and techniques. These new techniques have made it easier than ever to reverse captured password hashes. With the addition of powerful techniques, from GPGPU cracking to rainbow tables, it is easier than ever to access the plaintext for fun and profit.  Furthermore, during our day jobs we have found that many other processes can benefit from distributed access to the resources of high powered systems.  With many people requesting access to this, CrackLord was born.  CrackLord provides a scalable, pluggable, and distributed system for both password cracking as well as any other jobs we need.  Better said, CrackLord is a way to load balance the resources, such as CPU and GPU, from multiple hardware systems into a single queueing service across two primary services: the Resource and Queue.</p>
+          <hr class="tall"/>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="feature">
+                <div class="icon">
+                  <span class="fa-stack fa-3x">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-stack-overflow fa-stack-1x fa-inverse"></i>
+                  </span>
+                </div>
+                <div class="description">
+                  <h4>Queue</h4>
+                  The Queue is a service that runs on a single system, providing an interface for users to submit cracking jobs. These jobs are then processed and sent to available Resources to perform the actual crack. Users are able to create, pause, resume, and delete jobs in the Queue which will communicate with the Resource to handle the results.
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="feature">
+                <div class="icon">
+                  <span class="fa-stack fa-3x">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-server fa-stack-1x fa-inverse"></i>
+                  </span>
+                </div>
+                <div class="description">
+                  <h4>Resource</h4>
+                  The Resource is a service that runs on individual systems, providing access to their underlying hardware. Resources utilize various tools, such as Hashcat, John the Ripper, rcrack, or others, to run jobs and use the local CPU or GPU to crack hashes.  The Resource is written to allow new Tools and Plugins to be written and integrated into the system easily, with different Resource servers allowing the use of different tools as necessary. 
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          
+        </div>
+        <div class="col-md-6">
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  </body>
+</html>

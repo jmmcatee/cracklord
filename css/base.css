@@ -1,0 +1,58 @@
+ul.nav .active {
+	border-bottom: 3px #fff solid;
+}
+
+.jumbotron {
+	margin-top: 100px;
+	margin-bottom: 0px;
+	background-image: url(../img/jumbotronbackground.jpg);
+	background-position: 0% 25%;
+	background-size: cover;
+	background-repeat: no-repeat;
+	color: white;
+	height: 400px;
+	position: relative;
+}
+
+.jumbotron h1 {
+	font-family: 'Shadows Into Light', cursive;
+	color: #4298B5;
+	text-shadow: #fff 0px 0px 8px;
+	font-size: 5em;
+}
+
+.jumbotron p {
+	font-family: 'Open Sans', sans-serif;
+	color: #ADC4CC;
+	text-shadow: #ddd 1px 1px 0.1em;
+}
+
+.jumbotron .links {
+	margin-top: 40px;
+}
+
+.jumbotron .btn {
+	background: none;
+	border: 2px #fff solid;
+	color: #fff;
+	width: 190px;
+	margin: 5px 20px;
+	padding: 10px;
+	font-size: 1.1em;
+}
+
+.jumbotron .btn:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.feature .icon {
+	float: left;
+}
+.feature .description {
+	margin-left: 105px;
+}
+.feature h4 {
+	font-weight: bold;
+	text-decoration: underline;
+}
+
