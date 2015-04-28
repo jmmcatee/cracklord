@@ -42,6 +42,9 @@
           <div class="item">
             <div class="slide3"></div>
           </div>
+          <div class="item">
+            <div class="slide4"></div>
+          </div>
         </div>
         <div class="carousel-overlay container">
           <div class="col-md-4 pull-right">
@@ -135,7 +138,7 @@
             </div>
             <div class="content">
               <h4>For Users</h4>
-              <p>So first, you'll need to determine what your server configuration will look like.  There are two different servers that need to be run, the Queueserver and Resourceserver.  Both can be run on the same system or they can be run separately, either is fine.  You can also have multiple resource servers that all connect to the same Queue server.  The Tools on each can be different as well, but because Go is statically compiled, all Tools are built into the resource server at compile time; however, you can turn them off in the configs.  There is a lot of flexibility in the configuration, which is both good and bad as it can be hard to get started.  To try and help, we have put together some basic configuration files and instructions below.  You will also need the <a href="https://golang.org/">Go programming language</a>.</p>
+              <p>First, you'll need to determine what your server configuration will look like.  There are two different servers that need to be run, the Queueserver and Resourceserver.  Both can be run on the same system or they can be run separately, either is fine.  You can also have multiple resource servers that all connect to the same Queue server.  The Tools on each can be different as well, but because Go is statically compiled, all Tools are built into the resource server at compile time; however, you can turn them off in the configs.  There is a lot of flexibility in the configuration, which is both good and bad as it can be hard to get started.  To try and help, we have put together some basic configuration files and instructions below.  You will also need the <a href="https://golang.org/">Go programming language</a>.</p>
               <div class="row">
                 <div class="col-md-6">
                   <h5>Queue Server</h5>
@@ -187,13 +190,13 @@
             </div>
             <div class="content developers">
               <h4>For Developers</h4>
-              <p>So there are several ways you can get develop for CrackLord.  The reason you're probably here is because you need a specific Tool or plugin.  There's also several other components that you may want to customize or enhance.  If you have any questions, don't hestiate to submit an issue if you have a problem or reach out if you have questions.</p>
+              <p>There are several ways you can develop for CrackLord.  The reason you're probably here is because you need a specific Tool or plugin.  There's also several other components that you may want to customize or enhance.  If you have any questions, don't hestiate to submit an issue if you have a problem or reach out if you have questions.</p>
               <h5><i class="fa fa-wrench"></i> Write A Tool</h5>
-              <p>The whole idea behind CrackLord was to have lots of tools available.  There is a <a href="https://godoc.org/github.com/jmmcatee/cracklord/common">standard interface</a> for the Tasker and Tooler that each plugin uses.  Additionally, we've put together a <a href="https://github.com/jmmcatee/cracklord/wiki/Writing-A-Plugin">guide</a> showing how we wrote one of our own tools that should be way more helpful than the go docs. If you do write one, send us a pull request or let us know, we'd love to integrate it into master!</p>
+              <p>The whole idea behind CrackLord was to have lots of tools available.  There is a <a href="https://godoc.org/github.com/jmmcatee/cracklord/common">standard interface</a> for the Tasker and Tooler that each plugin uses.  Additionally, we've put together a <a href="https://github.com/jmmcatee/cracklord/wiki/Writing-A-Plugin">guide</a> showing how we wrote one of our own tools that should be way more helpful than the go docs. If you do write one, send us a pull request or let us know, we'd love to integrate it!</p>
               <h5><i class="fa fa-file-text"></i> Scripting Functions</h5>
               <p>The Queue server uses a standard <a href="https://github.com/jmmcatee/cracklord/wiki/API">API</a> and although we already have a default GUI, there's nothing preventing you from scripting this out.  It's a standard RESTful API that uses JSON data types which are supported in numerous languages.  Checkout our <a href="https://github.com/jmmcatee/cracklord/wiki/API">API documentation</a> to get started.</p>
-              <h5><i class="fa fa-image"></i> Create a New Interface</h5>
-              <p>So we've already put together a graphical user interface, but there's nothing preventing you from putting together a new one!  if it's awesome, we'll link to it so people can find it. Take a look at our <a href="https://github.com/jmmcatee/cracklord/wiki/API">API documentation</a> to get started and let us know if you have any questions.</p>
+              <h5><i class="fa fa-image"></i> Create A New Interface</h5>
+              <p>We've already put together a graphical user interface, but there's nothing preventing you from putting together a new one!  If it's awesome, we'll link to it so people can find it. Take a look at our <a href="https://github.com/jmmcatee/cracklord/wiki/API">API documentation</a> to get started and let us know if you have any questions.</p>
               <h5><i class="fa fa-cogs"></i> Enhance the Code</h5>
               <p>So you'd like to dive right in and improve CrackLord itself?  We owe you hugs because you're awesome!  First, we'd suggest you check out <a href="https://github.com/jmmcatee/cracklord/wiki/Internal-Interface-Map">this huge diagram</a> we put together showing all the parts of the internal code.  From there, the <a href="https://github.com/jmmcatee/cracklord/issues">GitHub Issue list</a> is probably the best place to dive right in and see what needs fixing.</p>
             </div>
@@ -206,13 +209,13 @@
       <h1>Plugins, Addons, and Tools</h1>
       <div class="row" id="plugins">
         <div class="col-md-12">
-          <p>Here is a list of all of the plugins and tools that we have configured within the resource server.  If you have one you'd like to see, you can either write it yourself and we'll get it in, or put in a request in our GitHub repository and we'll do our best to get it written, but we may need your help to figure out how.  We'll try and keep this list up to date with everything integrated into master or any that folks send us.</p>
+          <p>Here is a list of all of the plugins and tools that we have configured within the resource server.  If you have one you'd like to see, you can either write it yourself and we'll get it in, or put in a request in our GitHub repository and we'll do our best to get it written, but we may need your help to figure out how.  We'll try and keep this list up to date with everything included in releases or any links sent to us.</p>
           <ul class="list-group plugins">
             <li class="list-group-item">
               <div class="row plugin">
                 <div class="col-sm-3">
                   <h5><a href="https://github.com/jmmcatee/cracklord/plugins/hashcatdict">oclHashcat Dictionary</a></h5>
-                  <span class="author">Author: <a href="https://github.com/jmmcatee/"><i class="fa fa-github"></i> jmmcatee</a></span>
+                  <span class="author">Author: <a href="https://github.com/jmmcatee/"><i class="fa fa-github-alt"></i> jmmcatee</a></span>
                 </div>
                 <div class="col-sm-9">
                   Runs the popular password cracking tool <a href="http://hashcat.net">oclHashcat</a> to crack hashes using numerous different algorithms.  Runs hashcat from the command line in a managed process and automatically gathers the results.
@@ -226,7 +229,7 @@
     <footer class="footer">
       <div class="container">
         <div class="row">
-          <div class="text-muted col-md-6 text-left">Copyright &copy; 2015 This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions;</div>
+          <div class="text-muted col-md-6 text-left">Copyright &copy; 2015 This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions.</div>
           <div class="twitter-links col-md-6">
             <a href="https://twitter.com/michaelmcatee" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @michaelmcatee</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
             <a href="https://twitter.com/lucasjmorris" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @lucasjmorris</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>

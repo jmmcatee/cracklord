@@ -53,7 +53,7 @@ ul.nav .active {
 	left: 0;
 }
 
-.slide1, .slide2, .slide3 {
+.slide1, .slide2, .slide3, .slide4 {
 	min-height: 400px;
 	background-position: center, center;
 	background-repeat: no-repeat;
@@ -61,6 +61,7 @@ ul.nav .active {
 .slide1 { background-image: url("../img/jumbotron1.png"); }
 .slide2 { background-image: url("../img/jumbotron2.png"); }
 .slide3 { background-image: url("../img/jumbotron3.png"); }
+.slide4 { background-image: url("../img/jumbotron4.png"); }
 
 .developers h5 {
 	margin-top: 25px;
