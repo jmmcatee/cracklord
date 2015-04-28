@@ -68,6 +68,10 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 		$scope.reloadJobs();
 	}, 15000);
 
+	$scope.$on('$destroy', function() {
+		$interval.cancel(timer)
+	});
+
 	//Initially we'll also load our data	
 	$scope.loadJobs();
 }]);
