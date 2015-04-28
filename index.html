@@ -31,17 +31,21 @@
       </div>
     </nav>
     <div class="jumbotron top" id="home">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-6">
-            <h1><i class="fa fa-user-secret"></i>CrackLord</h1>
-            <p>Distributed system for management and execution of resource intensive tasks, such as password cracking and data processing.</p>
+      <div class="carousel slide">
+        <div class="carousel-inner">
+          <div class="item active">
+            <div class="slide1"></div>
+          </div>
+          <div class="item">
+            <div class="slide2"></div>
+          </div>
+          <div class="item">
+            <div class="slide3"></div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-3 pull-right">
-            <a class="btn btn-lg btn-default" href="https://www.github.com/jmmcatee/cracklord" role="button"><i class="fa fa-github"></i> View on GitHub</a>
-            <a class="btn btn-lg btn-default" href="https://github.com/jmmcatee/cracklord/releases" role="button"><i class="fa fa-download"></i> Download</a>
+        <div class="carousel-overlay container">
+          <div class="col-md-4 pull-right">
+            <h1><i class="fa fa-user-secret"></i>CrackLord</h1>
           </div>
         </div>
       </div>
@@ -49,9 +53,13 @@
     <div class="jumbotron sub">
       <div class="container">
         <div class="row">
-          <div class="col-md-12">
+          <div class="col-md-9">
             <h2>What Is CrackLord?</h2>
             <p>A management system for taking powerful hardware resources (GPU crackers, Cloud systems, etc.) and sharing them across groups of people with one location to manage them.</p>
+          </div>
+          <div class="col-md-3 pull-right links">
+            <a class="btn btn-lg btn-default" href="https://www.github.com/jmmcatee/cracklord" role="button"><i class="fa fa-github"></i> View on GitHub</a>
+            <a class="btn btn-lg btn-default" href="https://github.com/jmmcatee/cracklord/releases" role="button"><i class="fa fa-download"></i> Download</a>
           </div>
         </div>
       </div>
@@ -218,7 +226,7 @@
     <footer class="footer">
       <div class="container">
         <div class="row">
-          <div class="text-muted col-md-6 text-right">Footer / Copyright</div>
+          <div class="text-muted col-md-6 text-left">Copyright &copy; 2015 This program comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions;</div>
           <div class="twitter-links col-md-6">
             <a href="https://twitter.com/michaelmcatee" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @michaelmcatee</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
             <a href="https://twitter.com/lucasjmorris" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @lucasjmorris</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
@@ -229,7 +237,11 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script>
-    $('body').scrollspy({ target: '#navbar' })
+      $('body').scrollspy({ target: '#navbar' })
+      $('.carousel').carousel({
+        interval: 5000,
+        pause: "false"
+      })
     </script>
   </body>
 </html>

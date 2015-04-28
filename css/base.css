@@ -37,16 +37,30 @@ ul.nav .active {
 }
 
 .jumbotron.top {
-	margin-top: 65px;
+	margin-top: 63px;
 	margin-bottom: 0px;
-	background-image: url(../img/jumbotronbackground.jpg);
-	background-position: 0% 25%;
-	background-size: cover;
-	background-repeat: no-repeat;
 	position: relative;
 	color: white;
 	height: 400px;
+	padding: 0;
+	position: relative;
 }
+
+.carousel-overlay {
+	position: absolute; 
+	right: 0;
+	top: 0;
+	left: 0;
+}
+
+.slide1, .slide2, .slide3 {
+	min-height: 400px;
+	background-position: center, center;
+	background-repeat: no-repeat;
+}
+.slide1 { background-image: url("../img/jumbotron1.png"); }
+.slide2 { background-image: url("../img/jumbotron2.png"); }
+.slide3 { background-image: url("../img/jumbotron3.png"); }
 
 .developers h5 {
 	margin-top: 25px;
@@ -55,23 +69,18 @@ ul.nav .active {
 
 .jumbotron.top h1 {
 	font-family: 'Shadows Into Light', cursive;
-	color: #0c6b8a;
-	text-shadow: #fff 0px 0px 8px;
+	color: #024156;
+	text-shadow: #458FA8 2px 2px 8px;
 	font-size: 5em;
 	margin: 0;
+	margin-top: 50px;
 }
 
-.jumbotron.top p {
-	font-family: 'Open Sans', sans-serif;
-	color: #DAE9EE;
-	text-shadow: #ddd 1px 1px 0.1em;
+.links {
+	margin-top: 20px;
 }
 
-.jumbotron.top .links {
-	margin-top: 40px;
-}
-
-.jumbotron.top .btn {
+.links .btn {
 	background: none;
 	border: 2px #fff solid;
 	color: #fff;
@@ -81,7 +90,7 @@ ul.nav .active {
 	font-size: 1.1em;
 }
 
-.jumbotron.top .btn:hover {
+.links .btn:hover {
 	background: rgba(255, 255, 255, 0.2);
 }
 
@@ -154,4 +163,8 @@ footer .twitter-links {
 }
 .plugin h5 a, .plugin span.author a {
 	color: #0c6b8a;
+}
+
+#plugins {
+	padding-top: 8px;
 }
