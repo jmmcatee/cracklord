@@ -1,5 +1,11 @@
-<div class="btn-group-vertical" role="group">
-	<button class="btn btn-default disabled">Confirm<br>Reorder</button>
-	<button class="btn btn-success" ng-click="reorderConfirm()"><i class="fa fa-2x fa-thumbs-up"></i><br><div class="btnwrd">Confirm</div></button>
-	<button class="btn btn-warning" ng-click="reorderCancel()"><i class="fa fa-2x fa-thumbs-down"></i><br><div class="btnwrd">Cancel</div></button>
+<div class="btn-group">
+	<button class="btn btn-default disabled btn-label">Reorder</button>
+	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+		<span class="caret"></span>
+		<span class="sr-only">Toggle</span>
+	</button>
+	<ul class="dropdown-menu" roles="menu">
+		<li><a ng-click="reorderConfirm()" class="btn-confirm"><i class="fa fa-thumbs-up"></i> Confirm</a></li>
+		<li><a ng-click="reorderCancel()" class="btn-cancel"><i class="fa fa-thumbs-down"></i> Cancel</a></li>
+	</ul>
 </div>

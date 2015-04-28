@@ -176,7 +176,7 @@ cracklord.directive('reloadbutton', ['growl', function jobsReloadButton(growl) {
             datareload: '&'
         },
         replace: true,
-        template: '<button class="btn btn-primary"><i class="fa fa-2x fa-refresh"></i><br> <div class="btnwrd">Refresh</div></button>',
+        template: '<button class="btn btn-primary"><i class="fa fa-refresh"></i> Refresh</button>',
         link: function($scope, $element, $attrs) {
             $element.bind('click', function() {
                 $scope.datareload();

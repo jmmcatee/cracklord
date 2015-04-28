@@ -1,13 +1,11 @@
 <div class="row" ng-controller="JobsController">
-	<div class="col-md-1 sidebar fixed">
-		<div class="btn-group-vertical" role="group">
-			<button class="btn btn-default disabled">Actions</button>
-			<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-2x fa-plus"></i><br> <div class="btnwrd">Add New</div></a>
-			<job-reorder-confirm reload="loadJobs()" jobs="jobs" dragstatus="listreordered" ng-show="listreordered"></job-reorder-confirm>
-			<button class="btn btn-default disabled"> </button>
-  		</div>
-	</div>
-	<div class="col-md-11 col-md-offset-1 main">
+	<div class="col-md-12 main">
+		<div class="col-md-5 pull-right button-tray"> 
+			<div class="btn-group pull-right" role="group">
+				<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-plus"></i> Add Job</a>
+				<job-reorder-confirm reload="loadJobs()" jobs="jobs" dragstatus="listreordered" ng-if="listreordered"></job-reorder-confirm>
+			</div>
+		</div>
 		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
 		<h2 class="page-header">Current Queue</h2>
 		<div class="table">

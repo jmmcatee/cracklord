@@ -18,6 +18,12 @@ body {
 	border: #000000 solid 3px;
 	background-color: #fff;
 	border-radius: 2em;
+	padding: 0 25px;
+}
+
+.main > h1 {
+	margin: 30px 0 20px;
+	border: 0;
 }
 
 .login {
@@ -43,20 +49,25 @@ footer p.license {
 	padding: 0;
 }
 
-.sidebar.fixed {
-	position: fixed;
+.button-tray {
+	margin-top: 30px;
+	margin-right: 30px;
 }
 
-.sidebar button {
-	padding: 10px 12px;	
-}
-
-.sidebar button.disabled {
+button.btn-label {
 	background-color: #ffffff;
 	color: #000;	
 	font-weight: bold;
 	text-shadow: none;
 	text-decoration: underline;
+}
+.btn-confirm {
+	color: #5cb85c !important;
+	cursor: pointer;
+}
+.btn-cancel {
+	color: #f0ad4e !important;
+	cursor: pointer;
 }
 
 .sidebar > .btn-group-vertical > button:first-child:not(:last-child) {
