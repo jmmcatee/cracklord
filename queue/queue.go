@@ -34,8 +34,8 @@ type Queue struct {
 }
 
 type StateFile struct {
-	Stack []common.Job  `json:"stack"`
-	Pool  ResourcePool  `json:"pool"`
+	Stack []common.Job `json:"stack"`
+	Pool  ResourcePool `json:"pool"`
 }
 
 func NewQueue(statefile string, updatetime int, timeout int) Queue {
@@ -53,11 +53,11 @@ func NewQueue(statefile string, updatetime int, timeout int) Queue {
 	}
 
 	if _, err := os.Stat(StateFileLocation); err == nil {
-		q.parseState()	
+		q.parseState()
 	}
 
 	log.WithFields(log.Fields{
-		"statefile" : StateFileLocation,
+		"statefile":  StateFileLocation,
 		"keepertime": KeeperDuration,
 		"nettimeout": NetworkTimeout,
 	}).Debug("Setup a new queue")
@@ -93,10 +93,10 @@ func (q *Queue) parseState() error {
 	if err != nil {
 		log.WithField("error", err.Error()).Error("An error occured opening the state file.")
 		return err
-	}	
+	}
 
 	stateDecoder := json.NewDecoder(stateFile)
-	err  = stateDecoder.Decode(&s)
+	err = stateDecoder.Decode(&s)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("An error occured decoding the state file.")
 		return err
@@ -105,17 +105,18 @@ func (q *Queue) parseState() error {
 
 	for id, v := range s.Pool {
 		log.WithFields(log.Fields{
-			"name" : v.Name,
-			"id"   : id,
+			"name": v.Name,
+			"id":   id,
 		}).Debug("Added resource from state file.")
 
+		v.Address = "(disconnected)"
 		v.Status = common.STATUS_QUIT
 		q.pool[id] = v
 	}
 	for i, _ := range s.Stack {
 		log.WithFields(log.Fields{
-			"name" : s.Stack[i].Name,
-			"id"   : s.Stack[i].UUID,
+			"name": s.Stack[i].Name,
+			"id":   s.Stack[i].UUID,
 		}).Debug("Added job from state file.")
 		s.Stack[i].Status = common.STATUS_QUIT
 		q.stack = append(q.stack, s.Stack[i])
