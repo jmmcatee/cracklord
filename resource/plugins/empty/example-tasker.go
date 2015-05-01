@@ -1,8 +1,12 @@
 package exampleplugin
 
 import (
+	"bytes"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
+	"io"
+	"os/exec"
+	"sync"
 )
 
 /*
@@ -35,6 +39,12 @@ type exampleTasker struct {
 	server
 */
 func newExampleTask(j common.Job) (common.Tasker, error) {
+	//You can also log.Fatal (which will kill the resourceserver, so avoid), log.Error, log.Warn, and log.Info
+	log.Debug("Starting up a new example task plugin.")
+
+	e := exampleTasker{}
+
+	return &e, nil
 }
 
 /*
@@ -43,18 +53,21 @@ func newExampleTask(j common.Job) (common.Tasker, error) {
 	information
 */
 func (v *exampleTasker) Status() common.Job {
+	return v.job
 }
 
 /*
 	Start or restart a job running under this tool.
 */
 func (v *exampleTasker) Run() error {
+	return nil
 }
 
 /*
 	Pause the job if possible, save the state, etc.
 */
 func (v *exampleTasker) Pause() error {
+	return nil
 }
 
 /*
@@ -62,11 +75,12 @@ func (v *exampleTasker) Pause() error {
 	resources, etc.
 */
 func (v *exampleTasker) Quit() common.Job {
+	return v.job
 }
 
 /*
 	Get the input, output, and error streams
 */
-func (v *hascatTasker) IOE() (io.Writer, io.Reader, io.Reader) {
+func (v *exampleTasker) IOE() (io.Writer, io.Reader, io.Reader) {
 	return v.stdinPipe, v.stdoutPipe, v.stderrPipe
 }

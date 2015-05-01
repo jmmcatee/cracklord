@@ -1,6 +1,7 @@
 package exampleplugin
 
 import (
+	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
@@ -15,6 +16,12 @@ func Setup(path string) error {
 	confFile, err := ini.LoadFile(path)
 	if err != nil {
 		return err
+	}
+
+	basic := confFile.Section("Basic")
+	if len(basic) == 0 {
+		// Nothing retrieved, so return error
+		return errors.New("No \"Basic\" configuration section.")
 	}
 
 	log.Info("Example tool successfully setup")
