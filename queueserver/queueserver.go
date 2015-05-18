@@ -9,12 +9,14 @@ import (
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
 	"net/http"
+	"os"
 	"strconv"
 )
 
 func main() {
 	// Define the flags
 	var confPath = flag.String("conf", "", "Configuration file to use")
+	var webRoot = flag.String("webroot", "./public", "Location of the web server root")
 	var runIP = flag.String("host", "0.0.0.0", "IP to bind to")
 	var runPort = flag.String("port", "443", "Port to bind to")
 	var certPath = flag.String("cert", "", "Custom certificate file to use")
@@ -106,6 +108,12 @@ func main() {
 	if confAuth == nil {
 		println("Error: Authentication configuration is required.")
 		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		return
+	}
+
+	_, weberr := os.Stat(*webRoot)
+   	if weberr != nil {
+		println("Error: Public web root '"+*webRoot+"' does not exist.")
 		return
 	}
 
@@ -213,7 +221,7 @@ func main() {
 	})
 
 	// Build the Negroni handler
-	n := negroni.New(negroni.NewRecovery(), cracklog.NewNegroniLogger(), negroni.NewStatic(http.Dir("public")))
+	n := negroni.New(negroni.NewRecovery(), cracklog.NewNegroniLogger(), negroni.NewStatic(http.Dir(*webRoot)))
 	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
 	n.UseHandler(server.Router())
 	log.Debug("Negroni handler started.")
