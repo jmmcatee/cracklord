@@ -52,7 +52,7 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	// Get a ticket to prove the creds are valid
 	_, err = creds.GetTicket("krbtgt/"+a.Realm, nil)
 	if err != nil {
-		logger.Error("Error gathering kerberos ticket.")
+		logger.WithField("error", err.Error()).Error("Error gathering kerberos ticket.")
 		return User{}, err
 	}
 
