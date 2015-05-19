@@ -175,7 +175,7 @@ func main() {
 		if !ok {
 			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
 		}
-		ad.Realm = realm
+		ad.SetRealm(realm)
 
 		gmap := map[string]string{}
 		ro, ok := confAuth["ReadOnlyGroup"]

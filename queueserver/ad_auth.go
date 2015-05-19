@@ -12,7 +12,7 @@ import (
 // Active Directory structure to implement the basic authenticator
 type ADAuth struct {
 	GroupMap map[string]string
-	Realm    string
+	realm    string
 }
 
 // Function to configure the group mappying. One AD group per server group
@@ -24,7 +24,7 @@ func (a *ADAuth) Setup(mapping map[string]string) {
 
 // Function to configure the realm of the AD auth
 func (a *ADAuth) SetRealm(realm string) {
-	a.Realm = strings.ToUpper(realm)
+	a.realm = strings.ToUpper(realm)
 	log.WithField("realm", realm).Debug("AD authentication realm set.")
 }
 
@@ -39,28 +39,30 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 
 	logger := log.WithFields(log.Fields{
 		"user":  user,
-		"realm": a.Realm,
+		"realm": a.realm,
 	})
 
 	// Verify the validity of user and password
-	creds, err := kerb.NewCredential(user, a.Realm, pass, &credConf)
+	creds, err := kerb.NewCredential(user, a.realm, pass, &credConf)
 	if err != nil {
 		logger.Error("Error verifying kerberos credentials.")
 		return User{}, err
 	}
+	logger.Debug("Validated kerberos credentials.")	
 
 	// Get a ticket to prove the creds are valid
-	_, err = creds.GetTicket("krbtgt/"+a.Realm, nil)
+	_, err = creds.GetTicket("krbtgt/"+a.realm, nil)
 	if err != nil {
 		logger.WithField("error", err.Error()).Error("Error gathering kerberos ticket.")
 		return User{}, err
 	}
 
 	// User is valid so get group membership
-	db := ad.New(creds, a.Realm)
+	db := ad.New(creds, a.realm)
 
 	// Get the user info from AD
-	adUser, err := db.LookupPrincipal(user, a.Realm)
+	logger.Debug("Attempting to enumerate LDAP user info from AD")
+	adUser, err := db.LookupPrincipal(user, a.realm)
 
 	NewUser := User{
 		Username: user,
@@ -70,6 +72,7 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 		logger.WithField("group", g).Debug("Checking AD group.")
 		// Check if the AD group has a mapping
 		if clGroup, ok := a.GroupMap[g.String()]; ok {
+			logger.WithField("group", clGroup).Debug("Adding group to list")
 			// Group existed so store the result in the User structure
 			NewUser.Groups = append(NewUser.Groups, clGroup)
 		}
