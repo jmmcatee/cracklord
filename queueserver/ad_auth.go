@@ -68,13 +68,21 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 		Username: user,
 	}
 
-	for _, g := range adUser.Member {
+	for l, g := range a.GroupMap {
 		logger.WithField("group", g).Debug("Checking AD group.")
-		// Check if the AD group has a mapping
-		if clGroup, ok := a.GroupMap[g.String()]; ok {
-			logger.WithField("group", clGroup).Debug("Adding group to list")
-			// Group existed so store the result in the User structure
-			NewUser.Groups = append(NewUser.Groups, clGroup)
+		// Pull group membership of each access group level
+		adGroup, err := db.LookupGroup(g, a.realm)
+		if err != nil {
+			return User{}, err
+		}
+
+		// Check if our user is in the group
+		for _, obj := range adGroup.Member {
+			if adUser.DN == obj {
+				logger.WithField("group", obj).Debug("Adding group to list")
+				// Our user is in this group so assign the cracklord access level
+				NewUser.Groups = append(NewUser.Groups, l)
+			}
 		}
 	}
 
