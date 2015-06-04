@@ -162,7 +162,9 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt"))
 
 	//Append config file arguments
-	args = append(args, config.Arguments)
+	if config.Arguments != "" {
+		args = append(args, config.Arguments)
+	}
 
 	// Take the hashes given and create a file
 	hashFile, err := os.Create(filepath.Join(h.wd, "hashes.txt"))
@@ -246,7 +248,7 @@ func (v *hascatTasker) Status() common.Job {
 		}
 
 		etcMatch := regTimeEstimated.FindStringSubmatch(status)
-		log.WithField("etcMatch", etcMatch).Debug("Matching estimated time of completion.")	
+		log.WithField("etcMatch", etcMatch).Debug("Matching estimated time of completion.")
 		if len(etcMatch) == 2 {
 			v.job.ETC = etcMatch[1]
 		}
