@@ -891,7 +891,7 @@ func (q *Queue) AddResource(addr, name, auth string) error {
 
 	// Check that the address is already in use
 	for _, v := range q.pool {
-		if v.Address == addr && v.Status != STATUS_QUIT {
+		if v.Address == addr && v.Status != common.STATUS_QUIT {
 			// We have found a resource with the same address so error
 			log.WithField("address", addr).Debug("Resource already exists.")
 			return errors.New("Resource already exists!")
