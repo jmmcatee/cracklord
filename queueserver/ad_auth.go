@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"crypto/rand"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmckaskill/gokerb"
