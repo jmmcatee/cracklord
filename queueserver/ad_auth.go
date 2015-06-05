@@ -69,17 +69,11 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	}
 
 	for l, g := range a.GroupMap {
-		logger.WithField("group", g).Debug("Checking AD group.")
-		// Pull group membership of each access group level
-		adGroup, err := db.LookupGroup(g, a.realm)
-		if err != nil {
-			return User{}, err
-		}
-
 		// Check if our user is in the group
-		for _, obj := range adGroup.Member {
-			if adUser.DN == obj {
-				logger.WithField("group", obj).Debug("Adding group to list")
+		users := a.recurseGroup(g, db)
+
+		for _, obj := range users {
+			if adUser.SAMAccountName == obj {
 				// Our user is in this group so assign the cracklord access level
 				NewUser.Groups = append(NewUser.Groups, l)
 			}
@@ -92,4 +86,28 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	// Expiration timer is handled by the TokenStore
 
 	return NewUser, nil
+}
+
+func (a *ADAuth) recurseGroup(group string, db *ad.DB) []string {
+	var users []string
+	adGroup, err := db.LookupGroup(group, a.realm)
+	if err != nil {
+		return []string{}
+	}
+
+	for _, obj := range adGroup.Member {
+		// Get the DN
+		dn, err := db.LookupDN(obj)
+		if err != nil {
+			return []string{}
+		}
+
+		if reflect.TypeOf(dn).String() == "*ad.Group" {
+			users = append(users, a.recurseGroup(dn.(*ad.Group).SAMAccountName , db)...)
+		} else {
+			users = append(users, dn.(*ad.User).SAMAccountName )
+		}
+	}
+
+	return users
 }
