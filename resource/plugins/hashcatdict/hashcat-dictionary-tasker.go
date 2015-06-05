@@ -105,12 +105,14 @@ type hascatTasker struct {
 	stdoutPipe io.ReadCloser
 	stdinPipe  io.WriteCloser
 
-	mux  sync.Mutex
-	done bool
+	waitChan chan struct{}
+
+	mux sync.Mutex
 }
 
 func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h := hascatTasker{}
+	h.waitChan = make(chan struct{}, 1)
 
 	h.job = j
 
@@ -367,13 +369,6 @@ func (v *hascatTasker) Status() common.Job {
 
 	v.stdout.Reset()
 
-	if v.done {
-		v.job.Status = common.STATUS_DONE
-
-		log.WithField("jobid", v.job.UUID).Info("Job done.")
-		return v.job
-	}
-
 	log.WithFields(log.Fields{
 		"task":   v.job.UUID,
 		"status": v.job.Status,
@@ -383,10 +378,12 @@ func (v *hascatTasker) Status() common.Job {
 }
 
 func (v *hascatTasker) Run() error {
+	v.mux.Lock()
+	defer v.mux.Unlock()
 	// Check that we have not already finished this job
 	done := v.job.Status == common.STATUS_DONE || v.job.Status == common.STATUS_QUIT || v.job.Status == common.STATUS_FAILED
 	if done {
-		log.Warn("Unable to start hashcatdict job, it has already finished")
+		log.WithField("Status", v.job.Status).Debug("Unable to start hashcatdict job")
 		return errors.New("Job already finished.")
 	}
 
@@ -460,8 +457,10 @@ func (v *hascatTasker) Run() error {
 		// Listen on commmand wait and then send signal when finished
 		// This will be read on the Status() function
 		v.cmd.Wait()
+
 		v.mux.Lock()
-		v.done = true
+		v.job.Status = common.STATUS_DONE
+		v.waitChan <- struct{}{}
 		v.mux.Unlock()
 	}()
 
@@ -475,6 +474,8 @@ func (v *hascatTasker) Pause() error {
 	// Call status to update the job internals before pausing
 	v.Status()
 
+	v.mux.Lock()
+
 	// Because this is queue managed, we should just need to kill the process.
 	// It will be resumed automatically
 	if runtime.GOOS == "windows" {
@@ -483,14 +484,14 @@ func (v *hascatTasker) Pause() error {
 		v.cmd.Process.Signal(syscall.SIGINT)
 	}
 
+	v.mux.Unlock()
+
 	// Wait for the program to actually exit
-	v.cmd.Wait()
+	<-v.waitChan
 
 	// Change status to pause
-	v.job.Status = common.STATUS_PAUSED
-
 	v.mux.Lock()
-	v.done = false
+	v.job.Status = common.STATUS_PAUSED
 	v.mux.Unlock()
 
 	log.WithField("task", v.job.UUID).Debug("Task paused successfully")
@@ -504,19 +505,21 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
+	v.mux.Lock()
+
 	if runtime.GOOS == "windows" {
 		v.cmd.Process.Kill()
 	} else {
 		v.cmd.Process.Signal(syscall.SIGINT)
 	}
 
-	// Wait for the program to actually exit
-	v.cmd.Wait()
+	v.mux.Unlock()
 
-	v.job.Status = common.STATUS_QUIT
+	// Wait for the program to actually exit
+	<-v.waitChan
 
 	v.mux.Lock()
-	v.done = false
+	v.job.Status = common.STATUS_QUIT
 	v.mux.Unlock()
 
 	log.WithField("task", v.job.UUID).Debug("Task quit successfully")
