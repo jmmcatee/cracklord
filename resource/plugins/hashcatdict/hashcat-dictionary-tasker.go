@@ -360,7 +360,12 @@ func (v *hascatTasker) Status() common.Job {
 		linescanner := bufio.NewScanner(file)
 		var linetmp [][]string
 		for linescanner.Scan() {
-			linetmp = append(linetmp, strings.Split(linescanner.Text(), ":"))
+			var kvp []string
+			i := strings.LastIndex(linescanner.Text(), ":")
+			kvp = append(kvp, linescanner.Text()[:i-1])
+			kvp = append(kvp, linescanner.Text()[i+1:])
+
+			linetmp = append(linetmp)
 		}
 		if len(linetmp) > 0 {
 			v.job.OutputData = linetmp
@@ -368,6 +373,8 @@ func (v *hascatTasker) Status() common.Job {
 	}
 
 	v.stdout.Reset()
+
+	v.job.Error = v.stderr.String()
 
 	log.WithFields(log.Fields{
 		"task":   v.job.UUID,
