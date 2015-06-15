@@ -50,7 +50,7 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 func (q *Queue) Ping(ping int64, pong *int64) error {
 	q.Lock()
 
-	ping = ping * 2
+	pong = &ping
 
 	q.Unlock()
 	return nil
@@ -80,6 +80,14 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 		"uuid":       rpc.Job.UUID,
 		"parameters": rpc.Job.Parameters,
 	})
+
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.AddTask: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		log.Warn("Authentication token was not recognized")
@@ -134,6 +142,14 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 
 func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 	log.WithField("task", j.UUID).Debug("Attempting to gather task status")
+
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.TaskStatus: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		log.Warn("Authentication token was not matched")
@@ -159,6 +175,14 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 
 func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 	log.WithField("task", j.UUID).Debug("Attempting to pause task")
+
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.TaskPause: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		return errors.New(ERROR_AUTH)
@@ -194,6 +218,13 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 	log.WithField("task", rpc.Job.UUID).Debug("Attempting to run task")
 
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.TaskRun: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		return errors.New(ERROR_AUTH)
@@ -228,6 +259,13 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	log.WithField("task", j.UUID).Debug("Attempting to quit task")
 
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.TaskQuit: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		return errors.New(ERROR_AUTH)
@@ -260,6 +298,13 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 func (q *Queue) ResourceTools(rpc common.RPCCall, tools *[]common.Tool) error {
 	log.Debug("Gathering all tools")
 
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.ResourceTools: %v", err)
+		}
+	}()
+
 	q.RLock()
 	defer q.RUnlock()
 
@@ -290,6 +335,15 @@ func (q *Queue) ResourceTools(rpc common.RPCCall, tools *[]common.Tool) error {
 }
 
 func (q *Queue) AllTaskStatus(rpc common.RPCCall, j *[]common.Job) error {
+	log.Debug("Gathering all Task Status")
+
+	// Add a defered catch for panic from within the tools
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("Recovered from Panic in Resource.AllTaskStatus: %v", err)
+		}
+	}()
+
 	// Check authentication token
 	if rpc.Auth != q.authToken {
 		log.Warn("An error occured while trying to match the authentication token")
