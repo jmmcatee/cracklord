@@ -3,7 +3,7 @@ package resource
 import (
 	"bytes"
 	"errors"
-	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/cracklord/src/common"
 	"io"
 	"strconv"
 	"time"

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/cracklord/src/common"
 	"net/rpc"
 	"os"
 	"strings"

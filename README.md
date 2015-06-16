@@ -12,18 +12,18 @@ Get Cracklord
 
 Build the server and resource server components
 
-`go build github.com/jmmcatee/cracklord/server`
+`go build github.com/jmmcatee/cracklord/src/server`
 
-`go build github.com/jmmcatee/cracklord/resourceserver`
+`go build github.com/jmmcatee/cracklord/src/resourceserver`
 
 Navigate to the resource server directory and run it
 
-`cd $GOPATH/src/github.com/jmmcatee/cracklord/resourceserver`
+`cd $GOPATH/src/github.com/jmmcatee/cracklord/src/resourceserver`
 
 `./resourceserver.exe`
 
 Now open another prompt and navigate to the Cracklord server and run it
 
-`cd $GOPATH/src/github.com/jmmcatee/cracklord/server`
+`cd $GOPATH/src/github.com/jmmcatee/cracklord/src/server`
 
 `./server.exe`

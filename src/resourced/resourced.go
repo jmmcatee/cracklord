@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common/log"
-	"github.com/jmmcatee/cracklord/resource"
-	"github.com/jmmcatee/cracklord/resource/plugins/hashcatdict"
+	"github.com/jmmcatee/cracklord/src/common/log"
+	"github.com/jmmcatee/cracklord/src/resource"
+	"github.com/jmmcatee/cracklord/src/resource/plugins/hashcatdict"
 	"github.com/vaughan0/go-ini"
 	"net"
 	"net/rpc"
@@ -37,7 +37,7 @@ func main() {
 
 	if confError != nil {
 		println("ERROR: Unable to " + confError.Error())
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
@@ -46,13 +46,13 @@ func main() {
 	if len(resConf) == 0 {
 		// We do not have configuration data to quit
 		println("ERROR: There was a problem with your configuration file.")
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 	authToken := resConf["AuthToken"]
 	if authToken == "" {
 		println("ERROR: No authentication token given in configuration file.")
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
@@ -95,7 +95,7 @@ func main() {
 	pluginConf := confFile.Section("Plugins")
 	if len(pluginConf) == 0 {
 		println("ERROR: No plugin section in the resource server config file.")
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 	if pluginConf["hashcatdict"] != "" {

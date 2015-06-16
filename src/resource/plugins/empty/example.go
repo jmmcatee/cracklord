@@ -3,7 +3,7 @@ package exampleplugin
 import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/cracklord/src/common"
 	"github.com/vaughan0/go-ini"
 )
 

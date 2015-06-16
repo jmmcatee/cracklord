@@ -4,8 +4,8 @@ import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
-	"github.com/jmmcatee/cracklord/common/log"
-	"github.com/jmmcatee/cracklord/queue"
+	"github.com/jmmcatee/cracklord/src/common/log"
+	"github.com/jmmcatee/cracklord/src/queue"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
 	"net/http"
@@ -40,7 +40,7 @@ func main() {
 	// Check for errors
 	if confErr != nil {
 		println("ERROR: Unable to " + confErr.Error())
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
@@ -107,13 +107,13 @@ func main() {
 	confAuth := confFile.Section("Authentication")
 	if confAuth == nil {
 		println("Error: Authentication configuration is required.")
-		println("See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
 	_, weberr := os.Stat(*webRoot)
-   	if weberr != nil {
-		println("Error: Public web root '"+*webRoot+"' does not exist.")
+	if weberr != nil {
+		println("Error: Public web root '" + *webRoot + "' does not exist.")
 		return
 	}
 
@@ -127,29 +127,29 @@ func main() {
 
 		au, ok := confAuth["adminuser"]
 		if !ok {
-			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ap := confAuth["adminpass"]
 		if !ok {
-			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		su, ok := confAuth["standarduser"]
 		if !ok {
-			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		sp := confAuth["standarduser"]
 		if !ok {
-			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		ru, ok := confAuth["readonlyuser"]
 		if !ok {
-			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		rp := confAuth["readonlypass"]
 		if !ok {
-			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		umap[au] = ap
@@ -173,22 +173,22 @@ func main() {
 
 		realm, ok := confAuth["realm"]
 		if !ok {
-			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ad.SetRealm(realm)
 
 		gmap := map[string]string{}
 		ro, ok := confAuth["ReadOnlyGroup"]
 		if !ok {
-			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		st, ok := confAuth["StandardGroup"]
 		if !ok {
-			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		admin, ok := confAuth["AdminGroup"]
 		if !ok {
-			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue-auth")
+			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		gmap[ReadOnly] = ro
@@ -250,6 +250,6 @@ func main() {
 
 	err := http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
 	if err != nil {
-		log.Fatal("Unable to start up web server: "+err.Error())
+		log.Fatal("Unable to start up web server: " + err.Error())
 	}
 }
