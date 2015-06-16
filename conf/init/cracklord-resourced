@@ -1,0 +1,13 @@
+description   "Cracklord Resource Server"
+author        "Lucas Morris & Michael McAtee"
+
+start on (net-device-up and local-filesystems and runlevel [2345])
+stop  on runlevel [016]
+
+respawn
+
+chdir /etc/cracklord/
+
+setuid cracklord-user
+
+exec /usr/local/bin/resourced --conf="/etc/cracklord/resourced.ini"
