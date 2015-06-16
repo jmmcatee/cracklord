@@ -14,11 +14,11 @@ Build the server and resource server components
 
 `go build github.com/jmmcatee/cracklord/src/server`
 
-`go build github.com/jmmcatee/cracklord/src/resourceserver`
+`go build github.com/jmmcatee/cracklord/common/resourceserver`
 
 Navigate to the resource server directory and run it
 
-`cd $GOPATH/src/github.com/jmmcatee/cracklord/src/resourceserver`
+`cd $GOPATH/src/github.com/jmmcatee/cracklord/common/resourceserver`
 
 `./resourceserver.exe`
 

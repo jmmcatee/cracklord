@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/jmmcatee/cracklord/src/common"
-	"github.com/jmmcatee/cracklord/src/queue"
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/cracklord/common/queue"
 	"net/http"
 )
 

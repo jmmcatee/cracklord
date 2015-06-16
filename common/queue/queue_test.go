@@ -2,8 +2,8 @@ package queue
 
 import (
 	"fmt"
-	"github.com/jmmcatee/cracklord/src/common"
-	"github.com/jmmcatee/cracklord/src/resource"
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/cracklord/common/resource"
 	"testing"
 	"time"
 )

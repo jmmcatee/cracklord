@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/jmmcatee/cracklord/src/common"
+	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
 )
 

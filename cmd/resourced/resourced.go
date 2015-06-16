@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/src/common/log"
-	"github.com/jmmcatee/cracklord/src/resource"
-	"github.com/jmmcatee/cracklord/src/resource/plugins/hashcatdict"
+	"github.com/jmmcatee/cracklord/common/log"
+	"github.com/jmmcatee/cracklord/common/resource"
+	"github.com/jmmcatee/cracklord/common/resource/plugins/hashcatdict"
 	"github.com/vaughan0/go-ini"
 	"net"
 	"net/rpc"

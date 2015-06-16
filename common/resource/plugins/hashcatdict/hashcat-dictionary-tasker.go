@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/src/common"
+	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"os"
 	"os/exec"
