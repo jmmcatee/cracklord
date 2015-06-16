@@ -20,16 +20,6 @@ _cgo_export.*
 _testmain.go
 
 *.exe
-<<<<<<< HEAD
-=======
-
-# Generated Keys
->>>>>>> origin/master
 *.key
 *.pem
-server/cracklord.ini
-*.sublime-project
-sublimetext.sublime-workspace
-*.ini
-server/public/sftp-config.json
 *.json
