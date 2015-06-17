@@ -6,8 +6,8 @@ stop  on runlevel [016]
 
 respawn
 
-chdir /etc/cracklord/
+chdir /var/cracklord/
 
-setuid cracklord-user
+setuid cracklord
 
-exec /usr/local/bin/resourced --conf="/etc/cracklord/resourced.ini"
+exec /usr/local/bin/resourced --conf="/etc/cracklord/resourced.conf"
