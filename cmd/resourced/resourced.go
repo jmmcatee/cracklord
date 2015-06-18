@@ -1,15 +1,25 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/common/resource/plugins/hashcatdict"
 	"github.com/vaughan0/go-ini"
-	"net"
+	"io"
 	"net/rpc"
+	"net/rpc/jsonrpc"
 	"os"
+)
+
+const (
+	RESOURCED_INIT_FILE = "/etc/cracklord/resourced.conf"
+	CA_CERT_FILE        = "/etc/cracklord/ssl/cracklord_ca.pem"
+	RESOURCED_KEY_FILE  = "/etc/cracklord/ssl/resourced.key"
+	RESOURCED_CERT_FILE = "/etc/cracklord/ssl/resourced.crt"
 )
 
 func main() {
@@ -20,8 +30,9 @@ func main() {
 	var confPath = flag.String("conf", "", "Configuration file to use")
 	var runIP = flag.String("host", "0.0.0.0", "IP to bind to")
 	var runPort = flag.String("port", "9443", "Port to bind to")
-	// var certPath = flag.String("cert", "", "Custom certificate file to use")
-	// var keyPath = flag.String("key", "", "Custom key file to use")
+	var caCertPath = flag.String("cacert", "", "CA Certficate to use for validation")
+	var resKeyPath = flag.String("key", "", "Private key for the resource to use over TLS")
+	var resCertPath = flag.String("cert", "", "Certicate to use with the resource for TLS")
 
 	// Parse the flags
 	flag.Parse()
@@ -30,7 +41,7 @@ func main() {
 	var confFile ini.File
 	var confError error
 	if *confPath == "" {
-		confFile, confError = ini.LoadFile("./resourceserver.ini")
+		confFile, confError = ini.LoadFile(RESOURCED_INIT_FILE)
 	} else {
 		confFile, confError = ini.LoadFile(*confPath)
 	}
@@ -89,7 +100,7 @@ func main() {
 	}).Debug("Config file setup")
 
 	// Create a resource queue
-	resQueue := resource.NewResourceQueue(authToken)
+	resQueue := resource.NewResourceQueue()
 
 	//Get the configuration section for plugins
 	pluginConf := confFile.Section("Plugins")
@@ -103,18 +114,69 @@ func main() {
 		resQueue.AddTool(hashcatdict.NewTooler())
 	}
 
+	// Get an RPC server
 	res := rpc.NewServer()
-	res.Register(&resQueue)
-	log.WithFields(log.Fields{
-		"ip":   *runIP,
-		"port": *runPort,
-	}).Info("Listening for queueserver connection.")
 
-	listen, err := net.Listen("tcp", *runIP+":"+*runPort)
+	// Register the RPC endpoints
+	res.Register(&resQueue)
+
+	// Get the CA
+	var caFile *os.File
+	if *caCertPath == "" {
+		// Use default path to get the CA certificate
+		*caCertPath = CA_CERT_FILE
+	}
+
+	caFile, err := os.Open(*caCertPath)
+	caBytes := []byte{}
+	if err != nil {
+		println("ERROR: " + err.Error())
+	}
+
+	if _, err := io.ReadFull(caFile, caBytes); err != nil {
+		println("ERROR: " + err.Error())
+	}
+
+	caPool := x509.NewCertPool()
+	caPool.AppendCertsFromPEM(caBytes)
+
+	// Get the certificates and private key
+	if *resCertPath == "" || *resKeyPath == "" {
+		// The private key and/or the certificate were not given so go with defaults
+		*resKeyPath = RESOURCED_KEY_FILE
+		*resCertPath = RESOURCED_CERT_FILE
+	}
+
+	tlscert, err := tls.LoadX509KeyPair(*resCertPath, *resKeyPath)
+
+	// Setup TLS connection
+	tlsconfig := &tls.Config{}
+	tlsconfig.Certificates = make([]tls.Certificate, 1)
+	tlsconfig.Certificates[0] = tlscert
+	tlsconfig.RootCAs = caPool
+	tlsconfig.ClientCAs = caPool
+	tlsconfig.ClientAuth = tls.RequireAndVerifyClientCert
+	tlsconfig.CipherSuites = []uint16{tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256}
+	tlsconfig.MinVersion = tls.VersionTLS12
+	tlsconfig.SessionTicketsDisabled = true
+
+	listen, err := tls.Listen("tcp", *runIP+":"+*runPort, tlsconfig)
 	if err != nil {
 		println("ERROR: Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
 		return
 	}
+
+	log.WithFields(log.Fields{
+		"ip":   *runIP,
+		"port": *runPort,
+	}).Info("Listening for queueserver connection.")
 
 	// Accept only one connection at a time
 	for {
@@ -124,7 +186,7 @@ func main() {
 			return
 		}
 
-		res.ServeConn(conn)
+		res.ServeCodec(jsonrpc.NewServerCodec(conn))
 	}
 
 	log.Info("Connection closed, stopping resource server.")

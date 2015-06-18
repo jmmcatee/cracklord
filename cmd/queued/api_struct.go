@@ -152,7 +152,6 @@ type ResListResp struct {
 
 // Create resource structs
 type ResCreateReq struct {
-	Key     string `json:"key"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
 }

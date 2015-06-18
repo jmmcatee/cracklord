@@ -2,11 +2,13 @@ package queue
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
+	"net/rpc/jsonrpc"
 	"os"
 	"strings"
 	"sync"
@@ -180,10 +182,7 @@ func (q *Queue) AddJob(j common.Job) error {
 
 				// Tool exist, lets start the job on this resource and assign the resource to the job
 				j.ResAssigned = i
-				addJob := common.RPCCall{
-					Auth: q.pool[i].RPCCall.Auth,
-					Job:  j,
-				}
+				addJob := common.RPCCall{Job: j}
 
 				logger.Debug("Queue.AddTask RPC call started.")
 				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &j)
@@ -262,10 +261,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 			// We have found the job so lets see if it running
 			if q.stack[i].Status == common.STATUS_RUNNING {
 				// Job is running so lets tell it to pause
-				pauseJob := common.RPCCall{
-					Auth: q.pool[q.stack[i].ResAssigned].RPCCall.Auth,
-					Job:  q.stack[i],
-				}
+				pauseJob := common.RPCCall{Job: q.stack[i]}
 
 				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
 				log.WithField("job", jobuuid).Debug("Calling Queue.TaskPause on remote resource.")
@@ -311,10 +307,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 			s := q.stack[i].Status
 			if s != common.STATUS_DONE && s != common.STATUS_FAILED && s != common.STATUS_QUIT {
 				// Lets build the call to stop the job
-				quitJob := common.RPCCall{
-					Auth: q.pool[q.stack[i].ResAssigned].RPCCall.Auth,
-					Job:  q.stack[i],
-				}
+				quitJob := common.RPCCall{Job: q.stack[i]}
 
 				err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
 				log.WithField("job", jobuuid).Debug("Attempting to call Queue.TaskQuit on remote resource.")
@@ -409,10 +402,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 
 		if q.stack[i].ResAssigned == resUUID && q.stack[i].Status == common.STATUS_RUNNING {
 			// We found a task that is running so lets pause it
-			pauseJob := common.RPCCall{
-				Auth: q.pool[resUUID].RPCCall.Auth,
-				Job:  q.stack[i],
-			}
+			pauseJob := common.RPCCall{Job: q.stack[i]}
 
 			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, q.stack[i])
 			if err != nil {
@@ -491,10 +481,7 @@ func (q *Queue) PauseQueue() []error {
 			resuuid := q.stack[i].ResAssigned
 
 			// This task is running and needs to be paused
-			pauseJob := common.RPCCall{
-				Auth: q.pool[resuuid].RPCCall.Auth,
-				Job:  q.stack[i],
-			}
+			pauseJob := common.RPCCall{Job: q.stack[i]}
 
 			joblog.Debug("Calling Queue.TaskPause on job")
 			err := q.pool[resuuid].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
@@ -629,10 +616,7 @@ func (q *Queue) Quit() []common.Job {
 		// If the job is running quit it
 		if s == common.STATUS_RUNNING && s == common.STATUS_PAUSED {
 			// Build the quit call
-			quitJob := common.RPCCall{
-				Auth: q.pool[q.stack[i].ResAssigned].RPCCall.Auth,
-				Job:  q.stack[i],
-			}
+			quitJob := common.RPCCall{Job: q.stack[i]}
 
 			joblog.Debug("Quiting tasks")
 			err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &q.stack[i])
@@ -713,10 +697,7 @@ func (q *Queue) keeper() {
 										if q.stack[ji].ResAssigned == i {
 											// We have the resource the job needs so resume it
 
-											resumeJob := common.RPCCall{
-												Auth: q.pool[i].RPCCall.Auth,
-												Job:  q.stack[ji],
-											}
+											resumeJob := common.RPCCall{Job: q.stack[ji]}
 
 											logger.Debug("Calling Queue.TaskRun to resume job.")
 											err := q.pool[i].Client.Call("Queue.TaskRun", resumeJob, &q.stack[ji])
@@ -745,10 +726,7 @@ func (q *Queue) keeper() {
 											q.stack[ji].ToolUUID = tool.UUID
 										}
 
-										startJob := common.RPCCall{
-											Auth: q.pool[i].RPCCall.Auth,
-											Job:  q.stack[ji],
-										}
+										startJob := common.RPCCall{Job: q.stack[ji]}
 
 										logger.Debug("Calling Queue.AddTask to resume job.")
 										err := q.pool[i].Client.Call("Queue.AddTask", startJob, &q.stack[ji])
@@ -787,10 +765,7 @@ func (q *Queue) updateQueue() {
 	for i, _ := range q.stack {
 		if q.stack[i].Status == common.STATUS_RUNNING {
 			// Build status update call
-			jobStatus := common.RPCCall{
-				Auth: q.pool[q.stack[i].ResAssigned].RPCCall.Auth,
-				Job:  q.stack[i],
-			}
+			jobStatus := common.RPCCall{Job: q.stack[i]}
 
 			err := q.pool[q.stack[i].ResAssigned].Client.Call("Queue.TaskStatus", jobStatus, &q.stack[i])
 			// we care about the errors, but only from a logging perspective
@@ -880,7 +855,7 @@ func (q *Queue) AllTools() map[string]common.Tool {
 	return tools
 }
 
-func (q *Queue) AddResource(addr, name, auth string) error {
+func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) error {
 	// Create empty resource
 	res := NewResource()
 
@@ -900,18 +875,19 @@ func (q *Queue) AddResource(addr, name, auth string) error {
 
 	log.Printf("Connecting to resource %s\n", addr)
 
-	// Build the RPC client for the resource
-	var err error
-	res.Client, err = rpc.Dial("tcp", addr)
+	conn, err := tls.Dial("tcp", addr, tlsconfig)
 	if err != nil {
 		return err
 	}
 
-	// Build the default RPCCall struct
-	res.RPCCall = common.RPCCall{Auth: auth}
+	// Build the RPC client for the resource
+	res.Client = rpc.NewClientWithCodec(jsonrpc.NewClientCodec(conn))
+	if err != nil {
+		return err
+	}
 
 	// Get Hardware
-	res.Client.Call("Queue.ResourceHardware", res.RPCCall, &res.Hardware)
+	res.Client.Call("Queue.ResourceHardware", common.RPCCall{}, &res.Hardware)
 
 	// Set all hardware as available
 	for key, _ := range res.Hardware {
@@ -920,7 +896,7 @@ func (q *Queue) AddResource(addr, name, auth string) error {
 
 	// Get Tools
 	var tools []common.Tool
-	res.Client.Call("Queue.ResourceTools", res.RPCCall, &tools)
+	res.Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
 
 	for _, v := range tools {
 		res.Tools[v.UUID] = v
@@ -996,10 +972,7 @@ func (q *Queue) RemoveResource(resUUID string) error {
 			// Check status
 			if v.Status == common.STATUS_RUNNING || v.Status == common.STATUS_PAUSED {
 				// Quit the task
-				quitTask := common.RPCCall{
-					Auth: q.pool[resUUID].RPCCall.Auth,
-					Job:  v,
-				}
+				quitTask := common.RPCCall{Job: v}
 
 				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &q.stack[i])
 				if err != nil {

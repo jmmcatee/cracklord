@@ -11,7 +11,6 @@ type Resource struct {
 	Client   *rpc.Client
 	Name     string
 	Address  string
-	RPCCall  common.RPCCall
 	Hardware map[string]bool
 	Tools    map[string]common.Tool
 	Status   string // Can be running, paused, quit

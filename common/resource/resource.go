@@ -19,17 +19,14 @@ type Queue struct {
 	stack map[string]common.Tasker
 	tools []common.Tooler
 	sync.RWMutex
-	authToken string
-	hardware  map[string]bool
+	hardware map[string]bool
 }
 
-func NewResourceQueue(token string) Queue {
-	log.WithField("token", token).Debug("New resource queue created.")
+func NewResourceQueue() Queue {
 	return Queue{
-		stack:     map[string]common.Tasker{},
-		tools:     []common.Tooler{},
-		authToken: token,
-		hardware:  map[string]bool{},
+		stack:    map[string]common.Tasker{},
+		tools:    []common.Tooler{},
+		hardware: map[string]bool{},
 	}
 }
 
@@ -57,11 +54,6 @@ func (q *Queue) Ping(ping int64, pong *int64) error {
 }
 
 func (q *Queue) ResourceHardware(rpc common.RPCCall, hw *map[string]bool) error {
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		return errors.New(ERROR_AUTH)
-	}
-
 	q.RLock()
 	defer q.RUnlock()
 
@@ -87,12 +79,6 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 			log.Errorf("Recovered from Panic in Resource.AddTask: %v", err)
 		}
 	}()
-
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		log.Warn("Authentication token was not recognized")
-		return errors.New(ERROR_AUTH)
-	}
 
 	// variable to hold the tasker
 	var tasker common.Tasker
@@ -150,12 +136,6 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 		}
 	}()
 
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		log.Warn("Authentication token was not matched")
-		return errors.New(ERROR_AUTH)
-	}
-
 	// Grab the task specified by the UUID and return its status
 	q.Lock()
 	_, ok := q.stack[rpc.Job.UUID]
@@ -182,11 +162,6 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 			log.Errorf("Recovered from Panic in Resource.TaskPause: %v", err)
 		}
 	}()
-
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		return errors.New(ERROR_AUTH)
-	}
 
 	// Grab the task specified by the UUID
 	q.Lock()
@@ -225,11 +200,6 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 		}
 	}()
 
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		return errors.New(ERROR_AUTH)
-	}
-
 	// Grab the task specified by the UUID
 	q.Lock()
 	defer q.Unlock()
@@ -265,11 +235,6 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 			log.Errorf("Recovered from Panic in Resource.TaskQuit: %v", err)
 		}
 	}()
-
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		return errors.New(ERROR_AUTH)
-	}
 
 	// Grab the task specified by the UUID
 	q.Lock()
@@ -343,12 +308,6 @@ func (q *Queue) AllTaskStatus(rpc common.RPCCall, j *[]common.Job) error {
 			log.Errorf("Recovered from Panic in Resource.AllTaskStatus: %v", err)
 		}
 	}()
-
-	// Check authentication token
-	if rpc.Auth != q.authToken {
-		log.Warn("An error occured while trying to match the authentication token")
-		return errors.New(ERROR_AUTH)
-	}
 
 	log.Debug("Gathering status on all jobs")
 

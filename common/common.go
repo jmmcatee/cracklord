@@ -15,6 +15,5 @@ const (
 )
 
 type RPCCall struct {
-	Auth string
-	Job  Job
+	Job Job
 }

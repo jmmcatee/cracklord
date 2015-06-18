@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
@@ -21,6 +22,7 @@ type AppController struct {
 	T    TokenStore
 	Auth Authenticator
 	Q    queue.Queue
+	TLS  *tls.Config
 }
 
 func (a *AppController) Router() *mux.Router {
@@ -755,7 +757,7 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 	}
 
 	// Try and add the resource
-	err = a.Q.AddResource(req.Address, req.Name, req.Key)
+	err = a.Q.AddResource(req.Address, req.Name, a.TLS)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T
@@ -767,7 +769,6 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 			"error": err.Error(),
 			"addr":  req.Address,
 			"name":  req.Name,
-			"key":   req.Key,
 		}).Error("An error occured adding a resource.")
 
 		return

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -8,9 +10,17 @@ import (
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+)
+
+const (
+	QUEUED_INIT_FILE = "/etc/cracklord/queued.conf"
+	CA_CERT_FILE     = "/etc/cracklord/ssl/cracklord_ca.pem"
+	QUEUED_KEY_FILE  = "/etc/cracklord/ssl/queued.key"
+	QUEUED_CERT_FILE = "/etc/cracklord/ssl/queued.crt"
 )
 
 func main() {
@@ -19,8 +29,9 @@ func main() {
 	var webRoot = flag.String("webroot", "./public", "Location of the web server root")
 	var runIP = flag.String("host", "0.0.0.0", "IP to bind to")
 	var runPort = flag.String("port", "443", "Port to bind to")
-	var certPath = flag.String("cert", "", "Custom certificate file to use")
-	var keyPath = flag.String("key", "", "Custom key file to use")
+	var caCertPath = flag.String("cacert", "", "CA Certficate to use for validation")
+	var KeyPath = flag.String("key", "", "Private key for the resource to use over TLS")
+	var CertPath = flag.String("cert", "", "Certicate to use with the resource for TLS")
 
 	// Parse the flags
 	flag.Parse()
@@ -29,7 +40,7 @@ func main() {
 	var confFile ini.File
 	var confErr error
 	if *confPath == "" {
-		confFile, confErr = ini.LoadFile("./queueserver.ini")
+		confFile, confErr = ini.LoadFile(QUEUED_INIT_FILE)
 	} else {
 		confFile, confErr = ini.LoadFile(*confPath)
 	}
@@ -211,6 +222,55 @@ func main() {
 	// Configure the Queue
 	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout)
 
+	// Get the CA
+	var caFile *os.File
+	if *caCertPath == "" {
+		// Use default path to get the CA certificate
+		*caCertPath = CA_CERT_FILE
+	}
+
+	caFile, err := os.Open(*caCertPath)
+	caBytes := []byte{}
+	if err != nil {
+		println("ERROR: " + err.Error())
+	}
+
+	if _, err := io.ReadFull(caFile, caBytes); err != nil {
+		println("ERROR: " + err.Error())
+	}
+
+	caPool := x509.NewCertPool()
+	caPool.AppendCertsFromPEM(caBytes)
+
+	// Get the certificates and private key
+	if *CertPath == "" || *KeyPath == "" {
+		// The private key and/or the certificate were not given so go with defaults
+		*KeyPath = QUEUED_KEY_FILE
+		*CertPath = QUEUED_CERT_FILE
+	}
+
+	tlscert, err := tls.LoadX509KeyPair(*CertPath, *KeyPath)
+
+	// Setup TLS connection
+	tlsconfig := &tls.Config{}
+	tlsconfig.Certificates = make([]tls.Certificate, 1)
+	tlsconfig.Certificates[0] = tlscert
+	tlsconfig.RootCAs = caPool
+	tlsconfig.ClientCAs = caPool
+	tlsconfig.CipherSuites = []uint16{tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256}
+	tlsconfig.MinVersion = tls.VersionTLS12
+	tlsconfig.SessionTicketsDisabled = true
+
+	// Set the TLS policy for the Queue to communicate with the resources
+	server.TLS = tlsconfig
+
 	// Add some nice security stuff
 	secureMiddleware := secure.New(secure.Options{
 		SSLRedirect:             true,
@@ -221,34 +281,21 @@ func main() {
 	})
 
 	// Build the Negroni handler
-	n := negroni.New(negroni.NewRecovery(), cracklog.NewNegroniLogger(), negroni.NewStatic(http.Dir(*webRoot)))
+	n := negroni.New(negroni.NewRecovery(),
+		cracklog.NewNegroniLogger(),
+		negroni.NewStatic(http.Dir(*webRoot)))
+
 	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
 	n.UseHandler(server.Router())
 	log.Debug("Negroni handler started.")
 
-	// Check for given certs and generate a new one if none exist
-	var cFile, kFile string
-	if *certPath == "" || *keyPath == "" {
-		log.Info("No certificate provided, generating self-signed certificates")
-		// We need to create certs
-		err := genNewCert("") // Gen file in local directory
-
-		if err != nil {
-			log.Fatal("An error occured while attempting to generate certificates")
-		}
-
-		cFile = "cert.pem"
-		kFile = "cert.key"
-	} else {
-		cFile = *certPath
-		kFile = *keyPath
-		log.WithFields(log.Fields{
-			"public-cert": *certPath,
-			"private-key": *keyPath,
-		}).Info("Utilizing provided certificates")
+	listen, err := tls.Listen("tcp", *runIP+":"+*runPort, tlsconfig)
+	if err != nil {
+		println("ERROR: Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
+		return
 	}
 
-	err := http.ListenAndServeTLS(*runIP+":"+*runPort, cFile, kFile, n)
+	err = http.Serve(listen, n)
 	if err != nil {
 		log.Fatal("Unable to start up web server: " + err.Error())
 	}
