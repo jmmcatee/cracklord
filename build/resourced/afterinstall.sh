@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
+# Create directories
 mkdir -p /var/cracklord
-addgroup --system cracklord
-adduser --system --disabled-password --no-create-home --disabled-login cracklord
+mkdir -p /var/log/cracklord
 chown -R cracklord:cracklord /etc/cracklord
 chown -R cracklord:cracklord /var/cracklord
+chown -R cracklord:cracklord /var/log/cracklord
+
