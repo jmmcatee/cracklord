@@ -6,6 +6,7 @@ import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/unrolled/secure"
@@ -56,7 +57,7 @@ func main() {
 	}
 
 	genConf := confFile.Section("General")
-	switch genConf["LogLevel"] {
+	switch common.StripQuotes(genConf["LogLevel"]) {
 	case "Debug":
 		log.SetLevel(log.DebugLevel)
 		log.Warn("Please note the debug level logs may contain sensitive information!")
@@ -74,8 +75,9 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	if genConf["LogFile"] != "" {
-		hook, err := cracklog.NewFileHook(genConf["LogFile"])
+	lf := common.StripQuotes(genConf["LogFile"])
+	if lf != "" {
+		hook, err := cracklog.NewFileHook(lf)
 		if err != nil {
 			println("ERROR: Unable to open log file: " + err.Error())
 		} else {
@@ -84,13 +86,14 @@ func main() {
 	}
 
 	var statefile string
-	statefile = genConf["StateFile"]
+	statefile = common.StripQuotes(genConf["StateFile"])
 
 	var updatetime int
 	var resourcetimeout int
-	if genConf["UpdateTime"] != "" {
+	utconf := common.StripQuotes(genConf["UpdateTime"])
+	if ufconf != "" {
 		var err error
-		updatetime, err = strconv.Atoi(genConf["UpdateTime"])
+		updatetime, err = strconv.Atoi(utconf)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to parse update time in config file.")
 			updatetime = 30
@@ -98,9 +101,10 @@ func main() {
 	} else {
 		updatetime = 30
 	}
-	if genConf["ResourceTimeout"] != "" {
+	restimeconf = common.StripQuotes(genConf["ResourceTimeout"])
+	if restimeconf != "" {
 		var err error
-		resourcetimeout, err = strconv.Atoi(genConf["ResourceTimeout"])
+		resourcetimeout, err = strconv.Atoi(restimeconf)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to parse resource timeout in config file.")
 			resourcetimeout = 5
@@ -136,29 +140,29 @@ func main() {
 		// Get the users
 		umap := map[string]string{}
 
-		au, ok := confAuth["adminuser"]
+		au, ok := common.StripQuotes(confAuth["adminuser"])
 		if !ok {
 			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		ap := confAuth["adminpass"]
+		ap := common.StripQuotes(confAuth["adminpass"])
 		if !ok {
 			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
-		su, ok := confAuth["standarduser"]
+		su, ok := common.StripQuotes(confAuth["standarduser"])
 		if !ok {
 			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		sp := confAuth["standarduser"]
+		sp := common.StripQuotes(confAuth["standarduser"])
 		if !ok {
 			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
-		ru, ok := confAuth["readonlyuser"]
+		ru, ok := common.StripQuotes(confAuth["readonlyuser"])
 		if !ok {
 			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		rp := confAuth["readonlypass"]
+		rp := common.StripQuotes(confAuth["readonlypass"])
 		if !ok {
 			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
@@ -182,22 +186,22 @@ func main() {
 	case "ActiveDirectory":
 		var ad ADAuth
 
-		realm, ok := confAuth["realm"]
+		realm, ok := common.StripQuotes(confAuth["realm"])
 		if !ok {
 			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ad.SetRealm(realm)
 
 		gmap := map[string]string{}
-		ro, ok := confAuth["ReadOnlyGroup"]
+		ro, ok := common.StripQuotes(confAuth["ReadOnlyGroup"])
 		if !ok {
 			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		st, ok := confAuth["StandardGroup"]
+		st, ok := common.StripQuotes(confAuth["StandardGroup"])
 		if !ok {
 			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		admin, ok := confAuth["AdminGroup"]
+		admin, ok := common.StripQuotes(confAuth["AdminGroup"])
 		if !ok {
 			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}

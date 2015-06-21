@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"flag"
 	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/common/resource/plugins/hashcatdict"
@@ -60,14 +61,14 @@ func main() {
 		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
-	authToken := resConf["AuthToken"]
+	authToken := common.StripQuotes(resConf["AuthToken"])
 	if authToken == "" {
 		println("ERROR: No authentication token given in configuration file.")
 		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
-	switch resConf["LogLevel"] {
+	switch common.StripQuotes(resConf["LogLevel"]) {
 	case "Debug":
 		log.SetLevel(log.DebugLevel)
 	case "Info":
@@ -84,8 +85,9 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	if resConf["LogFile"] != "" {
-		hook, err := cracklog.NewFileHook(resConf["LogFile"])
+	lf := common.StripQuotes(resConf["LogFile"])
+	if lf != "" {
+		hook, err := cracklog.NewFileHook(lf)
 		if err != nil {
 			println("ERROR: Unable to open log file: " + err.Error())
 		} else {
@@ -109,8 +111,8 @@ func main() {
 		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
-	if pluginConf["hashcatdict"] != "" {
-		hashcatdict.Setup(pluginConf["hashcatdict"])
+	if common.StripQuotes(pluginConf["hashcatdict"]) != "" {
+		hashcatdict.Setup(common.StripQuotes(pluginConf["hashcatdict"]))
 		resQueue.AddTool(hashcatdict.NewTooler())
 	}
 
