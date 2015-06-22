@@ -204,9 +204,35 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		log.Error("Dictionary key provided was not present")
 		return &hascatTasker{}, errors.New("Dictionary key provided was not present.")
 	}
-	log.WithField("dictionary", dictPath).Debug("Dictionary added")
+
+	// Check for additions to the dictionary
+	if h.job.Parameters["customdictadd"] != "" {
+		// We need to prepend the values here to a dictionary
+		newDictPath := filepath.Join(h.wd, "custom-dict-"+dictKey+".txt")
+		newDict, err := os.Create(newDictPath)
+		if err != nil {
+			log.Error("Custom dictionary file could not be created.")
+			return &hascatTasker{}, errors.New("Custom dictionary file could not be created.")
+		}
+
+		// Copy the user content into the file
+		newDict.WriteString(h.job.Parameters["customdictadd"])
+
+		// Get the contents of the dictionary and append it to the new file
+		dictFile, err := os.Open(dictPath)
+		if err != nil {
+			log.Error("Dictionary could not be opened to copy to the custom dictionary.")
+			return &hascatTasker{}, errors.New("Dictionary could not be opened to copy to the custom dictionary.")
+		}
+
+		io.Copy(newDict, dictFile)
+
+		// Finally let's change the dictPath to the new file
+		dictPath = newDictPath
+	}
 
 	// Add dictionary to arguments
+	log.WithField("dictionary", dictPath).Debug("Dictionary added")
 	args = append(args, dictPath)
 
 	log.WithField("arguments", args).Debug("Arguments complete")

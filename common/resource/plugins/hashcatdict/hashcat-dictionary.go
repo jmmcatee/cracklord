@@ -506,6 +506,10 @@ func (h *hashcatDictTooler) Parameters() string {
 
 	params += ` ]
 	    },
+	    "customdictadd": {
+	      "title": "Custom Dictionary Additions",
+	      "type": "string"
+	    },
 	    "hashes": {
 	      "title": "Hashes",
 	      "type": "string"

@@ -10,7 +10,6 @@ import (
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -223,19 +222,13 @@ func main() {
 	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout)
 
 	// Get the CA
-	var caFile *os.File
 	if *caCertPath == "" {
 		// Use default path to get the CA certificate
 		*caCertPath = CA_CERT_FILE
 	}
 
-	caFile, err := os.Open(*caCertPath)
-	caBytes := []byte{}
+	caBytes, err := ioutil.ReadFile(*caCertPath)
 	if err != nil {
-		println("ERROR: " + err.Error())
-	}
-
-	if _, err := io.ReadFull(caFile, caBytes); err != nil {
 		println("ERROR: " + err.Error())
 	}
 

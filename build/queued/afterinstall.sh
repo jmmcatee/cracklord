@@ -16,7 +16,7 @@ echo -e "${COL_BLUE}Generating certificates for local CrackLord services $COL_RE
 # General QUEUED Key, Request, & Certificate
 openssl genrsa -out /etc/cracklord/ssl/queued.key 4096
 openssl req -new -key /etc/cracklord/ssl/queued.key -out /etc/cracklord/ssl/queued.csr -config /etc/cracklord/ssl/cracklord_queued_ssl.conf -batch
-openssl x509 -req -in /etc/cracklord/ssl/queued.csr -CA /etc/cracklord/ssl/cracklord_ca.pem -CAkey /etc/cracklord/ssl/cracklord_ca.key -CAcreateserial -out /etc/cracklord/ssl/queued.crt -days 500
+openssl x509 -req -extensions client_server_ssl -extfile /etc/cracklord/ssl/cracklord_queued_ext.conf -in /etc/cracklord/ssl/queued.csr -CA /etc/cracklord/ssl/cracklord_ca.pem -CAkey /etc/cracklord/ssl/cracklord_ca.key -CAcreateserial -out /etc/cracklord/ssl/queued.crt -days 500
 
 # General RESOURCED Key, Request, & Certificate
 openssl genrsa -out /etc/cracklord/ssl/resourced.key 4096
