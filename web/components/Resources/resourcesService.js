@@ -20,17 +20,19 @@ cracklord.factory('ResourceService', ['$resource', function ($resource) {
 }]);
 
 cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$filter', function(ResourceService, ResourceColorizer, $filter) {
-   var list = null;
+   var colorizer = ResourceColorizer;
+   var resources = {};
+   resources.list = [];
 
-   var reloadList = function() {
+   resources.update = function() {
       return ResourceService.query(
          function(data) {
-            for(var i = 0; i < list.length; i++) {
+            for(var i = 0; i < resources.list.length; i++) {
                for(var j = 0; j < data.length; j++) {
-                  if(data[j].id === list[i].id) {
+                  if(data[j].id === resources.list[i].id) {
                      for(var prop in data[j]) {
                         if(data[j].hasOwnProperty(prop)) {
-                           list[i][prop] = data[j][prop]
+                           resources.list[i][prop] = data[j][prop]
                         }  
                      }
                   }
@@ -40,36 +42,27 @@ cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$fil
       );
    }
 
-   var loadList = function() {
+   resources.load = function() {
       return ResourceService.query(
          function(data) {
             for(var i = 0; i < data.length; i++) {
-               data[i].color = ResourceColorizer.getColor();
+               data[i].color = colorizer.getColor();
             }
-            list = data;
+            angular.copy(data, resources.list)
          }
       );
    }
 
-   var promise = loadList();
-
-   return { 
-      promise: promise, 
-      reload: function() {
-         return reloadList();
-      },
-      get: function(id) {
-         var found = $filter('filter')(list, {id: id}, true);
-         if(found) {
-            return found[0];
-         } else {
-            return false;
-         }
-      },
-      getAll: function() {
-         return list;
+   resources.get = function(id) {
+      var found = $filter('filter')(resources.list, {id: id}, true);
+      if(found) {
+         return found[0];
+      } else {
+         return false;
       }
-   };
+   }
+
+   return resources;
 }]);
 
 cracklord.service('ResourceColorizer', function() {

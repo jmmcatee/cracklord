@@ -1,11 +1,8 @@
 cracklord.controller('ResourcesController', ['$scope', 'ResourceList', function ResourceController($scope, ResourceList) {
-	ResourceList.reload();
-	$scope.resources = ResourceList.getAll();
+	$scope.resources = ResourceList.list;
+	ResourceList.load();
 	
-	$scope.loadServers = function() { 
-		ResourceList.reload(); 
-		$scope.resources = ResourceList.getAll();
-	}
+	$scope.loadServers = ResourceList.reload(); 
 }]);
 
 cracklord.controller('ConnectResourceController', ['$scope', '$state', 'ResourceService', 'ResourceList', 'growl', '$timeout', function CreateJobController($scope, $state, ResourceService, ResourceList, growl, $timeout) {
@@ -19,7 +16,6 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 
 		newresource.name = $scope.formData.name;
 		newresource.address = $scope.formData.address;
-		newresource.key = $scope.formData.key;
 		
 		ResourceService.save(newresource).$promise.then(
 			function(data) {
