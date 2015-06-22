@@ -398,6 +398,11 @@ func (v *hascatTasker) Status() common.Job {
 		}
 	}
 
+	log.WithFields(log.Fields{
+		"Stdout": v.stdout,
+		"Stderr": v.stderr,
+	}).Debug("Stdout & Stderr")
+
 	v.stdout.Reset()
 
 	v.job.Error = v.stderr.String()
