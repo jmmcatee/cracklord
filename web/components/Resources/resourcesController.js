@@ -16,7 +16,6 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 
 		newresource.name = $scope.formData.name;
 		newresource.address = $scope.formData.address;
-		newresource.key = $scope.formData.key;
 		
 		ResourceService.save(newresource).$promise.then(
 			function(data) {
