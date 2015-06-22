@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"os"
 	"strings"
 	"sync"

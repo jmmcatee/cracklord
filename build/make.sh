@@ -26,6 +26,5 @@ PC=`rbenv which package_cloud`
 $FPM -s dir -t deb -n "cracklord-queued" -v "$VER" --after-install $QUEUESRC/afterinstall.sh --before-remove $QUEUESRC/beforeremove.sh --before-upgrade $QUEUESRC/beforeupgrade.sh --after-upgrade $QUEUESRC/afterupgrade.sh --url "$URL" --config-files etc/cracklord --description "CrackLord job management queue server" -m "$MAINT" -C $QUEUEDIR usr etc
 $FPM -s dir -t deb -n "cracklord-resourced" -v "$VER" --before-install $RESOURCESRC/beforeinstall.sh --after-install $RESOURCESRC/afterinstall.sh --before-remove $RESOURCESRC/beforeremove.sh --before-upgrade $RESOURCESRC/beforeupgrade.sh --after-upgrade $RESOURCESRC/afterupgrade.sh --url "$URL" --config-files etc/cracklord --description "Cracklord job management system resource server" -m "$MAINT" -C $RESOURCEDIR usr etc
 
-
 $PC push emperorcow/cracklord/debian/jessie *.deb
 $PC push emperorcow/cracklord/ubuntu/trusty *.deb
