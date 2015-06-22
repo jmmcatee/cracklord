@@ -9,7 +9,3 @@ fi
 if getent group cracklord >/dev/null ; then
 	groupdel cracklord
 fi
-
-if [ -d /var/cracklord ]; then
-	rm -r /var/cracklord
-fi
