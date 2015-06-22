@@ -9,14 +9,14 @@ CONFDIR="/etc/cracklord"
 SSLDIR="$CONFDIR/ssl"
 
 if [ -f $SSLDIR/cracklord_ca_ssl.conf -a -f $SSLDIR/cracklord_queued_ssl.conf -a -f $SSLDIR/cracklord_resourced_ssl.conf]; then
-	echo -e "${COL_BLUE}Generating certificate authority for resource authentication $COL_RESET"
+	echo -e "$COL_BLUE Generating certificate authority for resource authentication $COL_RESET"
 	# Generate the SSL CA to sign all resources to allow authentication
 	openssl genrsa -out /etc/cracklord/ssl/cracklord_ca.key 4096
 	# General CA Certificate
 	openssl req -x509 -new -nodes -key /etc/cracklord/ssl/cracklord_ca.key -days 1024 -out /etc/cracklord/ssl/cracklord_ca.pem -config /etc/cracklord/ssl/cracklord_ca_ssl.conf -batch
 
 	if [-f $SSLDIR/cracklord_ca.pem ]; then
-		echo -e "${COL_BLUE}Generating certificates for local CrackLord services $COL_RESET"
+		echo -e "$COL_BLUE Generating certificates for local CrackLord services $COL_RESET"
 		# General QUEUED Key, Request, & Certificate
 		openssl genrsa -out /etc/cracklord/ssl/queued.key 4096
 		openssl req -new -key /etc/cracklord/ssl/queued.key -out /etc/cracklord/ssl/queued.csr -config /etc/cracklord/ssl/cracklord_queued_ssl.conf -batch
