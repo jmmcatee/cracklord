@@ -11,6 +11,7 @@ import (
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
