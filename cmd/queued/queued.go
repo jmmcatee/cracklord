@@ -90,7 +90,7 @@ func main() {
 	var updatetime int
 	var resourcetimeout int
 	utconf := common.StripQuotes(genConf["UpdateTime"])
-	if ufconf != "" {
+	if utconf != "" {
 		var err error
 		updatetime, err = strconv.Atoi(utconf)
 		if err != nil {
@@ -100,7 +100,7 @@ func main() {
 	} else {
 		updatetime = 30
 	}
-	restimeconf = common.StripQuotes(genConf["ResourceTimeout"])
+	restimeconf := common.StripQuotes(genConf["ResourceTimeout"])
 	if restimeconf != "" {
 		var err error
 		resourcetimeout, err = strconv.Atoi(restimeconf)
@@ -139,30 +139,30 @@ func main() {
 		// Get the users
 		umap := map[string]string{}
 
-		au, ok := common.StripQuotes(confAuth["adminuser"])
-		if !ok {
+		au := common.StripQuotes(confAuth["adminuser"])
+		if au != "" {
 			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ap := common.StripQuotes(confAuth["adminpass"])
-		if !ok {
+		if ap != "" {
 			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
-		su, ok := common.StripQuotes(confAuth["standarduser"])
-		if !ok {
+		su := common.StripQuotes(confAuth["standarduser"])
+		if su != "" {
 			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		sp := common.StripQuotes(confAuth["standarduser"])
-		if !ok {
+		if sp != "" {
 			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
-		ru, ok := common.StripQuotes(confAuth["readonlyuser"])
-		if !ok {
+		ru := common.StripQuotes(confAuth["readonlyuser"])
+		if ru != "" {
 			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		rp := common.StripQuotes(confAuth["readonlypass"])
-		if !ok {
+		if rp != "" {
 			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
@@ -185,23 +185,23 @@ func main() {
 	case "ActiveDirectory":
 		var ad ADAuth
 
-		realm, ok := common.StripQuotes(confAuth["realm"])
-		if !ok {
+		realm := common.StripQuotes(confAuth["realm"])
+		if realm != "" {
 			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ad.SetRealm(realm)
 
 		gmap := map[string]string{}
-		ro, ok := common.StripQuotes(confAuth["ReadOnlyGroup"])
-		if !ok {
+		ro := common.StripQuotes(confAuth["ReadOnlyGroup"])
+		if ro != "" {
 			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		st, ok := common.StripQuotes(confAuth["StandardGroup"])
-		if !ok {
+		st := common.StripQuotes(confAuth["StandardGroup"])
+		if st != "" {
 			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		admin, ok := common.StripQuotes(confAuth["AdminGroup"])
-		if !ok {
+		admin := common.StripQuotes(confAuth["AdminGroup"])
+		if admin != "" {
 			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
