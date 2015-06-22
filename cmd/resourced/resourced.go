@@ -12,7 +12,6 @@ import (
 	"github.com/vaughan0/go-ini"
 	"io/ioutil"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"os"
 )
 
@@ -176,7 +175,7 @@ func main() {
 			return
 		}
 
-		res.ServeCodec(jsonrpc.NewServerCodec(conn))
+		res.ServeConn(conn)
 	}
 
 	log.Info("Connection closed, stopping resource server.")

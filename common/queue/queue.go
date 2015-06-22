@@ -77,8 +77,18 @@ func (q *Queue) writeState() error {
 		return err
 	}
 	stateEncoder := json.NewEncoder(stateFile)
-	s.Stack = q.stack
-	s.Pool = q.pool
+	copy(s.Stack, q.stack)
+
+	s.Pool = make(map[string]Resource)
+	for k, v := range q.pool {
+		s.Pool[k] = v
+	}
+
+	for i, _ := range s.Pool {
+		for ii, _ := range s.Pool[i].Tools {
+			delete(s.Pool[i].Tools, ii)
+		}
+	}
 
 	stateEncoder.Encode(s)
 	stateFile.Close()
@@ -881,7 +891,7 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) error {
 	}
 
 	// Build the RPC client for the resource
-	res.Client = rpc.NewClientWithCodec(jsonrpc.NewClientCodec(conn))
+	res.Client = rpc.NewClient(conn)
 	if err != nil {
 		return err
 	}

@@ -334,7 +334,7 @@ func Setup(path string) error {
 	// Join the path provided
 	confFile, err := ini.LoadFile(path)
 	if err != nil {
-		log.WithField(log.Fields{
+		log.WithFields(log.Fields{
 			"error": err.Error(),
 			"file":  path,
 		}).Error("Unable to load configuration file.")
