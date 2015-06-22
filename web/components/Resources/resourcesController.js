@@ -23,7 +23,7 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 				$timeout(function() {
 					growl.success("Connecting to resource");
 					$state.transitionTo('resources');
-				}, 3000)
+				}, 1000)
 			}, 
 			function(error) {
 				$scope.displayWait = false;
