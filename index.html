@@ -178,7 +178,10 @@
                       </ul>
                     </li>
                     <li>You will now need to edit the default configuration file at /etc/cracklord/resourced.conf</li>
-                    <li>You can now run the resource server.  Please note that there may be individual configuration needs for various tools, such as getting X11 running for oclHashcat, or installing nmap, etc.  See the Tool list below for links to additional information.</li>
+                    <li>You can now run the resource server.  Please note that there may be individual configuration needs for various tools, such as getting X11 running for oclHashcat, or installing nmap, etc.  See the Tool list below for links to additional information.  To run the server, just: </li>
+                      <ul class="list-unstyled">
+                      <li><code>service cracklord-resourced start</code></li>
+                      </ul>
                     <li>Finally, you need to connect the resource to the queue.  Resources authenticate to the Queue server using certificates.  These are also used to secure communications between the queue and resource, as the transmission may contain highly sensitive information, such as hashes.</li>
                     <li>If your resource and queue are on the same system, we've already created a hash for you.  You can go to https://&lt;QUEUESERVER&gt; and, under resources, click connect to add the resource using localhost. If not, please see https://github.com/jmmcatee/cracklord/wiki/Creating-Resource-Certificates for additional information.</li>
                   </ol>
