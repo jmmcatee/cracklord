@@ -187,22 +187,22 @@ func main() {
 		var ad ADAuth
 
 		realm := common.StripQuotes(confAuth["realm"])
-		if realm != "" {
+		if realm == "" {
 			log.Fatal("No Active Directory realm was configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ad.SetRealm(realm)
 
 		gmap := map[string]string{}
 		ro := common.StripQuotes(confAuth["ReadOnlyGroup"])
-		if ro != "" {
+		if ro == "" {
 			log.Fatal("A read only group was not provided. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		st := common.StripQuotes(confAuth["StandardGroup"])
-		if st != "" {
+		if st == "" {
 			log.Fatal("A group for standard access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		admin := common.StripQuotes(confAuth["AdminGroup"])
-		if admin != "" {
+		if admin == "" {
 			log.Fatal("A group for read only access was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
