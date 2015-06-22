@@ -138,36 +138,49 @@
             </div>
             <div class="content">
               <h4>For Users</h4>
-              <p>First, you'll need to determine what your server configuration will look like.  There are two different servers that need to be run, the Queueserver and Resourceserver.  Both can be run on the same system or they can be run separately, either is fine.  You can also have multiple resource servers that all connect to the same Queue server.  The Tools on each can be different as well, but because Go is statically compiled, all Tools are built into the resource server at compile time; however, you can turn them off in the configs.  There is a lot of flexibility in the configuration, which is both good and bad as it can be hard to get started.  To try and help, we have put together some basic configuration files and instructions below.  You will also need the <a href="https://golang.org/">Go programming language</a>.</p>
+              <p>First, you'll need to determine what your server configuration will look like.  There are two different servers that need to be run, the Queueserver and Resourceserver.  Both can be run on the same system or they can be run separately, either is fine.  You can also have multiple resource servers that all connect to the same Queue server.  The Tools on each can be different as well, but because Go is statically compiled, all Tools are built into the resource server at compile time; however, you can turn them off in the configs.  There is a lot of flexibility in the configuration, which is both good and bad as it can be hard to get started.  To try and help, we have put together some basic configuration files and instructions below.  To help ease the deployment of CrackLord, we have created a set of Debian Packages that will work for Ubuntu, Debian, and Kali.  
               <div class="row">
                 <div class="col-md-6">
                   <h5>Queue Server</h5>
                   <ol>
-                    <li>Download and compile the relevant code:
+                    <li>Add our package repository to your system using apt: 
                       <ul class="list-unstyled">
-                      <li><code>go install github.com/jmmcatee/cracklord/queueserver</code></li>
+                      <li><code>curl -s https://packagecloud.io/install/repositories/emperorcow/cracklord/script.deb.sh | sudo bash</code></li>
                       </ul>
-                    </pre>
+                      <i>Note: You really shouldn't trust a random script, see <a href="https://packagecloud.io/emperorcow/cracklord/install">here</a> for more detailed instructions if you're security conscious.</i>
                     </li>
-                    <li>The queue server should now be in $GOPATH/bin/.</li>
-                    <li>Copy the files from <code>$GOPATH/src/github.com/jmmcatee/cracklord/queueserver/public</code> into a "public" directory in the same location as the queueserver binary.</li>
-                    <li>You will need to create a configuration file, see our <a href="https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#queue">wiki</a> for an example.</li>
-                    <li>You can now run the queue server, you will also need a resource server</li>
+                    <li>Now you can install the debian package for the Queue Daemon: 
+                      <ul class="list-unstyled">
+                      <li><code>apt-get install cracklord-queued</code></li>
+                      </ul>
+                    </li>
+                    <li>This will install the queue, the web GUI, and create a set of self-signed certificates you can use to authenticate resources you may want to connect in the future.  If you have a resource on the same system, we've also tried to make it easy and have created that cert for you.</li>
+                    <li>You should now look at /etc/cracklord/queued.conf and change any settings that you'd like for your environment</li>
+                    <li>Now you can start up the queue server by issuing the following command
+                      <ul class="list-unstyled">
+                      <li><code>service cracklord-queued start</code></li>
+                      </ul>
+                    </li>
                   </ol>
                 </div>
                 <div class="col-md-6">
                   <h5>Resource Server and Tools</h5>
                   <ol>
-                    <li>Download and compile the relevant code:
+                    <li>If you haven't already, you should install our apt repository: 
                       <ul class="list-unstyled">
-                      <li><code>go install github.com/jmmcatee/cracklord/resourceserver</code></li>
+                      <li><code>curl -s https://packagecloud.io/install/repositories/emperorcow/cracklord/script.deb.sh | sudo bash</code></li>
                       </ul>
-                    </pre>
+                      <i>Note: You really shouldn't trust a random script, see <a href="https://packagecloud.io/emperorcow/cracklord/install">here</a> for more detailed instructions if you're security conscious.</i>
                     </li>
-                    <li>The resource server should now be in $GOPATH/bin/.</li>
-                    <li>You will need to create a configuration file, see our <a href="https://github.com/jmmcatee/cracklord/wiki/Configuration-Files#resource">wiki</a> for an example.</li>
-                    <li>You can now run the resource server.  There may be individual configuration needs for the tools you are running, for example, setting up X11 to run oclHashcat. See the Tool list below for additional information.</li>
-                    <li>Finally, you need to connect the resource to the queue, using the key you configured, go to https://&lt;QUEUESERVER&gt; and, under resources, click connect to add the resource</li>
+                    <li>Now you can install the debian package for the Resource Daemon: 
+                      <ul class="list-unstyled">
+                      <li><code>apt-get install cracklord-resourced</code></li>
+                      </ul>
+                    </li>
+                    <li>You will now need to edit the default configuration file at /etc/cracklord/resourced.conf</li>
+                    <li>You can now run the resource server.  Please note that there may be individual configuration needs for various tools, such as getting X11 running for oclHashcat, or installing nmap, etc.  See the Tool list below for links to additional information.</li>
+                    <li>Finally, you need to connect the resource to the queue.  Resources authenticate to the Queue server using certificates.  These are also used to secure communications between the queue and resource, as the transmission may contain highly sensitive information, such as hashes.</li>
+                    <li>If your resource and queue are on the same system, we've already created a hash for you.  You can go to https://&lt;QUEUESERVER&gt; and, under resources, click connect to add the resource using localhost. If not, please see https://github.com/jmmcatee/cracklord/wiki/Creating-Resource-Certificates for additional information.</li>
                   </ol>
                 </div>
               </div>
