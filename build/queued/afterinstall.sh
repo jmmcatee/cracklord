@@ -1,6 +1,4 @@
-#!/bin/bash
-
-# Colors
+#!/bin/sh
 ESC_SEQ="\x1b["
 COL_RESET=$ESC_SEQ"39;49;00m"
 COL_BLUE=$ESC_SEQ"34;01m"
@@ -31,9 +29,6 @@ if [ -f $SSLDIR/cracklord_ca_ssl.conf -a -f $SSLDIR/cracklord_queued_ssl.conf -a
 		rm -r /etc/cracklord/ssl/*.csr
 	fi
 fi 
-
-# Create a directory for our logs
-mkdir -p /var/log/cracklord
 
 # Reload upstart configuration so our service appears and works
 initctl reload-configuration
