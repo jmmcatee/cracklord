@@ -21,13 +21,23 @@ type RPCCall struct {
 }
 
 func StripQuotes(str string) string {
-	tmp   := strings.TrimSpace(str)
-	l     := len(tmp)
+	if str == "" {
+		return str
+	}
+
+	tmp := strings.TrimSpace(str)
+	l := len(tmp)
+
+	if l < 1 {
+		return tmp
+	}
+
 	first := tmp[:1]
-	last  := tmp[l-1:]
+	last := tmp[l-1:]
 
 	if first == "\"" && last == "\"" {
-		return tmp[1:l-1]
+		return tmp[1 : l-1]
 	}
+
 	return tmp
 }

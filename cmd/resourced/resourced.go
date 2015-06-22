@@ -61,12 +61,6 @@ func main() {
 		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
-	authToken := common.StripQuotes(resConf["AuthToken"])
-	if authToken == "" {
-		println("ERROR: No authentication token given in configuration file.")
-		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
-		return
-	}
 
 	switch common.StripQuotes(resConf["LogLevel"]) {
 	case "Debug":
