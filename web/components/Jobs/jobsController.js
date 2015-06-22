@@ -1,6 +1,7 @@
 cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', '$interval', function JobsController($scope, JobsService, QueueService, growl, ResourceList, $interval) {
 	var timer
 	$scope.listreordered = false;
+	ResourceList.load();
 
 	$scope.sortableOptions = {
 		handle: '.draghandle',
