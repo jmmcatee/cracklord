@@ -23,7 +23,7 @@ gem install package_cloud --quiet
 FPM=`rbenv which fpm`
 PC=`rbenv which package_cloud`
 
-$FPM -s dir -t deb -n "cracklord-queued" -v "$VER" --before-install $QUEUESRC/beforeinstall.sh --after-install $QUEUESRC/afterinstall.sh --before-remove $QUEUESRC/beforeremove.sh --after-remove $QUEUESRC/afterremove.sh --url "$URL" --config-files etc/cracklord --description "CrackLord job management queue server" -m "$MAINT" -C $QUEUEDIR usr etc
+$FPM -s dir -t deb -n "cracklord-queued" -v "$VER" --before-install $QUEUESRC/beforeinstall.sh --after-install $QUEUESRC/afterinstall.sh --before-remove $QUEUESRC/beforeremove.sh --after-remove $QUEUESRC/afterremove.sh --url "$URL" --config-files etc/cracklord --description "CrackLord job management queue server" -m "$MAINT" -C $QUEUEDIR usr etc var
 $FPM -s dir -t deb -n "cracklord-resourced" -v "$VER" --before-install $RESOURCESRC/beforeinstall.sh --after-install $RESOURCESRC/afterinstall.sh --before-remove $RESOURCESRC/beforeremove.sh --after-remove $RESOURCESRC/afterremove.sh --url "$URL" --config-files etc/cracklord --description "Cracklord job management system resource server" -m "$MAINT" -C $RESOURCEDIR usr etc
 
 $PC push emperorcow/cracklord/debian/jessie *.deb
