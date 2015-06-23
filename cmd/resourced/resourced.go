@@ -9,6 +9,8 @@ import (
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/common/resource/plugins/hashcatdict"
+	"github.com/jmmcatee/cracklord/common/resource/plugins/testtimergpu"
+	"github.com/jmmcatee/cracklord/common/resource/plugins/testtimercpu"
 	"github.com/vaughan0/go-ini"
 	"io/ioutil"
 	"net/rpc"
@@ -107,6 +109,12 @@ func main() {
 	if common.StripQuotes(pluginConf["hashcatdict"]) != "" {
 		hashcatdict.Setup(common.StripQuotes(pluginConf["hashcatdict"]))
 		resQueue.AddTool(hashcatdict.NewTooler())
+	}
+	if common.StripQuotes(pluginConf["testtimer"]) == "true" {
+		testtimergpu.Setup()
+		testtimercpu.Setup()
+		resQueue.AddTool(testtimergpu.NewTooler())
+		resQueue.AddTool(testtimercpu.NewTooler())
 	}
 
 	// Get an RPC server
