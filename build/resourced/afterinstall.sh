@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ ! -d /var/cracklord ]; then 
-	mkdir -p /var/cracklord >/dev/null 2>&1
+	mkdir -p /var/cracklord
 fi
 
 if [ ! -d /var/log/cracklord ]; then 
