@@ -391,7 +391,7 @@ func (v *hascatTasker) Status() common.Job {
 			kvp = append(kvp, linescanner.Text()[:i-1])
 			kvp = append(kvp, linescanner.Text()[i+1:])
 
-			linetmp = append(linetmp)
+			linetmp = append(linetmp, kvp)
 		}
 		if len(linetmp) > 0 {
 			v.job.OutputData = linetmp
@@ -498,6 +498,7 @@ func (v *hascatTasker) Run() error {
 
 		v.mux.Lock()
 		v.job.Status = common.STATUS_DONE
+		v.job.Progress = 100.00
 		v.waitChan <- struct{}{}
 		v.mux.Unlock()
 	}()
