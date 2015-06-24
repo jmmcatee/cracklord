@@ -141,29 +141,29 @@ func main() {
 		umap := map[string]string{}
 
 		au := common.StripQuotes(confAuth["adminuser"])
-		if au != "" {
+		if au == "" {
 			log.Fatal("An administrative user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		ap := common.StripQuotes(confAuth["adminpass"])
-		if ap != "" {
+		if ap == "" {
 			log.Fatal("An administrative password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		su := common.StripQuotes(confAuth["standarduser"])
-		if su != "" {
+		if su == "" {
 			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		sp := common.StripQuotes(confAuth["standarduser"])
-		if sp != "" {
+		if sp == "" {
 			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
 		ru := common.StripQuotes(confAuth["readonlyuser"])
-		if ru != "" {
+		if ru == "" {
 			log.Fatal("An read only user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 		rp := common.StripQuotes(confAuth["readonlypass"])
-		if rp != "" {
+		if rp == "" {
 			log.Fatal("An read only password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
 
