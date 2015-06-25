@@ -283,7 +283,17 @@ func (q *Queue) PauseJob(jobuuid string) error {
 				}
 
 				// Task is now paused so update the resource
-				hardware := q.pool[q.stack[i].ResAssigned].Tools[q.stack[i].ToolUUID].Requirements
+				// Find the real ToolUUID since the Job's might have changed (See AddJob)
+				var correctToolUUID string
+				for _, res := range q.pool {
+					for queueUUID, tool := range res.Tools {
+						if q.stack[i].ToolUUID == tool.UUID {
+							// We found the UUID of the tool so store it
+							correctToolUUID = queueUUID
+						}
+					}
+				}
+				hardware := q.pool[q.stack[i].ResAssigned].Tools[correctToolUUID].Requirements
 				q.pool[q.stack[i].ResAssigned].Hardware[hardware] = true
 
 				return nil
@@ -329,8 +339,18 @@ func (q *Queue) QuitJob(jobuuid string) error {
 				}
 
 				// Task has been quit without errors so update the available hardware and return
-				hw := q.pool[q.stack[i].ResAssigned].Tools[q.stack[i].ToolUUID].Requirements
-				q.pool[q.stack[i].ResAssigned].Hardware[hw] = true
+				// Find the real ToolUUID since the Job's might have changed (See AddJob)
+				var correctToolUUID string
+				for _, res := range q.pool {
+					for queueUUID, tool := range res.Tools {
+						if q.stack[i].ToolUUID == tool.UUID {
+							// We found the UUID of the tool so store it
+							correctToolUUID = queueUUID
+						}
+					}
+				}
+				hardware := q.pool[q.stack[i].ResAssigned].Tools[correctToolUUID].Requirements
+				q.pool[q.stack[i].ResAssigned].Hardware[hardware] = true
 
 				return nil
 			}
@@ -419,8 +439,18 @@ func (q *Queue) PauseResource(resUUID string) error {
 			}
 
 			// Task should now be paused to free up the resource
-			hw := q.pool[resUUID].Tools[q.stack[i].ToolUUID].Requirements
-			q.pool[resUUID].Hardware[hw] = true
+			// Find the real ToolUUID since the Job's might have changed (See AddJob)
+			var correctToolUUID string
+			for _, res := range q.pool {
+				for queueUUID, tool := range res.Tools {
+					if q.stack[i].ToolUUID == tool.UUID {
+						// We found the UUID of the tool so store it
+						correctToolUUID = queueUUID
+					}
+				}
+			}
+			hardware := q.pool[q.stack[i].ResAssigned].Tools[correctToolUUID].Requirements
+			q.pool[q.stack[i].ResAssigned].Hardware[hardware] = true
 		}
 	}
 
@@ -486,7 +516,6 @@ func (q *Queue) PauseQueue() []error {
 			joblog.Debug("Found running job, attempting to stop")
 
 			// Get some helpful values
-			tooluuid := q.stack[i].ToolUUID
 			resuuid := q.stack[i].ResAssigned
 
 			// This task is running and needs to be paused
@@ -505,7 +534,18 @@ func (q *Queue) PauseQueue() []error {
 			}
 
 			// Update available hardware
-			q.pool[resuuid].Hardware[q.pool[resuuid].Tools[tooluuid].Requirements] = true
+			// Find the real ToolUUID since the Job's might have changed (See AddJob)
+			var correctToolUUID string
+			for _, res := range q.pool {
+				for queueUUID, tool := range res.Tools {
+					if q.stack[i].ToolUUID == tool.UUID {
+						// We found the UUID of the tool so store it
+						correctToolUUID = queueUUID
+					}
+				}
+			}
+			hardware := q.pool[q.stack[i].ResAssigned].Tools[correctToolUUID].Requirements
+			q.pool[q.stack[i].ResAssigned].Hardware[hardware] = true
 		}
 	}
 
