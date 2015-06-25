@@ -160,10 +160,24 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 					'#d43f3a'
 				]
 
-				for(var time in $scope.detail.performancedata) {
+				var sorted_times = Object.keys($scope.detail.performancedata).sort()
+				var len = sorted_times.length - 1
+				var min = Math.max(0, len-240)
+				var step = len > 60 ? 3 : 1
+				for (var i = min; i <= len; i=i+step) {
+					time = sorted_times[i]
 					$scope.line.data[0].push($scope.detail.performancedata[time]);
-					$scope.line.labels.push("");
-				}
+					if((i - min) % 20 == 0) {
+						var date = new Date(time * 1000)
+						var m = ('0'+date.getMinutes()).slice(-2);
+						var h = date.getHours();
+						var ampm = h > 12 ? "PM" : "AM";
+						h = h > 12 ? h - 12 : h;
+						$scope.line.labels.push(h + ":" + m + " " + ampm);
+					} else {
+						$scope.line.labels.push("");
+					}
+				};
 			}
 		},
 		link: function($scope, $element, $attrs) {
