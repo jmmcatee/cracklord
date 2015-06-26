@@ -3,7 +3,7 @@
 		<div class="col-md-5 pull-right button-tray"> 
 			<div class="btn-group pull-right" role="group">
 				<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-plus"></i> Add Job</a>
-				<job-reorder-confirm reload="loadJobs()" jobs="jobs" dragstatus="listreordered" ng-if="listreordered"></job-reorder-confirm>
+				<job-reorder-confirm reload="loadJobs()" current="currentjobs" complete="completedjobs" dragstatus="listreordered" ng-if="listreordered"></job-reorder-confirm>
 			</div>
 		</div>
 		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
@@ -21,8 +21,8 @@
 					</div>
 				</div>
 			</div>
-			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
-				<div ng-repeat="job in jobs | filter: {status: '!quit'} | filter: {status: '!failed'} | filter: {status: '!done'}" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
+			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="currentjobs">
+				<div ng-repeat="job in currentjobs track by job.id" class="listrow">
 					<div class="row" style="{{job.resourcecolor}}">
 						<div class="collapser">
 							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
@@ -68,7 +68,7 @@
 				</div>
 			</div>
 			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="jobs">
-				<div ng-repeat="job in jobs | filter: {status: '!running'} | filter: {status: '!paused'} | filter: {status: '!created'}" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
+				<div ng-repeat="job in completedjobs track by job.id" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
 					<div class="row">
 						<div class="collapser">
 							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>

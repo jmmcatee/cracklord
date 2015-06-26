@@ -1,6 +1,8 @@
 cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService', 'growl', 'ResourceList', '$interval', function JobsController($scope, JobsService, QueueService, growl, ResourceList, $interval) {
 	var timer
 	$scope.listreordered = false;
+	$scope.currentjobs = [];
+	$scope.completedjobs = [];
 	ResourceList.load();
 
 	$scope.sortableOptions = {
@@ -12,19 +14,35 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 	};
 
 	$scope.loadJobs = function() {
-		$scope.jobs = JobsService.query(
+		JobsService.query(
 			//Our success handler
 			function(data) {
 				$scope.listreordered = false;
-				for(var i = 0; i < $scope.jobs.length; i++) {
-					if($scope.jobs[i].resourceid) {
-						var id = $scope.jobs[i].resourceid;
+
+				for(var i = 0; i < data.length; i++) {
+					if(data[i].resourceid) {
+						var id = data[i].resourceid;
 						var resource = ResourceList.get(id);
 						if(resource) {
-							$scope.jobs[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
+							data[i].resourcecolor = "background-color: rgb("+resource.color.r+","+resource.color.g+","+resource.color.b+");";
 						}
 					}
-					$scope.jobs[i].expanded = false;
+					data[i].expanded = false;
+					if(items[i].status == "quit" || items[i].status == "failed" || items[i].status == "done") {
+						idx = $scope.completedjobs.map(function(e) { return e.id; }).indexOf(items[i].id);
+						if(idx >= 0) {
+							$scope.completedjobs[idx] = items[i]
+						} else {
+							$scope.completedjobs.push(items[i]);
+						}
+					} else {
+						idx = $scope.currentjobs.map(function(e) { return e.id; }).indexOf(items[i].id);
+						if(idx >= 0) {
+							$scope.currentjobs[idx] = items[i]
+						} else {
+							$scope.currentjobs.push(items[i]);
+						}
+					}
 				}
 
 			},
@@ -41,32 +59,9 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 		);
 	}
 
-	$scope.reloadJobs = function() {
-		JobsService.query(
-			function(data) {
-				for(var i = 0; i < $scope.jobs.length; i++) {
-					var jobid = $scope.jobs[i].id
-
-					for(var j = 0; j < data.length; j++) {
-						if(data[j].id === $scope.jobs[i].id) {
-							for(var prop in data[j]) {
-								if(data[j].hasOwnProperty(prop)) {
-									$scope.jobs[i][prop] = data[j][prop]
-								}	
-							}
-						}
-					}
-				}
-			}, 
-			function(error) {
-				growl.error("Unable to automatically update job data.")
-			}
-		)
-	}
-
 	//Setup a timer to refresh the data on a regular basis.
 	timer = $interval(function() {
-		$scope.reloadJobs();
+		$scope.loadJobs();
 	}, 15000);
 
 	$scope.$on('$destroy', function() {
@@ -84,18 +79,26 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 		replace: true,
 		scope: {
 			reload: "&",
-			jobs: "=",
+			current: "=",
+			complete: "=",
 			dragstatus: "="
 		},
 		controller: function($scope) {
 			$scope.reorderConfirm = function() {
-				var ids = $scope.jobs.map(function (job) {
+				var cur_ids = $scope.current.map(function (job) {
+					if(job) {
+						return job.id;
+					}
+				});
+				var done_ids = $scope.complete.map(function (job) {
 					if(job) {
 						return job.id;
 					}
 				});
 
-				QueueService.reorder(ids)
+				total = cur_ids.concat(done_ids)
+
+				QueueService.reorder(total)
 					.success(function(data, status, headers, config) {
 						growl.success("Job data reordered successfully.");
 						$scope.dragstatus = false;
@@ -244,19 +247,6 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 			});
 		},
 	}
-}]);
-
-cracklord.filter('currentJobs', ['JOB_STATUS_RUNNING', 'JOB_STATUS_COMPLETED', function(JOB_STATUS_RUNNING, JOB_STATUS_COMPLETED) {
-	return function(items) {
-		var filtered = [];
-		for (var i = 0; i < items.length; i++) {
-			var item = angularjs.copy(items[i]);
-			if(JOB_STATUS_RUNNING.indexOf(item.status)) {
-				filtered.push(item);
-			}
-		}
-		return filtered;
-	};
 }]);
 
 cracklord.controller('CreateJobController', ['$scope', '$state', 'ToolsService', 'JobsService', 'growl', function CreateJobController($scope, $state, ToolsService, JobsService, growl) {
