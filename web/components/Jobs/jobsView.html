@@ -22,7 +22,7 @@
 				</div>
 			</div>
 			<div class="table-body" id="#joblistcontainer" ui-sortable="sortableOptions" ng-model="currentjobs">
-				<div ng-repeat="job in currentjobs track by job.id" class="listrow">
+				<div ng-repeat="job in currentjobs track by job.id" ng-class="$index % 2 ? 'odd' : 'even'" class="listrow">
 					<div class="row" style="{{job.resourcecolor}}">
 						<div class="collapser">
 							<a ng-if="job.expanded" ng-click="job.expanded = false" aria-label="detail"><i class="fa fa-minus fa-1x"></i></a>
