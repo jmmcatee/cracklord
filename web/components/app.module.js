@@ -29,6 +29,8 @@ function sortEnumInJSON(input) {
    }
 }
 
+
+
 cracklord.config(["$httpProvider", function($httpProvider) {
    $httpProvider.defaults.transformResponse.push(function(resData) {
       sortEnumInJSON(resData);

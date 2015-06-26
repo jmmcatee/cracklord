@@ -9,16 +9,51 @@
 			<hr>
 			<canvas id="job-chart-progress" class="chart chart-doughnut" data="donut.data" labels="donut.labels" colours="donut.colors" options="donut.options" legend="true"></canvas>
 		</div>
+		<div class="modal fade" id="parameters-{{jobid}}" tabindex="-1" role="dialog" aria-labelledby="paramsModalLabel">
+		  <div class="modal-dialog" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title" id="paramsModalLabel">Job Parameters</h4>
+		      </div>
+		      <div class="modal-body">
+					<table class="table table-condensed tool-options">
+						<thead>
+							<th>Option</th>
+							<th>Value</th>
+						</thead>
+						<tbody>
+							<tr ng-repeat="(key, value) in detail.params">
+								<td>{{key}}</td>
+								<td>{{value}}</td>
+							</tr>
+						</tbody>
+					</table>
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
 	</div>
 	<div class="row">
 		<hr class="tall">
-		<div class="col-sm-10">
+		<div class="col-sm-6">
 			<h4>Results:</h4>
 		</div>
-		<div class="job-output-actions pull-right">
+		<div class="job-actions pull-right">
 			<div class="btn-group btn-group-xs">
 				<button class="btn btn-default disabled"><b>Export:</b></button>	
-				<button type="button" class="btn btn-info btn-xs" ng-csv="detail.outputdata" csv-header="detail.outputtitles" filename="{{detail.name}}.csv"><i class="fa fa-file-excel-o"></i></button>
+				<button type="button" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="top" title="Export to CSV" tooltip ng-csv="detail.outputdata" csv-header="detail.outputtitles" filename="{{detail.name}}.csv"><i class="fa fa-file-excel-o"></i></button>
+			</div>
+		</div>
+		<div class="job-actions pull-right">
+			<div class="btn-group btn-group-xs">
+				<button class="btn btn-default disabled"><b>Actions:</b></button>	
+				<span data-toggle="modal" data-target="#parameters-{{jobid}}">
+					<button type="button" class="btn btn-primary btn-xs" tooltip data-toggle="tooltip" data-placement="top" title="View Submitted Parameters"><i class="fa fa-cogs"></i></button>
+				</span>
 			</div>
 		</div>
 	</div>

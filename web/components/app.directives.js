@@ -31,6 +31,21 @@ cracklord.directive("confirmPopover", function() {
     };
 });
 
+cracklord.directive('tooltip', function(){
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs){
+            $(element).hover(function(){
+                // on mouseenter
+                $(element).tooltip('show');
+            }, function(){
+                // on mouseleave
+                $(element).tooltip('hide');
+            });
+        }
+    };
+});
+
 cracklord.directive('playbutton', ['growl', 'AuthService', 'USER_ROLES', function splaybutton(growl, AuthService, USER_ROLES) {
     return {
         restrict: 'E',

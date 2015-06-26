@@ -297,11 +297,11 @@ hr {
 	overflow: auto;
 }
 
-.job-output-actions {
+.job-actions {
 	margin: 0 20px;
 }
 
-.job-output-actions .btn-default {
+.job-actions .btn-default {
 	color: #000;
 }
 
@@ -317,6 +317,11 @@ hr {
 span.status {
 	padding-top: 1px;
 	padding-left: 5px;
+}
+
+.tooltip-inner {
+	max-width: 150px;
+	width: 150px;
 }
 
 /*******************************************************************************
