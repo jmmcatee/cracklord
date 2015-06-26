@@ -1,31 +1,17 @@
 <div class="slider">
-	<div class="row">
-		<div class="col-sm-4">
-			<canvas id="job-chart-hps" class="chart chart-line" data="line.data" labels="line.labels" legend="true" series="line.series" colours="line.colors" options="line.options"> </canvas> 
+	<div class="row detail-overview">
+		<div class="col-sm-8">
+			<canvas id="job-chart-hps" class="chart chart-line" width="700" height="260" data="line.data" labels="line.labels" legend="true" series="line.series" colours="line.colors" options="line.options"> </canvas> 
 		</div>
 		<div class="col-sm-4">
-			<canvas id="job-chart-progress" class="chart chart-doughnut" data="donut.data" labels="donut.labels" colours="donut.colors" options="donut.options" legend="true"></canvas>
-		</div>
-		<div class="col-sm-4">
-			<div><b><i class="fa fa-server"></i> Resource</b>: {{resource.name || 'Not yet assigned'}}</div>
+			<div><b><i class="fa fa-server"></i> Resource</b>: {{resource.name || 'Unknown / Unassigned'}}</div>
 			<div><b><i class="fa fa-wrench"></i> Tool</b>: {{tool.name}} - {{tool.version}}</div>
 			<hr>
-			<table class="table table-condensed tool-options">
-				<thead>
-					<th>Option</th>
-					<th>Value</th>
-				</thead>
-				<tbody>
-					<tr ng-repeat="(key, value) in detail.params">
-						<td>{{key}}</td>
-						<td>{{value | limitTo: 35}}</td>
-					</tr>
-				</tbody>
-			</table>
+			<canvas id="job-chart-progress" class="chart chart-doughnut" data="donut.data" labels="donut.labels" colours="donut.colors" options="donut.options" legend="true"></canvas>
 		</div>
 	</div>
-	<hr class="tall">
 	<div class="row">
+		<hr class="tall">
 		<div class="col-sm-10">
 			<h4>Results:</h4>
 		</div>

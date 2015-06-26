@@ -1,10 +1,10 @@
 <div class="row" ng-controller="JobsController">
 	<div class="col-md-12 main">
 		<div class="col-md-5 pull-right button-tray"> 
-			<div class="btn-group pull-right" role="group">
+			<div class="btn-group pull-right button-tray-primary" role="group">
 				<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="createjob.tools"><i class="fa fa-plus"></i> Add Job</a>
-				<job-reorder-confirm reload="loadJobs()" current="currentjobs" complete="completedjobs" dragstatus="listreordered" ng-if="listreordered"></job-reorder-confirm>
 			</div>
+			<job-reorder-confirm reload="loadJobs()" current="currentjobs" complete="completedjobs" dragstatus="listreordered" ng-if="listreordered"></job-reorder-confirm>
 		</div>
 		<h1 class="page-header"><i class="fa fa-stack-overflow"></i>Job Management</h1>
 		<h2 class="page-header">Current Queue</h2>

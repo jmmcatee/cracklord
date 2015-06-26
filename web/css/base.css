@@ -53,13 +53,8 @@ footer p.license {
 	margin-top: 30px;
 	margin-right: 30px;
 }
-
-button.btn-label {
-	background-color: #ffffff;
-	color: #000;	
-	font-weight: bold;
-	text-shadow: none;
-	text-decoration: underline;
+.button-tray-primary {
+	padding-left:20px;
 }
 .btn-confirm {
 	color: #5cb85c !important;
@@ -282,6 +277,10 @@ hr {
 
 .job-detail: hover {
 	background-color: #fff;
+}
+
+.job-detail .detail-overview {
+	height: 300px;
 }
 
 .job-detail div.slider {
