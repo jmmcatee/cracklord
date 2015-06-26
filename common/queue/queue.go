@@ -76,17 +76,13 @@ func (q *Queue) writeState() error {
 		return err
 	}
 	stateEncoder := json.NewEncoder(stateFile)
+
+	s.Stack = make([]common.Job, len(q.stack))
 	copy(s.Stack, q.stack)
 
 	s.Pool = make(map[string]Resource)
 	for k, v := range q.pool {
 		s.Pool[k] = v
-	}
-
-	for i, _ := range s.Pool {
-		for ii, _ := range s.Pool[i].Tools {
-			delete(s.Pool[i].Tools, ii)
-		}
 	}
 
 	stateEncoder.Encode(s)
@@ -122,6 +118,11 @@ func (q *Queue) parseState() error {
 
 		v.Address = "(disconnected)"
 		v.Status = common.STATUS_QUIT
+	
+		for tool, _ := range v.Tools {
+			delete(v.Tools, tool)
+		}
+	
 		q.pool[id] = v
 	}
 	for i, _ := range s.Stack {
