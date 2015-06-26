@@ -45,6 +45,7 @@ cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$fil
    resources.load = function() {
       return ResourceService.query(
          function(data) {
+            colorizer.resetSeed()
             for(var i = 0; i < data.length; i++) {
                data[i].color = colorizer.getColor();
             }
@@ -95,6 +96,10 @@ cracklord.service('ResourceColorizer', function() {
          'g': Math.round(g * 255), 
          'b': Math.round(b * 255)
       };
+   }
+
+   this.resetSeed = function() {
+      seed = 0.54;
    }
 
    this.getColor = function() {
