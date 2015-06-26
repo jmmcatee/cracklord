@@ -17,14 +17,14 @@ type testPipe struct {
 }
 
 type testTimerGPUTasker struct {
-	job        common.Job
-	success    bool
-	stop       chan bool
-	stderrBuf  *bytes.Buffer
-	stdoutBuf  *bytes.Buffer
-	stderr     testPipe
-	stdout     testPipe
-	stdin      testPipe
+	job       common.Job
+	success   bool
+	stop      chan bool
+	stderrBuf *bytes.Buffer
+	stdoutBuf *bytes.Buffer
+	stderr    testPipe
+	stdout    testPipe
+	stdin     testPipe
 }
 
 func newTestTimerTask(j common.Job) (common.Tasker, error) {
@@ -49,7 +49,7 @@ func newTestTimerTask(j common.Job) (common.Tasker, error) {
 
 	t.stderr.R, t.stderr.W = io.Pipe()
 	t.stdout.R, t.stdout.W = io.Pipe()
-	t.stdin.R, t.stdin.W   = io.Pipe()	
+	t.stdin.R, t.stdin.W = io.Pipe()
 
 	return &t, nil
 }
@@ -59,6 +59,7 @@ func (t *testTimerGPUTasker) Status() common.Job {
 
 	t.job.PerformanceData[timestamp] = fmt.Sprintf("%d", t.job.CrackedHashes)
 	t.job.Progress = float64(t.job.CrackedHashes) / float64(t.job.TotalHashes) * 100.0
+	t.job.ETC = fmt.Sprintf("%s seconds", t.job.TotalHashes-t.job.CrackedHashes)
 
 	log.WithFields(log.Fields{
 		"cur": t.job.CrackedHashes,
@@ -75,9 +76,9 @@ func (t *testTimerGPUTasker) Run() error {
 	go func() {
 		for ; t.job.CrackedHashes < t.job.TotalHashes; t.job.CrackedHashes++ {
 			select {
-				case <- t.stop: 
-					return
-				case <- time.After(time.Second): 
+			case <-t.stop:
+				return
+			case <-time.After(time.Second):
 			}
 		}
 		if t.success {
