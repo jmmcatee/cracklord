@@ -36,7 +36,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 
 						cmplt_idx = $scope.completedjobs.map(function(e) { return e.id; }).indexOf(data[i].id);
 						if(cmplt_idx >= 0) {
-							data[i].expanded = $scope.currentjobs[cmplt_idx].expanded
+							data[i].expanded = $scope.completedjobs[cmplt_idx].expanded
 							$scope.completedjobs[cmplt_idx] = data[i]
 						} else {
 							data[i].expanded = false
