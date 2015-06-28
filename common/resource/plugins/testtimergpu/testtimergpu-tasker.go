@@ -59,7 +59,7 @@ func (t *testTimerGPUTasker) Status() common.Job {
 
 	t.job.PerformanceData[timestamp] = fmt.Sprintf("%d", t.job.CrackedHashes)
 	t.job.Progress = float64(t.job.CrackedHashes) / float64(t.job.TotalHashes) * 100.0
-	t.job.ETC = fmt.Sprintf("%s seconds", t.job.TotalHashes-t.job.CrackedHashes)
+	t.job.ETC = fmt.Sprintf("%d seconds", t.job.TotalHashes-t.job.CrackedHashes)
 
 	log.WithFields(log.Fields{
 		"cur": t.job.CrackedHashes,
