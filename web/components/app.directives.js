@@ -25,6 +25,11 @@ cracklord.directive("confirmPopover", function() {
                 popoverDiv.find(".btn-danger").click(function(e) {
                     el.popover('hide');
                 });
+                $(document).on('click', function(event) {
+                    if(!($event.target).closest("#confirm_"+id).length) {
+                        el.popover('hide');
+                    }
+                });
             });
 
         }
