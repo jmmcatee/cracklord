@@ -13,7 +13,7 @@ if [ -d /etc/cracklord ]; then
 fi
 if [ -d /var/cracklord ]; then 
 	chown -R cracklord:cracklord /var/cracklord
-	chmod -R 640 /var/cracklord
+	chmod -R 740 /var/cracklord
 fi
 if [ -d /var/log/cracklord ]; then 
 	chown -R cracklord:cracklord /var/log/cracklord
