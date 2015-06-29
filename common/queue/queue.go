@@ -118,11 +118,11 @@ func (q *Queue) parseState() error {
 
 		v.Address = "(disconnected)"
 		v.Status = common.STATUS_QUIT
-	
+
 		for tool, _ := range v.Tools {
 			delete(v.Tools, tool)
 		}
-	
+
 		q.pool[id] = v
 	}
 	for i, _ := range s.Stack {
@@ -696,91 +696,100 @@ func (q *Queue) keeper() {
 			case <-kTimer:
 				log.Info("Updating queue status and keeping jobs.")
 
+				// Get lock
 				q.Lock()
+
+				// Update all running jobs
+				q.updateQueue()
 
 				//Write our state file
 				if StateFileLocation != "" {
 					q.writeState()
 				}
 
-				// Get lock
-				// Update all running jobs
-				q.updateQueue()
-
 				// Look for open resources
-				for i, _ := range q.pool {
+				//ResourceLoop:
+				for resKey, _ := range q.pool {
 					// Check that the resource is running
-					if q.pool[i].Status == common.STATUS_RUNNING {
-						for r, b := range q.pool[i].Hardware {
-							if b {
+					if q.pool[resKey].Status == common.STATUS_RUNNING {
+						// Loop through hardware the resouce offers (CPU, GPU, etc.)
+					HardwareLoop:
+						for hardwareKey, hardwareFree := range q.pool[resKey].Hardware {
+							// If the hardware is free
+							if hardwareFree {
 								log.WithFields(log.Fields{
-									"resource": q.pool[i].Name,
-									"hardware": r,
+									"resource": q.pool[resKey].Name,
+									"hardware": hardwareKey,
 								}).Debug("Found empty resource hardware")
+
 								// This resource is free, so lets find a job for it
-								for ji, _ := range q.stack {
+							JobLoop:
+								for jobKey, _ := range q.stack {
 									logger := log.WithFields(log.Fields{
-										"resource": q.pool[i].Name,
-										"job":      q.stack[ji].UUID,
+										"resource": q.pool[resKey].Name,
+										"job":      q.stack[jobKey].UUID,
 									})
 
-									requirement := q.pool[i].Tools[q.stack[ji].ToolUUID].Requirements
-									tool, ok := q.pool[i].Tools[q.stack[ji].ToolUUID]
+									// Are we looking to start or resume the job?
+									switch q.stack[jobKey].Status {
+									case common.STATUS_CREATED: // We are going to start the job fresh
+										// We first need to check if this tool exists on this resource
+										if tool, ok := q.pool[resKey].Tools[q.stack[jobKey].ToolUUID]; ok {
+											// We now need to get the hardware requirements for this tool
+											if q.pool[resKey].Tools[q.stack[jobKey].ToolUUID].Requirements == hardwareKey {
+												// We now know we have an open resource and a job that needs that resource
+												logger.Debug("Attempting to start new job on resource")
 
-									s := q.stack[ji].Status
+												// It is now possible that the Tool UUID on the resource does not match
+												// the Tool UUID the job and Queue have. This is because the Queue changes
+												// all UUIDs (keys in the pool map) to make identical Tools across multiple
+												// resources show up as one Tool available to the system. We now need to set
+												// the Job's ToolUUID field to the correct UUID for the resource if this has
+												// happened.
+												if tool.UUID != q.stack[jobKey].ToolUUID {
+													q.stack[jobKey].ToolUUID = tool.UUID
+												}
 
-									startable := s == common.STATUS_CREATED
-									resumable := s == common.STATUS_PAUSED
+												logger.Debug("Calling Queue.AddTask to start the job.")
+												err := q.pool[resKey].Client.Call("Queue.AddTask", common.RPCCall{Job: q.stack[jobKey]}, &q.stack[jobKey])
+												if err != nil {
+													// Something failed so let's mark the job as failed
+													logger.WithField("error", err.Error()).Error("Error while attempting to start job on remote resource.")
+													q.stack[jobKey].Status = common.STATUS_FAILED
+													continue JobLoop
+												}
 
-									if requirement == r && resumable && ok {
-										// The job is paused so let's see if the resource that is free is the one the job needs
-										logger.Debug("Attempting to resume job.")
-
-										if q.stack[ji].ResAssigned == i {
-											// We have the resource the job needs so resume it
-
-											resumeJob := common.RPCCall{Job: q.stack[ji]}
-
-											logger.Debug("Calling Queue.TaskRun to resume job.")
-											err := q.pool[i].Client.Call("Queue.TaskRun", resumeJob, &q.stack[ji])
-											if err != nil {
-												// We had an error resuming the job
-												logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
-											} else {
-												// No errors so mark the resource as used
-												q.pool[i].Hardware[r] = false
-												break
+												// Job has been started so mark the hardware as in use and assign the resource ID
+												q.stack[jobKey].ResAssigned = resKey
+												q.pool[resKey].Hardware[hardwareKey] = false
+												break HardwareLoop
 											}
 										}
-									}
+									case common.STATUS_PAUSED: // We are going to resume the job were it is
+										// We are resuming a job so we first need to check if the job was assigned to this resource
+										if q.stack[jobKey].ResAssigned == resKey {
+											// This job was assigned to this resource so we need to find the correct local UUID of the tool
+											for _, resTool := range q.pool[resKey].Tools {
+												if resTool.UUID == q.stack[jobKey].ToolUUID {
+													// We have found the correct UUID, so check if this is the available hardware
+													if resTool.Requirements == hardwareKey {
+														// The job requires the hardware that is available on this resource to resume
+														logger.Debug("Attempting to resume job.")
 
-									if requirement == r && startable && ok {
-										// Found a task that can be started and needs this resource
-										// Build the call
-										logger.Debug("Attempting to start job.")
+														err := q.pool[resKey].Client.Call("Queue.TaskRun", common.RPCCall{Job: q.stack[jobKey]}, &q.stack[jobKey])
+														if err != nil {
+															// Something failed so let's mark the job as failed
+															logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
+															q.stack[jobKey].Status = common.STATUS_FAILED
+															continue JobLoop
+														}
 
-										// It is now possible that the job about to be assigned to the resource
-										// actually has a Tool UUID different than the one the Queue has for this
-										// tool. This is because the Queue changes the UUID if it has two identical
-										// tools. We need to set the Job's ToolUUID to the real UUID of the tool
-										// if this is the case
-										if tool.UUID != q.stack[ji].ToolUUID {
-											q.stack[ji].ToolUUID = tool.UUID
-										}
-
-										startJob := common.RPCCall{Job: q.stack[ji]}
-
-										logger.Debug("Calling Queue.AddTask to resume job.")
-										err := q.pool[i].Client.Call("Queue.AddTask", startJob, &q.stack[ji])
-										if err != nil {
-											// something went wrong so log it, but the keeper will get this
-											// resource the next time through
-											logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
-										} else {
-											// there were no errors so lets take up the hardware resource
-											q.stack[ji].ResAssigned = i
-											q.pool[i].Hardware[r] = false
-											break
+														// Job has been started so mark the hardware as in use
+														q.pool[resKey].Hardware[hardwareKey] = false
+														break HardwareLoop
+													}
+												}
+											}
 										}
 									}
 								}
