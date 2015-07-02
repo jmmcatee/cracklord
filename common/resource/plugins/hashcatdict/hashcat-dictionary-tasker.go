@@ -77,7 +77,7 @@ func init() {
 	regHashType, err = regexp.Compile(`Hash\.Type\.\.\.\.\.\.\:\s+(\w+)`)
 	regTimeStarted, err = regexp.Compile(`Time\.Started\.\.\.\:\s+(.+)\(.+\)`)
 	regTimeEstimated, err = regexp.Compile(`Time\.Estimated\.: .*\((.*?)\)`)
-	regGPUSpeed, err = regexp.Compile(`Speed\.GPU\.#([\d|\*]+)\.\.\.\:\s+(\d+\.\d+)\s+(.?H/s)`)
+	regGPUSpeed, err = regexp.Compile(`Speed\.GPU\.#([\d|\*]+)\.\.\.\:\s+(\d+[\.]?[\d+]?)\s+(.?H/s)`)
 	regRecovered, err = regexp.Compile(`Recovered\.+:\s+(\d+)\/(\d+)`)
 	regProgress, err = regexp.Compile(`Progress\.{7}: (\d*)/(\d*) \((\d{1,3}\.\d{2})%\)`)
 	regRejected, err = regexp.Compile(`(Rejected)\.\.\.\.\.\.\.\:\s+(\d+\/\d+.+)`)
