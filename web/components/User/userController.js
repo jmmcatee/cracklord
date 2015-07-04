@@ -1,17 +1,13 @@
 cracklord.controller('UserController', ['$state', '$scope', 'USER_ROLES', 'AuthService', 'UserSession', function UserController($state, $scope, USER_ROLES, AuthService, UserSession) {
 	$scope.user = {}
-	$scope.user.current = null;
+	$scope.user.name = UserSession.name;
 	$scope.user.allroles = USER_ROLES;
 	$scope.user.checkrole = AuthService.isAuthorized;
-
-	$scope.setCurrentUser = function(user) {
-		$scope.currentUser = user;
-	}
 
 	$scope.userLogout = function() {
 		AuthService.logout()
 			.success(function(data, status, headers, config) {
-					$scope.currentUser = null;
+					$scope.name = null;
 					UserSession.destroy();
 					$state.go('login');
 			})
@@ -33,7 +29,7 @@ cracklord.controller('LoginFormController', ['$state', '$scope', 'AuthService', 
 		AuthService.login(creds)
 			.success(function(data, status, headers, config) {
 				UserSession.create(data.token, $scope.login.username, data.role);
-				$scope.setCurrentUser($scope.login.username);
+				$scope.user.name = UserSession.name;
 				growl.success("Login successful.");
 				$state.go('jobs');
 			})

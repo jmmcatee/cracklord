@@ -19,9 +19,9 @@
 			</div>
 			<div id="navbar" class="navbar-collapse collapse">
 				<ul class="nav navbar-nav navbar-right">
-					<li><a ng-if="currentUser" ui-sref="jobs"><i class="fa fa-stack-overflow"></i> Jobs</a></li>
+					<li><a ng-if="user.name" ui-sref="jobs"><i class="fa fa-stack-overflow"></i> Jobs</a></li>
 					<li><a ng-if="user.checkrole(user.allroles.admin)" ui-sref="resources"><i class="fa fa-server"></i> Resources</a></li>
-					<li><a ng-if="currentUser" ng-click="userLogout()" href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
+					<li><a ng-if="user.name" ng-click="userLogout()" href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
 				</ul>
 			</div>
 		</div>
@@ -47,6 +47,7 @@
 	<script type="text/javascript" src="./libs/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./libs/angular.min.js"></script>
 	<script type="text/javascript" src="./libs/angular-mocks.js"></script>
+	<script type="text/javascript" src="./libs/angular-cookies.min.js"></script>
 	<script type="text/javascript" src="./libs/angular-resource.min.js"></script>
 	<script type="text/javascript" src="./libs/angular-growl.min.js"></script>
 	<script type="text/javascript" src="./libs/angular-ui-router.min.js"></script>

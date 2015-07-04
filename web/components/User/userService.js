@@ -1,31 +1,35 @@
-cracklord.service('UserSession', function() {
+cracklord.service('UserSession', ['$cookies', function($cookies) {
 	this.create  = function(userToken, userName, userRole) {
 		this.token = userToken
-		sessionStorage.setItem('usertoken', userToken);
+		$cookies.put('usertoken', userToken);
 		this.name = userName;
-		sessionStorage.setItem('username', userName);
+		$cookies.put('username', userName);
 		this.role = userRole;
-		sessionStorage.setItem('userrole', userRole);
+		$cookies.put('userrole', userRole);
 	}
 	this.destroy = function() {
 		this.token = null
-		sessionStorage.removeItem('usertoken');
+		$cookies.remove('usertoken');
 		this.name = null;
-		sessionStorage.removeItem('username');
+		$cookies.remove('username');
 		this.role = null;
-		sessionStorage.removeItem('userrole');
+		$cookies.remove('userrole');
 	}
 	this.initCookies = function() {
-		this.token = sessionStorage.getItem('usertoken');
-		this.name = sessionStorage.getItem('username');
-		this.role = sessionStorage.getItem('userrole');
-		return this.token;
+		this.token = $cookies.get('usertoken');
+		this.name = $cookies.get('username');
+		this.role = $cookies.get('userrole');
+		if(this.token && this.name && this.role) {
+			return true;
+		} 
+		return false;
 	}
 	return this;
-});
+}]);
 
 cracklord.factory('AuthService', ['$http', 'UserSession', function($http, UserSession) {
 	var authService = {};
+	UserSession.initCookies();
 
 	authService.login = function(creds) {
 		return $http.post('/api/login', creds);
@@ -66,7 +70,9 @@ cracklord.factory('userTokenHttpInterceptor', ['$q', 'UserSession', '$injector',
 		responseError: function(res) {
 			if(res.status === 401) {
 				$injector.get('$state').go('login');
-				growl.warning("You need to login first.");
+				if(req.url !== '/api/login') {
+					growl.warning("You need to login first.");
+				}
 			}
 			return $q.reject(res);
 		}
