@@ -410,7 +410,7 @@ func (q *Queue) RemoveJob(jobuuid string) error {
 	return errors.New("Job not found.")
 }
 
-func (q *Queue) pauseResource(resUUID string) error {
+func (q *Queue) PauseResource(resUUID string) error {
 	log.WithField("resource", resUUID).Debug("Attempting to pause resource")
 
 	q.Lock()
@@ -460,7 +460,7 @@ func (q *Queue) pauseResource(resUUID string) error {
 	return nil
 }
 
-func (q *Queue) resumeResource(resUUID string) error {
+func (q *Queue) ResumeResource(resUUID string) error {
 	log.WithField("resource", resUUID).Debug("Attempting to resume resource.")
 
 	q.Lock()
@@ -983,7 +983,8 @@ func (q *Queue) KeepAllResourceManagers() {
 	log.Debug("ResourceManager keep loop complete.")
 }
 
-func (q *Queue) addResource(addr, name string, tlsconfig *tls.Config) error {
+//This function will add a resource to the queue.  Returns the UUID.
+func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, error) {
 	// Create empty resource
 	res := NewResource()
 
@@ -997,7 +998,7 @@ func (q *Queue) addResource(addr, name string, tlsconfig *tls.Config) error {
 		if v.Address == addr && v.Status != common.STATUS_QUIT {
 			// We have found a resource with the same address so error
 			log.WithField("address", addr).Debug("Resource already exists.")
-			return errors.New("Resource already exists!")
+			return nil, errors.New("Resource already exists!")
 		}
 	}
 
@@ -1005,13 +1006,13 @@ func (q *Queue) addResource(addr, name string, tlsconfig *tls.Config) error {
 
 	conn, err := tls.Dial("tcp", addr, tlsconfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Build the RPC client for the resource
 	res.Client = rpc.NewClient(conn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Get Hardware
@@ -1054,10 +1055,13 @@ func (q *Queue) addResource(addr, name string, tlsconfig *tls.Config) error {
 	res.Address = addr
 	res.Status = common.STATUS_RUNNING
 
-	// Add resource to resource pool with generated UUID
-	q.pool[uuid.New()] = res
+	//Generate a UUID for the resource
+	resourceuuid := uuid.New()
 
-	return nil
+	// Add resource to resource pool with generated UUID
+	q.pool[resourceuuid] = res
+
+	return resourceuuid, nil
 }
 
 func (q *Queue) GetResource(resUUID string) (Resource, bool) {
@@ -1074,7 +1078,7 @@ func (q *Queue) GetResource(resUUID string) (Resource, bool) {
 // RemoveResource closes the resource RPC client, and removes it from service.
 // It does not delete it however, because that information is needed by the API
 // even after it is no longer in service.
-func (q *Queue) removeResource(resUUID string) error {
+func (q *Queue) RemoveResource(resUUID string) error {
 	// Check for the resource with given UUID
 	_, ok := q.pool[resUUID]
 	if !ok {

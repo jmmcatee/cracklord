@@ -31,9 +31,10 @@ type ResourceManager interface {
 	//return an error if there are any problems.
 	DeleteResource(resourceid string) error
 	//GetResource takes the UUID of a resource in the queue and will return all
-	//of the information about it in a common.Resource object.  Can also return
+	//of the information about it in a queue.Resource object, as well as the
+	//parameters that the resourcemanager is tracking internally.  Can also return
 	//an error if there are any problems.
-	GetResource(resourceid string) (Resource, error)
+	GetResource(resourceid string) (Resource, map[string]string, error)
 	//PauseResource and ResumeResource take the UUID of the targeted resource and
 	//will either stop them from receiving new jobs on the queue, or resume
 	//allowing them to receive new jobs.
