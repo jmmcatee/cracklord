@@ -1,8 +1,6 @@
 package common
 
-import (
-	"encoding/json"
-)
+import ()
 
 type Tool struct {
 	Name         string
@@ -36,9 +34,4 @@ func CompareTools(t1, t2 Tool) bool {
 	}
 
 	return true
-}
-
-type ToolJSONForm struct {
-	Form   json.RawMessage `json:"form"`
-	Schema json.RawMessage `json:"schema"`
 }

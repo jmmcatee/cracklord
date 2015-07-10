@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
 	"os"
@@ -26,10 +27,11 @@ var NetworkTimeout time.Duration
 var StateFileLocation string
 
 type Queue struct {
-	status string // Empty, Running, Paused, Exhausted
-	pool   ResourcePool
-	stack  []common.Job
-	stats  Stats
+	status   string // Empty, Running, Paused, Exhausted
+	pool     ResourcePool
+	stack    []common.Job
+	managers protectedmap.ProtectedMap
+	stats    Stats
 	sync.RWMutex
 	qk chan bool
 }
@@ -47,10 +49,11 @@ func NewQueue(statefile string, updatetime int, timeout int) Queue {
 
 	// Build the queue
 	q := Queue{
-		status: STATUS_EMPTY,
-		pool:   NewResourcePool(),
-		stack:  []common.Job{},
-		stats:  NewStats(),
+		status:   STATUS_EMPTY,
+		pool:     NewResourcePool(),
+		stack:    []common.Job{},
+		managers: protectedmap.New(),
+		stats:    NewStats(),
 	}
 
 	if _, err := os.Stat(StateFileLocation); err == nil {
@@ -407,7 +410,7 @@ func (q *Queue) RemoveJob(jobuuid string) error {
 	return errors.New("Job not found.")
 }
 
-func (q *Queue) PauseResource(resUUID string) error {
+func (q *Queue) pauseResource(resUUID string) error {
 	log.WithField("resource", resUUID).Debug("Attempting to pause resource")
 
 	q.Lock()
@@ -457,7 +460,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 	return nil
 }
 
-func (q *Queue) ResumeResource(resUUID string) error {
+func (q *Queue) resumeResource(resUUID string) error {
 	log.WithField("resource", resUUID).Debug("Attempting to resume resource.")
 
 	q.Lock()
@@ -495,6 +498,9 @@ func (q *Queue) PauseQueue() []error {
 
 	// Now we need to be 100% up-to-date
 	q.updateQueue()
+
+	// Let's run the keep functions on all of our resource managers
+	q.KeepAllResourceManagers()
 
 	log.Debug("Queue update completed.")
 
@@ -906,7 +912,78 @@ func (q *Queue) AllTools() map[string]common.Tool {
 	return tools
 }
 
-func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) error {
+// This function is used to gather all currently available resource managers
+// and provide them back to the API or any other needed functions.
+func (q *Queue) AllResourceManagers() map[string]ResourceManager {
+	//We'll make a slice to hold our resource managers
+	managers := make(map[string]ResourceManager, q.managers.Count())
+
+	// Now we'll create a loop on our protected map
+	i := q.managers.Iterator()
+
+	// Loop through each one, with the manager variable being a standard tuple
+	for manager := range i.Loop() {
+		// Convert our generic interface from the protectedmap into the right type
+		mgrtype := (manager.Val).(ResourceManager)
+		// Get the data into our temporary map
+		managers[manager.Key] = mgrtype
+	}
+
+	//Return the results
+	return managers
+}
+
+// This function will return a copy of a single resource manager from the Queue
+// and all of the associated etails.  It takes a parameter of the system name of
+// the manager desired.
+func (q *Queue) GetResourceManager(systemname string) (ResourceManager, bool) {
+	manager, ok := q.managers.Get(systemname)
+	if ok == true {
+		mgrtype := manager.(ResourceManager)
+		return mgrtype, ok
+	} else {
+		return nil, ok
+	}
+}
+
+// This function is used to add a resource manager to the map of all available
+// managers and is used to add resourcemanager plugins during their creation.
+func (q *Queue) AddResourceManager(id string, resmgr ResourceManager) error {
+	//Let's check and see if it already exists, if so we should error
+	if _, ok := q.managers.Get(id); ok {
+		log.WithField("id", id).Error("ResourceManager cannot be added twice.")
+		return errors.New("ResourceManager cannot be added twice.")
+	}
+
+	//Otherwise, set our resource manager and be done with it.
+	q.managers.Set(id, resmgr)
+
+	//Log that we did it, because that's just good practice.
+	log.WithField("id", id).Info("Added resource manager into the queue.")
+
+	//Return with no error.
+	return nil
+}
+
+// This function will loop through all resource managers and executes thier keeper
+// functions, causing them to update the status for all of their resources.
+// The actions of each will be dependent on the resource manager.
+func (q *Queue) KeepAllResourceManagers() {
+	log.Debug("ResourceManager keep loop starting.")
+
+	//First we need to setup an iterator to loop through the entire map and then loop
+	i := q.managers.Iterator()
+	for manager := range i.Loop() {
+		// First we need to convert our resource manager over to the proper type
+		mgrtype := (manager.Val).(ResourceManager)
+		// Now for each resource manager, let's call it's Keep() function
+		mgrtype.Keep()
+	}
+
+	log.Debug("ResourceManager keep loop complete.")
+}
+
+func (q *Queue) addResource(addr, name string, tlsconfig *tls.Config) error {
 	// Create empty resource
 	res := NewResource()
 
@@ -983,30 +1060,21 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) error {
 	return nil
 }
 
-func (q *Queue) GetResources() []common.Resource {
+func (q *Queue) GetResource(resUUID string) (Resource, bool) {
 	q.Lock()
 	defer q.Unlock()
 
-	var resources []common.Resource
-	for id, v := range q.pool {
-		r := common.Resource{}
-		r.UUID = id
-		r.Name = v.Name
-		r.Address = v.Address
-		r.Tools = v.Tools
-		r.Status = v.Status
-		r.Hardware = v.Hardware
-
-		resources = append(resources, r)
+	res, ok := q.pool[resUUID]
+	if !ok {
+		return Resource{}, false
 	}
-
-	return resources
+	return res, ok
 }
 
 // RemoveResource closes the resource RPC client, and removes it from service.
 // It does not delete it however, because that information is needed by the API
 // even after it is no longer in service.
-func (q *Queue) RemoveResource(resUUID string) error {
+func (q *Queue) removeResource(resUUID string) error {
 	// Check for the resource with given UUID
 	_, ok := q.pool[resUUID]
 	if !ok {
