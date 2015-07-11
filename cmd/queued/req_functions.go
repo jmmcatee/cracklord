@@ -43,9 +43,9 @@ func (a *AppController) Router() *mux.Router {
 	// Resource endpoints
 	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResource)
 	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
-	r.Path("/api/resources/{id}").Methods("GET").HandlerFunc(a.ReadResource)
-	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResources)
-	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
+	r.Path("/api/resources/{manager}/{id}").Methods("GET").HandlerFunc(a.ReadResource)
+	r.Path("/api/resources/{manager}/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
+	r.Path("/api/resources/{manager}/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
 
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
@@ -1013,12 +1013,24 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the resource ID
+	// Get the resource ID and manager name from URL
 	resID := mux.Vars(r)["id"]
+	managerName := mux.Vars(r)["manager"]
+
+	// Get the resource manager as defined in the URL
+	manager, ok := a.Q.GetResourceManager(managerName)
+	if !ok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "The requested resource manager was not found."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithField("resource", resID).Warn("Resource manager details could not be found.")
+	}
 
 	// Get the resource
-	resource, ok := a.Q.GetResource(resID)
-
+	resource, params, err := manager.GetResource(resID)
 	if !ok {
 		resp.Status = RESP_CODE_NOTFOUND
 		resp.Message = "The requested resource was not found."
@@ -1034,8 +1046,8 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	resp.Resource.Name = resource.Name
 	resp.Resource.Address = resource.Address
 	resp.Resource.Status = resource.Status
-	resp.Resource.Params = resource.Parameters
-	resp.Resource.Manager = resource.Manager
+	resp.Resource.Params = params
+	resp.Resource.Manager = manager.SystemName()
 
 	log.WithFields(log.Fields{
 		"uuid":    resID,
@@ -1065,7 +1077,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	log.WithField("name", resp.Resource.Name).Info("Information gathered on resource.")
 }
 
-func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request) {
+func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var req ResUpdateReq
 	var resp ResUpdateResp
@@ -1119,29 +1131,10 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-
-	// Get the resource
-	resource, resok := a.Q.GetResource(resID)
-
-	// If that resource doesn't exist, let's throw an error
-	if !resok {
-		resp.Status = RESP_CODE_NOTFOUND
-		resp.Message = "That resource does not exist."
-
-		rw.WriteHeader(RESP_CODE_NOTFOUND)
-		respJSON.Encode(resp)
-
-		log.WithFields(log.Fields{
-			"manager": resource.Manager,
-			"addr":    resource.Address,
-			"name":    resource.Name,
-		}).Warn("Unable to find requested resource to update.")
-
-		return
-	}
+	managerName := mux.Vars(r)["manager"]
 
 	// Get the manager for the resource
-	manager, manok := a.Q.GetResourceManager(resource.Manager)
+	manager, manok := a.Q.GetResourceManager(managerName)
 
 	//If that resource manager doesn't exist, return a not found error
 	if !manok {
@@ -1152,10 +1145,30 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"manager": resource.Manager,
+			"manager": manager.SystemName(),
 			"addr":    resource.Address,
 			"name":    resource.Name,
 		}).Warn("Unable to find requested manager to update resource.")
+
+		return
+	}
+
+	// Get the resource
+	resource, params, resok := manager.GetResource(resID)
+
+	// If that resource doesn't exist, let's throw an error
+	if !resok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager": manager.SystemName(),
+			"addr": resource.Address,
+			"name": resource.Name,
+		}).Warn("Unable to find requested resource to update.")
 
 		return
 	}
@@ -1251,29 +1264,10 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-
-	// Get the resource
-	resource, resok := a.Q.GetResource(resID)
-
-	// If that resource doesn't exist, let's throw an error
-	if !resok {
-		resp.Status = RESP_CODE_NOTFOUND
-		resp.Message = "That resource does not exist."
-
-		rw.WriteHeader(RESP_CODE_NOTFOUND)
-		respJSON.Encode(resp)
-
-		log.WithFields(log.Fields{
-			"manager": resource.Manager,
-			"addr":    resource.Address,
-			"name":    resource.Name,
-		}).Warn("Unable to find requested resource to update.")
-
-		return
-	}
+	managerName := mux.Vars(r)["manager"]
 
 	// Get the manager for the resource
-	manager, manok := a.Q.GetResourceManager(resource.Manager)
+	manager, manok := a.Q.GetResourceManager(managerName)
 
 	//If that resource manager doesn't exist, return a not found error
 	if !manok {
@@ -1284,10 +1278,30 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"manager": resource.Manager,
+			"manager": manager.SystemName(),
 			"addr":    resource.Address,
 			"name":    resource.Name,
 		}).Warn("Unable to find requested manager to update resource.")
+
+		return
+	}
+
+	// Get the resource
+	resource, params, resok := manager.GetResource(resID)
+
+	// If that resource doesn't exist, let's throw an error
+	if !resok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager": manager.SystemName(),
+			"addr":    resource.Address,
+			"name":    resource.Name,
+		}).Warn("Unable to find requested resource to update.")
 
 		return
 	}
@@ -1398,3 +1412,4 @@ func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
 	// Finally, we did it successfully!
 	log.Info("Queue reodered successfully")
 }
+j
