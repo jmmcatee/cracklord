@@ -828,12 +828,12 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// First we need to loop through all resource managers
-	for managerid, managerdata := range a.Q.AllResourceManagers() {
+	for managerid, manager := range a.Q.AllResourceManagers() {
 		//Then  we need to loop through all resources controlled by the manager
-		for _, resourceid := range managerdata.GetManagedResources() {
-			resource, ok := a.Q.GetResource(resourceid)
+		for _, resourceid := range manager.GetManagedResources() {
+			resource, params, err := manager.GetResource(resourceid)
 
-			if !ok {
+			if err != nil {
 				log.WithField("resourceid", resourceid).Error("Unable to find resource in queue when provided by manager while gathering API resource list.")
 				continue
 			}
@@ -844,7 +844,7 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 			outresource.Name = resource.Name
 			outresource.Status = resource.Status
 			outresource.Address = resource.Address
-			outresource.Params = resource.Parameters
+			outresource.Params = params
 
 			for _, t := range resource.Tools {
 				outresource.Tools = append(outresource.Tools, APITool{t.UUID, t.Name, t.Version})
@@ -945,7 +945,7 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 	}
 
 	// Now let's try and add the resource itself.
-	err = manager.AddResource(req.Name, req.Address, req.Params, a.TLS)
+	err = manager.AddResource(req.Name, req.Address, req.Params)
 
 	// If there was an error returned by the resource manager, let's go ahead and return an error to the user.
 	if err != nil {
@@ -1031,7 +1031,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 
 	// Get the resource
 	resource, params, err := manager.GetResource(resID)
-	if !ok {
+	if err != nil {
 		resp.Status = RESP_CODE_NOTFOUND
 		resp.Message = "The requested resource was not found."
 
@@ -1053,7 +1053,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 		"uuid":    resID,
 		"name":    resource.Name,
 		"addr":    resource.Address,
-		"manager": resource.Manager,
+		"manager": manager.SystemName(),
 	}).Debug("Gathered resource information.")
 
 	for _, t := range resource.Tools {
@@ -1145,72 +1145,28 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"manager": manager.SystemName(),
-			"addr":    resource.Address,
-			"name":    resource.Name,
+			"manager":  managerName,
+			"resource": resID,
 		}).Warn("Unable to find requested manager to update resource.")
 
 		return
 	}
 
-	// Get the resource
-	resource, params, resok := manager.GetResource(resID)
+	err = manager.UpdateResource(resID, req.Status, req.Params)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = "An error occured while trying to update that resource: " + err.Error()
 
-	// If that resource doesn't exist, let's throw an error
-	if !resok {
-		resp.Status = RESP_CODE_NOTFOUND
-		resp.Message = "That resource does not exist."
-
-		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"manager": manager.SystemName(),
-			"addr": resource.Address,
-			"name": resource.Name,
-		}).Warn("Unable to find requested resource to update.")
+			"manager":  manager.SystemName(),
+			"error":    err.Error(),
+			"resource": resID,
+		}).Error("An error occured while trying to update a resource.")
 
 		return
-	}
-
-	switch req.Status {
-	case "resume":
-		err = manager.ResumeResource(resID)
-		if err != nil {
-			resp.Status = RESP_CODE_ERROR
-			resp.Message = err.Error()
-
-			rw.WriteHeader(RESP_CODE_ERROR)
-			respJSON.Encode(resp)
-
-			log.WithFields(log.Fields{
-				"error":    err.Error(),
-				"manager":  manager.SystemName(),
-				"resource": resID,
-			}).Error("An error occured while trying to resume resource.")
-
-			return
-		}
-		break
-
-	case "pause":
-		err = manager.PauseResource(resID)
-		if err != nil {
-			resp.Status = RESP_CODE_ERROR
-			resp.Message = err.Error()
-
-			rw.WriteHeader(RESP_CODE_ERROR)
-			respJSON.Encode(resp)
-
-			log.WithFields(log.Fields{
-				"error":    err.Error(),
-				"manager":  manager.SystemName(),
-				"resource": resID,
-			}).Error("An error occured while trying to pause resource.")
-
-			return
-		}
-		break
 	}
 
 	// Build good response because we were able to get here
@@ -1278,19 +1234,18 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"manager": manager.SystemName(),
-			"addr":    resource.Address,
-			"name":    resource.Name,
+			"manager":  managerName,
+			"resource": resID,
 		}).Warn("Unable to find requested manager to update resource.")
 
 		return
 	}
 
 	// Get the resource
-	resource, params, resok := manager.GetResource(resID)
+	resource, _, err := manager.GetResource(resID)
 
 	// If that resource doesn't exist, let's throw an error
-	if !resok {
+	if err != nil {
 		resp.Status = RESP_CODE_NOTFOUND
 		resp.Message = "That resource does not exist."
 
@@ -1307,7 +1262,7 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 	}
 
 	// Remove the resource
-	err := manager.DeleteResource(resID)
+	err = manager.DeleteResource(resID)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = "An error occured while trying to delete that resource: " + err.Error()
@@ -1322,8 +1277,6 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-
-	// TODO (mcatee): Add a check for no found resource and return correct status codes
 
 	// Build good response
 	resp.Status = RESP_CODE_OK
@@ -1412,4 +1365,3 @@ func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
 	// Finally, we did it successfully!
 	log.Info("Queue reodered successfully")
 }
-j

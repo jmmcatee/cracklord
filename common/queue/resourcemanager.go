@@ -1,8 +1,6 @@
 package queue
 
-import (
-	"crypto/tls"
-)
+import ()
 
 /* The ResourceManager interface is used to implement functionality to manage
  * resources throughout the queue.  All resource actions (add, remove, update)
@@ -25,7 +23,7 @@ type ResourceManager interface {
 	//will be required by the Queue to connect to the resource.  It should then
 	//add the resource to the queue itself for use by jobs.  Can return an error
 	//but that will be nil is there were no issues.
-	AddResource(name string, address string, params map[string]string, tls *tls.Config) error
+	AddResource(name string, address string, params map[string]string) error
 	//DeleteResource will remove a resource from the queue as soon as it is able
 	//pending job completion.  Takes a parameter of the resource UUID and will
 	//return an error if there are any problems.
@@ -34,12 +32,11 @@ type ResourceManager interface {
 	//of the information about it in a queue.Resource object, as well as the
 	//parameters that the resourcemanager is tracking internally.  Can also return
 	//an error if there are any problems.
-	GetResource(resourceid string) (Resource, map[string]string, error)
-	//PauseResource and ResumeResource take the UUID of the targeted resource and
-	//will either stop them from receiving new jobs on the queue, or resume
-	//allowing them to receive new jobs.
-	PauseResource(resourceid string) error
-	ResumeResource(resourceid string) error
+	GetResource(resourceid string) (*Resource, map[string]string, error)
+	//Update resource allows the API to change the status of an existing resource
+	//or update the parameters internal to the resource manager.  Address, name,
+	//and other queue related resource data cannot be changed.
+	UpdateResource(resourceid string, newstatus string, newparams map[string]string) error
 	//GetManagedResources returns a slice of all resource UUIDs managed by this
 	//resource manager.
 	GetManagedResources() []string

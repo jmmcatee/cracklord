@@ -201,7 +201,13 @@ type ResReadResp struct {
 
 // Update a resource struct
 type ResUpdateReq struct {
-	Status string `json:"status"`
+	ID      string            `json:"id"`
+	Name    string            `json:"name"`
+	Address string            `json:"address"`
+	Manager string            `json:"manager"`
+	Params  map[string]string `json:"params"`
+	Status  string            `json:"status"`
+	Tools   []APITool         `json:"tools"`
 }
 
 type ResUpdateResp struct {

@@ -9,6 +9,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/queue"
+	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
 	"io/ioutil"
@@ -277,6 +278,11 @@ func main() {
 		BrowserXssFilter:        true,
 		IsDevelopment:           true,
 	})
+
+	// SETUP RESOURCE MANAGERS
+	// Setup Direct Connect Manager
+	resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
+	server.Q.AddResourceManager(resmgr_dc)
 
 	// Build the Negroni handler
 	n := negroni.New(negroni.NewRecovery(),
