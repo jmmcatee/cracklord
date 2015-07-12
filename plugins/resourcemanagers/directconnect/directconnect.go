@@ -40,39 +40,87 @@ func (this directResourceManager) Description() string {
 	return "Directly connect to resource servers."
 }
 
-func (this directResourceManager) Parameters() string {
-	return `"form": [
-        "reconnect",
-	    {
-	        "key": "notes",
-	        "type": "textarea",
-	        "placeholder": "OPTIONAL: Any notes you would like to include (location, primary contact, etc.)"
-	    }
-	],
-	"schema": {
+func (this directResourceManager) ParametersForm() string {
+	return `[
+			{
+				"type": "section",
+				"htmlClass": "row",
+				"items": [
+					{
+						"type": "section",
+						"htmlClass": "col-xs-6",
+						"items": [
+							"name"
+						]
+					},
+					{
+						"type": "section",
+						"htmlClass": "col-xs-6",
+						"items": [
+							"address"
+						]
+					}
+				]
+			},
+         "reconnect",
+			{
+				"key": "notes",
+				"type": "textarea",
+				"placeholder": "OPTIONAL: Any notes you would like to include (location, primary contact, etc.)"
+			}
+    	]`
+}
+func (this directResourceManager) ParametersSchema() string {
+	return `{
 		"type": "object",
 		"title": "Direct Connect",
 		"properties": {
-		    "notes": {
-			    "title": "Notes",
-			    "type": "string"
-		    },
-		    "reconnect": {
-	            "title": "Attempt automatic reconnect?",
-	            "type": "boolean",
-	            "default": true
-	        }
-		}
+			"name": {
+				"title": "Name",
+				"type": "string",
+				"description": "The name you would like to reference this resource as."
+			},
+			"address": {
+				"title": "Address",
+				"type": "string",
+				"default": "localhost",
+				"description": "The full DNS name or IP address of the resource."
+			},
+			"notes": {
+				"title": "Notes",
+				"type": "string"
+			},
+			"reconnect": {
+				"title": "Attempt automatic reconnect?",
+				"type": "boolean",
+				"default": true,
+				"description": "Should the system attempt to automatically reconnect in the event this resource becomes disconnected?"
+			}
+		},
+		"required": [
+			"name",
+			"address",
+			"reconnect"
+		]
 	}`
 }
 
-func (this *directResourceManager) AddResource(name string, address string, params map[string]string) error {
+func (this *directResourceManager) AddResource(params map[string]string) error {
+	//First, we need to get the name and address out of the parameters, as we're getting those from the user in this resource manager
+	address, ok := params["address"]
+	if !ok {
+		return errors.New("Cannot add resource, address was not specified.")
+	}
+	name, ok := params["name"]
+	if !ok {
+		return errors.New("Cannot add resource, name was not specified.")
+	}
+
 	//First, we attempt to add the resource into the queue itself
 	uuid, err := this.q.AddResource(address, name, this.tls)
 
 	//If unable to connect, log it and return the error to the API
 	if err != nil {
-		log.WithField("error", err.Error()).Error("Unable to add resource through direct connect manager")
 		return err
 	}
 
@@ -88,7 +136,7 @@ func (this *directResourceManager) DeleteResource(resourceid string) error {
 
 	//If there was an error, log it back to the API
 	if err != nil {
-		log.WithField("error", err.Error()).Error("Unable to remove resource through direct connect manager")
+		log.WithField("error", err.Error()).Debug("Unable to remove resource through direct connect manager")
 		return err
 	}
 
@@ -109,7 +157,7 @@ func (this directResourceManager) GetResource(resourceid string) (*queue.Resourc
 	//Now we'll gather the data from our local map of parameters
 	localresource, ok := this.resources.Get(resourceid)
 	if !ok {
-		return &queue.Resource{}, nil, errors.New("Resource wiht requested ID could not be found in direct connect resource manager.")
+		return &queue.Resource{}, nil, errors.New("Resource with requested ID could not be found in direct connect resource manager.")
 	}
 
 	//Since our map uses a generic interface{}, we have to cast our result back

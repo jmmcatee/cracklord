@@ -389,36 +389,16 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// We need to split the response from the tool into Form and Schema like we
-	// do with tools.
-	var form common.JSONSchemaForm
-
-	// Let's decode the JSON string we got from the resource manager
-	jsonBuf := bytes.NewBuffer([]byte(resmgr.Parameters()))
-	err := json.NewDecoder(jsonBuf).Decode(&form)
-
-	//If that string was invalid, we have to return an internal server error to
-	//the API.
-	if err != nil {
-		log.WithField("msg", err).Error("There was a problem processing resource manager JSON parameters")
-		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
-
-		rw.WriteHeader(RESP_CODE_ERROR)
-		respJSON.Encode(resp)
-		return
-	}
-
 	// Now since everything seems ok, let's build up our response and send it off
 	// to the API.
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
-	//Resp.Tool is of the type APIResourceManagerDetail
+	//Resp.ResourceManager is of the type APIResourceManagerDetail
 	resp.ResourceManager.ID = resmgr.SystemName()
 	resp.ResourceManager.Name = resmgr.DisplayName()
 	resp.ResourceManager.Description = resmgr.Description()
-	resp.ResourceManager.Form = &form.Form
-	resp.ResourceManager.Schema = &form.Schema
+	resp.ResourceManager.Form = resmgr.ParametersForm()
+	resp.ResourceManager.Schema = resmgr.ParametersSchema()
 
 	// Write out the HTTP OK header
 	rw.WriteHeader(RESP_CODE_OK)
@@ -937,15 +917,13 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 
 		log.WithFields(log.Fields{
 			"manager": req.Manager,
-			"addr":    req.Address,
-			"name":    req.Name,
 		}).Warn("Unable to find requested resource manager.")
 
 		return
 	}
 
 	// Now let's try and add the resource itself.
-	err = manager.AddResource(req.Name, req.Address, req.Params)
+	err = manager.AddResource(req.Params)
 
 	// If there was an error returned by the resource manager, let's go ahead and return an error to the user.
 	if err != nil {
@@ -956,9 +934,8 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"error": err.Error(),
-			"addr":  req.Address,
-			"name":  req.Name,
+			"error":   err.Error(),
+			"manager": req.Manager,
 		}).Error("An error occured adding a resource.")
 
 		return
@@ -972,7 +949,6 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 	respJSON.Encode(resp)
 
 	log.WithFields(log.Fields{
-		"name":    req.Name,
 		"manager": req.Manager,
 	}).Info("Resource successfully added.")
 }

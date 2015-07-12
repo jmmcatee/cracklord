@@ -2,9 +2,14 @@
 	<div class="col-md-12 main">
 		<div class="col-md-5 pull-right button-tray"> 
 			<div class="btn-group pull-right" role="group">
-				<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="connectresource"><i class="fa fa-link"></i> Connect</a>
-				<reloadbutton datareload="loadServers()"></reloadbutton>
+				<button class="btn btn-primary dropdown-toggle" ng-if="user.checkrole([user.allroles.admin])"><i class="fa fa-link"></i> Connect <span class="caret"></span></button>
+				<ul class="dropdown-menu">
+					<li ng-repeat="mgr in managers">
+						<a ui-sref="connectresource({manager: {{mgr.id}}})">{{mgr.name}}</a>
+					</li>
+				</ul>
 			</div>
+			<reloadbutton datareload="loadServers()"></reloadbutton>
 		</div>
 		<h1 class="page-header"><i class="fa fa-server"></i> Resources Connected</h1>
 		<div class="table-responsive">

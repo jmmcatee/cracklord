@@ -61,11 +61,11 @@ type APIResourceManager struct {
 }
 
 type APIResourceManagerDetail struct {
-	ID          string           `json:"id"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Form        *json.RawMessage `json:"form"`
-	Schema      *json.RawMessage `json:"schema"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Form        string `json:"form"`
+	Schema      string `json:"schema"`
 }
 
 // Tools List Response Structure
@@ -181,8 +181,6 @@ type ResListResp struct {
 
 // Create resource structs
 type ResCreateReq struct {
-	Name    string            `json:"name"`
-	Address string            `json:"address"`
 	Manager string            `json:"manager"`
 	Params  map[string]string `json:"params"`
 }
@@ -202,8 +200,6 @@ type ResReadResp struct {
 // Update a resource struct
 type ResUpdateReq struct {
 	ID      string            `json:"id"`
-	Name    string            `json:"name"`
-	Address string            `json:"address"`
 	Manager string            `json:"manager"`
 	Params  map[string]string `json:"params"`
 	Status  string            `json:"status"`

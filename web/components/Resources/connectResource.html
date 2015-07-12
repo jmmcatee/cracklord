@@ -9,26 +9,20 @@
 		<div id="form-container">
 			<div class="page-header text-center">
 				<h2>Connect to Resource</h2>
+				<h3>{{manager.name}}</h3>
 			</div>
 			<div class="row">
 				<div class="col-sm-10 col-sm-offset-1">
-					<form id="connectresource" ng-submit="processResourceConnectForm()">
-						<div class="form-group">
-							<label for="name">Friendly Name</label>
-							<input type="text" class="form-control" name="name" ng-model="formData.name" required>
+					<form id="connectresource" sf-schema="manager.schema" sf-form="manager.form" sf-model="formData">
+					</form>
+					<div class="form-group row">
+						<div class="col-xs-3 pull-left">
+							<a class="btn btn-block btn-danger" ui-sref="resources"><i class="fa fa-times"></i> Cancel</a>
 						</div>
-						<div class="form-group">
-							<label for="name">Address</label>
-							<input type="text" class="form-control" name="address" ng-model="formData.address" required>
+						<div class="col-xs-3 pull-right">
+							<a class="btn btn-block btn-success" ng-click="processResourceConnectForm()"><i class="fa fa-link"></i> Connect</a>
 						</div>
-						<div class="form-group row">
-							<div class="col-xs-3 pull-left">
-								<a class="btn btn-block btn-danger" ui-sref="resources"><i class="fa fa-times"></i> Cancel</a>
-							</div>
-							<div class="col-xs-3 pull-right">
-								<button class="btn btn-block btn-success"><i class="fa fa-link"></i> Connect</button>
-							</div>
-						</div>
+					</div>
 					</form>
 				</div>
 			</div>

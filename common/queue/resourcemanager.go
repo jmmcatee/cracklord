@@ -15,15 +15,20 @@ type ResourceManager interface {
 	DisplayName() string
 	//Description returns a string with a short description of the resource manager
 	Description() string
-	//Parameters returns a string containing a JSON object with the necessary
-	//information to add a new resource using this manager
-	Parameters() string
+	//ParametersForm and ParametersSchema return a string containing JSON objects
+	//with the necessary information to add a new resource using this manager.
+	//They will need to be in the same format as the tool parameters, using the
+	//format specified at http://schemaform.io.  Consider that name and address
+	//will be mandatory fields for when you add a resource, you may want to ask
+	//for them, or you may want to generate them.
+	ParametersForm() string
+	ParametersSchema() string
 	//AddResource takes a map of input (as required by parameters), the name and
 	//address of the resource.  Finally, it also takes a tls configuration that
 	//will be required by the Queue to connect to the resource.  It should then
 	//add the resource to the queue itself for use by jobs.  Can return an error
 	//but that will be nil is there were no issues.
-	AddResource(name string, address string, params map[string]string) error
+	AddResource(params map[string]string) error
 	//DeleteResource will remove a resource from the queue as soon as it is able
 	//pending job completion.  Takes a parameter of the resource UUID and will
 	//return an error if there are any problems.
