@@ -1,8 +1,15 @@
 <div class="row" ng-controller="ResourcesController">
 	<div class="col-md-12 main">
 		<div class="col-md-5 pull-right button-tray"> 
-			<div class="btn-group pull-right" role="group">
-				<a class="btn btn-primary" ng-if="user.checkrole([user.allroles.standard, user.allroles.admin])" ui-sref="connectresource"><i class="fa fa-link"></i> Connect</a>
+			<div class="btn-group pull-right">
+				<div class="btn-group" role="group">
+					<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle" ng-if="user.checkrole([user.allroles.admin])"><i class="fa fa-link"></i> Add Resource <span class="caret"></span></button>
+					<ul class="dropdown-menu">
+						<li ng-repeat="mgr in managers">
+							<a ui-sref="connectresource({manager: '{{mgr.id}}'})">{{mgr.name}}</a>
+						</li>
+					</ul>
+				</div>
 				<reloadbutton datareload="loadServers()"></reloadbutton>
 			</div>
 		</div>
@@ -13,6 +20,7 @@
 					<tr>
 						<th class="">Name</th>
 						<th class="">Address</th>
+						<th class="">Manager</th>
 						<th class="">Status</th>
 						<th class=""></th>
 					</tr>
@@ -21,6 +29,7 @@
 					<tr ng-repeat="res in resources" style="background-color: rgb({{res.color.r}}, {{res.color.g}}, {{res.color.b}});">
 						<td class="name">{{res.name}}</td>
 						<td class="address">{{res.address}}</td>
+						<td class="manager">{{res.managername}}</td>
 						<td class="status {{res.status}}">{{res.status}}</td>
 						<td>
 							<div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">

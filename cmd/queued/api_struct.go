@@ -54,6 +54,33 @@ type ToolsGetResp struct {
 	Tool    APIToolDetail `json:"tool"`
 }
 
+// Resource Manager API structure
+type APIResourceManager struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type APIResourceManagerDetail struct {
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Form        *json.RawMessage `json:"form"`
+	Schema      *json.RawMessage `json:"schema"`
+}
+
+// Tools List Response Structure
+type ResourceManagersResp struct {
+	Status           int                  `json:"status"`
+	Message          string               `json:"message"`
+	ResourceManagers []APIResourceManager `json:"resourcemanagers"`
+}
+
+type ResourceManagerGetResp struct {
+	Status          int                      `json:"status"`
+	Message         string                   `json:"message"`
+	ResourceManager APIResourceManagerDetail `json:"resourcemanager"`
+}
+
 // API Jobs structure
 type APIJob struct {
 	ID            string    `json:"id"`
@@ -136,11 +163,13 @@ type JobDeleteResp struct {
 
 // Resource API structure
 type APIResource struct {
-	ID      string    `json:"id"`
-	Name    string    `json:"name"`
-	Address string    `json:"address"`
-	Status  string    `json:"status"`
-	Tools   []APITool `json:"tools"`
+	ID      string            `json:"id"`
+	Name    string            `json:"name"`
+	Address string            `json:"address"`
+	Manager string            `json:"manager"`
+	Params  map[string]string `json:"params"`
+	Status  string            `json:"status"`
+	Tools   []APITool         `json:"tools"`
 }
 
 // List resource structs
@@ -152,8 +181,8 @@ type ResListResp struct {
 
 // Create resource structs
 type ResCreateReq struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
+	Manager string            `json:"manager"`
+	Params  map[string]string `json:"params"`
 }
 
 type ResCreateResp struct {
@@ -170,7 +199,11 @@ type ResReadResp struct {
 
 // Update a resource struct
 type ResUpdateReq struct {
-	Status string `json:"status"`
+	ID      string            `json:"id"`
+	Manager string            `json:"manager"`
+	Params  map[string]string `json:"params"`
+	Status  string            `json:"status"`
+	Tools   []APITool         `json:"tools"`
 }
 
 type ResUpdateResp struct {

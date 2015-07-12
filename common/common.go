@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"strings"
 )
 
@@ -18,6 +19,11 @@ const (
 
 type RPCCall struct {
 	Job Job
+}
+
+type JSONSchemaForm struct {
+	Form   json.RawMessage `json:"form"`
+	Schema json.RawMessage `json:"schema"`
 }
 
 func StripQuotes(str string) string {

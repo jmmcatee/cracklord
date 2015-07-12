@@ -44,7 +44,7 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 }
 
 // Task RPC functions
-func (q *Queue) Ping(ping int64, pong *int64) error {
+func (q *Queue) Ping(ping int, pong *int) error {
 	q.Lock()
 
 	pong = &ping

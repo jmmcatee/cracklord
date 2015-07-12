@@ -36,12 +36,16 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/tools").Methods("GET").HandlerFunc(a.ListTools)
 	r.Path("/api/tools/{id}").Methods("GET").HandlerFunc(a.GetTool)
 
+	// Resource Manager endpoints
+	r.Path("/api/resourcemanagers").Methods("GET").HandlerFunc(a.ListResourceManagers)
+	r.Path("/api/resourcemanagers/{id}").Methods("GET").HandlerFunc(a.GetResourceManager)
+
 	// Resource endpoints
 	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResource)
 	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
-	r.Path("/api/resources/{id}").Methods("GET").HandlerFunc(a.ReadResource)
-	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResources)
-	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
+	r.Path("/api/resources/{manager}/{id}").Methods("GET").HandlerFunc(a.ReadResource)
+	r.Path("/api/resources/{manager}/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
+	r.Path("/api/resources/{manager}/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
 
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
@@ -239,7 +243,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// We need to split the response from the tool into Form and Schema
-	var form common.ToolJSONForm
+	var form common.JSONSchemaForm
 
 	jsonBuf := bytes.NewBuffer([]byte(tool.Parameters))
 	err := json.NewDecoder(jsonBuf).Decode(&form)
@@ -269,6 +273,142 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 		"name": tool.Name,
 		"ver":  tool.Version,
 	}).Info("Detailed information on tool sent to API")
+}
+
+// List Resource Managers endpoint (GET - /api/resourcemanagers)
+// This function will provide a list of all resource managers and their IDs to the API
+// in the form of a javascript array of objects.
+func (a *AppController) ListResourceManagers(rw http.ResponseWriter, r *http.Request) {
+	// Resposne and Request structures
+	var resp ResourceManagersResp
+
+	// JSON Encoder and Decoder
+	respJSON := json.NewEncoder(rw)
+
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	//Check to make sure our token is valid, and if not return an error to the API
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		log.WithField("token", token).Warn("An unknown user token attempted to list resource managers.")
+		return
+	}
+
+	// Check for the read only user level as this is just data gathering.
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(ReadOnly) {
+		// If the user isn't allowed or the token isn't valid return an HTTP
+		// Unauthorized to the user.
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		//Write out the unauthorized response
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		log.WithField("user", user.Username).Warn("An unauthorized user token attempted to list resource managers.")
+		return
+	}
+
+	// Get the map of all resource managers from the Queue
+	for resmgrid, resmgrdata := range a.Q.AllResourceManagers() {
+		resp.ResourceManagers = append(resp.ResourceManagers,
+			APIResourceManager{
+				ID:   resmgrid,
+				Name: resmgrdata.DisplayName(),
+			})
+		log.WithFields(log.Fields{
+			"id":   resmgrid,
+			"name": resmgrdata.DisplayName(),
+		}).Debug("Added resource manager to list")
+	}
+
+	// Build response of 200 for the API Status and Message portions
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+
+	//Write out the HTTP 200 header
+	rw.WriteHeader(RESP_CODE_OK)
+	// Write out our response to the response writer in JSON format
+	respJSON.Encode(resp)
+
+	//Log it for the end user
+	log.Info("Provided a resource manager listing to API")
+}
+
+// Get the details on a single resource manager (GET /api/resourcemanagers/{id})
+func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Request) {
+	// Response and Request structures
+	var resp ResourceManagerGetResp
+
+	// JSON Encoder and Decoder
+	respJSON := json.NewEncoder(rw)
+
+	// Get the authorization header
+	token := r.Header.Get("AuthorizationToken")
+
+	// Check to make sure our user token is valid
+	if !a.T.CheckToken(token) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		log.WithField("token", token).Warn("An unknown user token attempted to get tool details.")
+		return
+	}
+
+	// Check for the read only level as this is just information we're returning
+	user, _ := a.T.GetUser(token)
+	if !user.Allowed(ReadOnly) {
+		resp.Status = RESP_CODE_UNAUTHORIZED
+		resp.Message = RESP_CODE_UNAUTHORIZED_T
+
+		rw.WriteHeader(RESP_CODE_UNAUTHORIZED)
+		respJSON.Encode(resp)
+		log.WithField("user", user.Username).Warn("An unauthorized user token attempted to get tool details.")
+		return
+	}
+
+	// Get the resource manager ID from the URL
+	systemname := mux.Vars(r)["id"]
+
+	// Get the resource manager object itself
+	resmgr, ok := a.Q.GetResourceManager(systemname)
+	if !ok {
+		// The resource manager was not found, let's return that in proper HTTP
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = RESP_CODE_NOTFOUND_T
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+		return
+	}
+
+	form := json.RawMessage(resmgr.ParametersForm())
+	schema := json.RawMessage(resmgr.ParametersSchema())
+
+	// Now since everything seems ok, let's build up our response and send it off
+	// to the API.
+	resp.Status = RESP_CODE_OK
+	resp.Message = RESP_CODE_OK_T
+	//Resp.ResourceManager is of the type APIResourceManagerDetail
+	resp.ResourceManager.ID = resmgr.SystemName()
+	resp.ResourceManager.Name = resmgr.DisplayName()
+	resp.ResourceManager.Description = resmgr.Description()
+	resp.ResourceManager.Form = &form
+	resp.ResourceManager.Schema = &schema
+
+	// Write out the HTTP OK header
+	rw.WriteHeader(RESP_CODE_OK)
+	//Encode and write out our response
+	respJSON.Encode(resp)
+
+	log.WithField("id", resmgr.SystemName()).Info("Detailed information on resource manager sent to API")
 }
 
 // Get Job list (GET - /api/jobs)
@@ -670,26 +810,38 @@ func (a *AppController) ListResource(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// List resources
-	for _, r := range a.Q.GetResources() {
-		var apires APIResource
-		apires.ID = r.UUID
-		apires.Name = r.Name
-		apires.Status = r.Status
-		apires.Address = r.Address
+	// First we need to loop through all resource managers
+	for managerid, manager := range a.Q.AllResourceManagers() {
+		//Then  we need to loop through all resources controlled by the manager
+		for _, resourceid := range manager.GetManagedResources() {
+			resource, params, err := manager.GetResource(resourceid)
 
-		for _, t := range r.Tools {
-			apires.Tools = append(apires.Tools, APITool{t.UUID, t.Name, t.Version})
+			if err != nil {
+				log.WithField("resourceid", resourceid).Error("Unable to find resource in queue when provided by manager while gathering API resource list.")
+				continue
+			}
+
+			var outresource APIResource
+			outresource.Manager = managerid
+			outresource.ID = resourceid
+			outresource.Name = resource.Name
+			outresource.Status = resource.Status
+			outresource.Address = resource.Address
+			outresource.Params = params
+
+			for _, t := range resource.Tools {
+				outresource.Tools = append(outresource.Tools, APITool{t.UUID, t.Name, t.Version})
+			}
+
+			resp.Resources = append(resp.Resources, outresource)
+
+			log.WithFields(log.Fields{
+				"id":      resourceid,
+				"name":    resource.Name,
+				"addr":    resource.Address,
+				"manager": managerid,
+			}).Debug("Gathered resource information.")
 		}
-
-		resp.Resources = append(resp.Resources, apires)
-
-		log.WithFields(log.Fields{
-			"id":   r.UUID,
-			"name": r.Name,
-			"addr": r.Address,
-		}).Debug("Gathered resource information.")
-
 	}
 
 	// Job should now be removed, so return all OK
@@ -756,8 +908,27 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Try and add the resource
-	err = a.Q.AddResource(req.Address, req.Name, a.TLS)
+	//First we need to get the appropriate resource manager
+	manager, ok := a.Q.GetResourceManager(req.Manager)
+	//If that resource manager doesn't exist, return a not found error
+	if !ok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource manager does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager": req.Manager,
+		}).Warn("Unable to find requested resource manager.")
+
+		return
+	}
+
+	// Now let's try and add the resource itself.
+	err = manager.AddResource(req.Params)
+
+	// If there was an error returned by the resource manager, let's go ahead and return an error to the user.
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T
@@ -766,22 +937,23 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 		respJSON.Encode(resp)
 
 		log.WithFields(log.Fields{
-			"error": err.Error(),
-			"addr":  req.Address,
-			"name":  req.Name,
+			"error":   err.Error(),
+			"manager": req.Manager,
 		}).Error("An error occured adding a resource.")
 
 		return
 	}
 
-	// Job should now be removed, so return all OK
+	// At this point, the resource should be added, we can return success.
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
 
-	log.WithField("name", req.Name).Info("Resource successfully added.")
+	log.WithFields(log.Fields{
+		"manager": req.Manager,
+	}).Info("Resource successfully added.")
 }
 
 func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
@@ -820,33 +992,56 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the resource ID
+	// Get the resource ID and manager name from URL
 	resID := mux.Vars(r)["id"]
+	managerName := mux.Vars(r)["manager"]
+
+	// Get the resource manager as defined in the URL
+	manager, ok := a.Q.GetResourceManager(managerName)
+	if !ok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "The requested resource manager was not found."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithField("resource", resID).Warn("Resource manager details could not be found.")
+	}
 
 	// Get the resource
-	for _, r := range a.Q.GetResources() {
-		if resID == r.UUID {
-			// Found the resource so set it to the response
-			resp.Resource.ID = r.UUID
-			resp.Resource.Name = r.Name
-			resp.Resource.Address = r.Address
-			resp.Resource.Status = r.Status
+	resource, params, err := manager.GetResource(resID)
+	if err != nil {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "The requested resource was not found."
 
-			log.WithFields(log.Fields{
-				"uuid": r.UUID,
-				"name": r.Name,
-				"addr": r.Address,
-			}).Debug("Gathered resource information.")
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
 
-			for _, t := range r.Tools {
-				resp.Resource.Tools = append(resp.Resource.Tools, APITool{t.UUID, t.Name, t.Version})
-				log.WithFields(log.Fields{
-					"uuid": t.UUID,
-					"name": t.Name,
-					"ver":  t.Version,
-				}).Debug("Tool on resource gathered.")
-			}
-		}
+		log.WithField("resource", resID).Warn("Resource details were requested and could not be found.")
+	}
+
+	// Found the resource so set it to the response
+	resp.Resource.ID = resID
+	resp.Resource.Name = resource.Name
+	resp.Resource.Address = resource.Address
+	resp.Resource.Status = resource.Status
+	resp.Resource.Params = params
+	resp.Resource.Manager = manager.SystemName()
+
+	log.WithFields(log.Fields{
+		"uuid":    resID,
+		"name":    resource.Name,
+		"addr":    resource.Address,
+		"manager": manager.SystemName(),
+	}).Debug("Gathered resource information.")
+
+	for _, t := range resource.Tools {
+		resp.Resource.Tools = append(resp.Resource.Tools, APITool{t.UUID, t.Name, t.Version})
+		log.WithFields(log.Fields{
+			"uuid": t.UUID,
+			"name": t.Name,
+			"ver":  t.Version,
+		}).Debug("Tool configured on resource gathered.")
 	}
 
 	// TODO (mcatee): Add a check for no found resource and return correct status codes
@@ -861,7 +1056,7 @@ func (a *AppController) ReadResource(rw http.ResponseWriter, r *http.Request) {
 	log.WithField("name", resp.Resource.Name).Info("Information gathered on resource.")
 }
 
-func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request) {
+func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var req ResUpdateReq
 	var resp ResUpdateResp
@@ -915,41 +1110,45 @@ func (a *AppController) UpdateResources(rw http.ResponseWriter, r *http.Request)
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
+	managerName := mux.Vars(r)["manager"]
 
-	// Check the status change given
-	if req.Status == "pause" {
-		err = a.Q.PauseResource(resID)
-		if err != nil {
-			resp.Status = RESP_CODE_ERROR
-			resp.Message = RESP_CODE_ERROR_T
+	// Get the manager for the resource
+	manager, manok := a.Q.GetResourceManager(managerName)
 
-			rw.WriteHeader(RESP_CODE_ERROR)
-			respJSON.Encode(resp)
-			return
-		}
+	//If that resource manager doesn't exist, return a not found error
+	if !manok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource manager does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager":  managerName,
+			"resource": resID,
+		}).Warn("Unable to find requested manager to update resource.")
+
+		return
 	}
 
-	if req.Status == "resume" {
-		err = a.Q.ResumeResource(resID)
-		if err != nil {
-			resp.Status = RESP_CODE_ERROR
-			resp.Message = RESP_CODE_ERROR_T
+	err = manager.UpdateResource(resID, req.Status, req.Params)
+	if err != nil {
+		resp.Status = RESP_CODE_ERROR
+		resp.Message = "An error occured while trying to update that resource: " + err.Error()
 
-			rw.WriteHeader(RESP_CODE_ERROR)
-			respJSON.Encode(resp)
+		rw.WriteHeader(RESP_CODE_ERROR)
+		respJSON.Encode(resp)
 
-			log.WithFields(log.Fields{
-				"error":    err.Error(),
-				"resource": resID,
-			}).Error("An error occured while trying to resume resource.")
+		log.WithFields(log.Fields{
+			"manager":  manager.SystemName(),
+			"error":    err.Error(),
+			"resource": resID,
+		}).Error("An error occured while trying to update a resource.")
 
-			return
-		}
+		return
 	}
 
-	// TODO (mcatee): Add a check for no found resource and return correct status codes
-
-	// Build good response
+	// Build good response because we were able to get here
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
 
@@ -1000,12 +1199,52 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
+	managerName := mux.Vars(r)["manager"]
+
+	// Get the manager for the resource
+	manager, manok := a.Q.GetResourceManager(managerName)
+
+	//If that resource manager doesn't exist, return a not found error
+	if !manok {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource manager does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager":  managerName,
+			"resource": resID,
+		}).Warn("Unable to find requested manager to update resource.")
+
+		return
+	}
+
+	// Get the resource
+	resource, _, err := manager.GetResource(resID)
+
+	// If that resource doesn't exist, let's throw an error
+	if err != nil {
+		resp.Status = RESP_CODE_NOTFOUND
+		resp.Message = "That resource does not exist."
+
+		rw.WriteHeader(RESP_CODE_NOTFOUND)
+		respJSON.Encode(resp)
+
+		log.WithFields(log.Fields{
+			"manager": manager.SystemName(),
+			"addr":    resource.Address,
+			"name":    resource.Name,
+		}).Warn("Unable to find requested resource to update.")
+
+		return
+	}
 
 	// Remove the resource
-	err := a.Q.RemoveResource(resID)
+	err = manager.DeleteResource(resID)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
+		resp.Message = "An error occured while trying to delete that resource: " + err.Error()
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
@@ -1017,8 +1256,6 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 
 		return
 	}
-
-	// TODO (mcatee): Add a check for no found resource and return correct status codes
 
 	// Build good response
 	resp.Status = RESP_CODE_OK

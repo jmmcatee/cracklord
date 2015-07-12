@@ -19,7 +19,7 @@ cracklord.factory('ResourceService', ['$resource', function ($resource) {
    });
 }]);
 
-cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$filter', function(ResourceService, ResourceColorizer, $filter) {
+cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', 'ResourceManagers', '$filter', function(ResourceService, ResourceColorizer, ResourceManagers, $filter) {
    var colorizer = ResourceColorizer;
    var resources = {};
    resources.list = [];
@@ -47,6 +47,7 @@ cracklord.service('ResourceList', ['ResourceService', 'ResourceColorizer', '$fil
          function(data) {
             colorizer.resetSeed()
             for(var i = 0; i < data.length; i++) {
+               data[i].managername = ResourceManagers.idToName(data[i].manager)
                data[i].color = colorizer.getColor();
             }
             angular.copy(data, resources.list)
