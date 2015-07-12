@@ -388,7 +388,7 @@ func (v *hascatTasker) Status() common.Job {
 		for linescanner.Scan() {
 			var kvp []string
 			i := strings.LastIndex(linescanner.Text(), ":")
-			kvp = append(kvp, linescanner.Text()[:i-1])
+			kvp = append(kvp, linescanner.Text()[:i])
 			kvp = append(kvp, linescanner.Text()[i+1:])
 
 			linetmp = append(linetmp, kvp)
