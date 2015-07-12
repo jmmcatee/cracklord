@@ -1,4 +1,4 @@
-cracklord.controller('ResourcesController', ['$scope', 'ResourceList', function ResourceController($scope, ResourceList) {
+cracklord.controller('ResourcesController', ['$scope', 'ResourceList', 'ResourceManagers', function ResourceController($scope, ResourceList, ResourceManagers) {
 	$scope.managers = ResourceManagers.list; 
 	ResourceManagers.load();
 
@@ -12,7 +12,7 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 	$scope.displayWait = false;
 	ResourceManagers.get($stateParams.manager).$promise.then(
 		function(data) {
-			$scope.manager = data
+			$scope.manager = data.resourcemanager
 		}, 
 		function(error) {
 			growl.error("Unable to load resource manager parameters: "+error.message);
@@ -24,7 +24,7 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 
 		var newresource = new ResourceService();
 
-		newresource.manager = $scope.formData.name;
+		newresource.manager = $scope.manager.id;
 		newresource.params = $scope.formData;
 		
 		ResourceService.save(newresource).$promise.then(

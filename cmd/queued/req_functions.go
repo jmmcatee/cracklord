@@ -389,6 +389,9 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	form := json.RawMessage(resmgr.ParametersForm())
+	schema := json.RawMessage(resmgr.ParametersSchema())
+
 	// Now since everything seems ok, let's build up our response and send it off
 	// to the API.
 	resp.Status = RESP_CODE_OK
@@ -397,8 +400,8 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 	resp.ResourceManager.ID = resmgr.SystemName()
 	resp.ResourceManager.Name = resmgr.DisplayName()
 	resp.ResourceManager.Description = resmgr.Description()
-	resp.ResourceManager.Form = resmgr.ParametersForm()
-	resp.ResourceManager.Schema = resmgr.ParametersSchema()
+	resp.ResourceManager.Form = &form
+	resp.ResourceManager.Schema = &schema
 
 	// Write out the HTTP OK header
 	rw.WriteHeader(RESP_CODE_OK)

@@ -12,16 +12,24 @@ cracklord.factory('ResourceManagersService', ['$resource', function ($resource) 
    });
 }]);
 
-cracklord.service('ResourceManagers', ['ResourceManagersService', '$filter' function(ResourceManagersService, $filter) {
+cracklord.service('ResourceManagers', ['ResourceManagersService', '$filter', function(ResourceManagersService, $filter) {
    var managers = {};
    managers.list = [];
+   managers.names = {};
 
    managers.load = function() {
       return ResourceManagersService.query(
          function(data) {
-            angular.copy(data, managers.list)
+            angular.copy(data, managers.list);
+            for(var i = 0; i < data.length; i++) {
+               managers.names[data[i].id] = data[i].name;
+            }
          }
       );
+   }
+
+   managers.idToName = function(id) {
+      return managers.names[id];
    }
 
    managers.get = function(id) {

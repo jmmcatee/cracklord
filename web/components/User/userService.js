@@ -70,7 +70,7 @@ cracklord.factory('userTokenHttpInterceptor', ['$q', 'UserSession', '$injector',
 		responseError: function(res) {
 			if(res.status === 401) {
 				$injector.get('$state').go('login');
-				if(req.url !== '/api/login') {
+				if(res.config.url !== '/api/login') {
 					growl.warning("You need to login first.");
 				}
 			}

@@ -15,9 +15,9 @@ type ResourceManager interface {
 	DisplayName() string
 	//Description returns a string with a short description of the resource manager
 	Description() string
-	//ParametersForm and ParametersSchema return a string containing JSON objects
+	//Parameters returns a string containing JSON objects
 	//with the necessary information to add a new resource using this manager.
-	//They will need to be in the same format as the tool parameters, using the
+	//It will need to be in the same format as the tool parameters, using the
 	//format specified at http://schemaform.io.  Consider that name and address
 	//will be mandatory fields for when you add a resource, you may want to ask
 	//for them, or you may want to generate them.

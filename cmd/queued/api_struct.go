@@ -61,18 +61,18 @@ type APIResourceManager struct {
 }
 
 type APIResourceManagerDetail struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Form        string `json:"form"`
-	Schema      string `json:"schema"`
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Form        *json.RawMessage `json:"form"`
+	Schema      *json.RawMessage `json:"schema"`
 }
 
 // Tools List Response Structure
 type ResourceManagersResp struct {
 	Status           int                  `json:"status"`
 	Message          string               `json:"message"`
-	ResourceManagers []APIResourceManager `json:"tools"`
+	ResourceManagers []APIResourceManager `json:"resourcemanagers"`
 }
 
 type ResourceManagerGetResp struct {

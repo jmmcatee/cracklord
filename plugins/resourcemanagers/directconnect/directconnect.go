@@ -42,32 +42,25 @@ func (this directResourceManager) Description() string {
 
 func (this directResourceManager) ParametersForm() string {
 	return `[
-			{
-				"type": "section",
-				"htmlClass": "row",
-				"items": [
-					{
-						"type": "section",
-						"htmlClass": "col-xs-6",
-						"items": [
-							"name"
-						]
-					},
-					{
-						"type": "section",
-						"htmlClass": "col-xs-6",
-						"items": [
-							"address"
-						]
-					}
-				]
-			},
-         "reconnect",
-			{
-				"key": "notes",
-				"type": "textarea",
-				"placeholder": "OPTIONAL: Any notes you would like to include (location, primary contact, etc.)"
-			}
+		"name",
+		"address",
+		{
+		    "key": "reconnect",
+		    "type": "radiobuttons",
+		    "style": {
+		      "selected": "btn-info",
+		      "unselected": "btn-default"
+		    },
+		    "titleMap": {
+		        "true": "Reconnect",
+		        "false": "Stay Disconnected"
+		    }
+		},
+		{
+			"key": "notes",
+			"type": "textarea",
+			"placeholder": "OPTIONAL: Any notes you would like to include (location, primary contact, etc.)"
+		}
     	]`
 }
 func (this directResourceManager) ParametersSchema() string {
@@ -91,9 +84,9 @@ func (this directResourceManager) ParametersSchema() string {
 				"type": "string"
 			},
 			"reconnect": {
-				"title": "Attempt automatic reconnect?",
-				"type": "boolean",
-				"default": true,
+				"title": "Attempt automatic resource service reconnects:",
+				"type": "string",
+				"default": "true",
 				"description": "Should the system attempt to automatically reconnect in the event this resource becomes disconnected?"
 			}
 		},
@@ -222,18 +215,28 @@ func (this directResourceManager) GetManagedResources() []string {
 //that resource is still connected.  If so, it will do nothing; however, if not
 //then it will attempt to reconnect if at all possible.
 func (this *directResourceManager) Keep() {
+	log.Debug("Direct connect keeper starting up")
 	iter := this.resources.Iterator()
 	for data := range iter.Loop() {
+		logger := log.WithField("resourceid", data.Key)
+		logger.Debug("Gathering data on resource")
 		localResource := data.Val.(resourceInfo)
 		queueResource, ok := this.q.GetResource(data.Key)
+
 		if !ok {
-			log.WithField("resourceid", data.Key).Error("Unable to find a resource in the queue that the direct connect manager thought it was responsible for.")
+			logger.Error("Unable to find a resource in the queue that the direct connect manager thought it was responsible for.")
 			continue
 		}
+
 		status := this.q.CheckResourceConnectionStatus(queueResource)
+		logger.WithField("status", status).Debug("Checked resource connection status")
+
 		if !status && localResource.Reconnect {
 			log.WithField("resource", queueResource.Name).Info("Attempting to reconnect to directly connected resource.")
-			this.q.ConnectResource(queueResource, this.tls)
+			err := this.q.ConnectResource(queueResource, this.tls)
+			if err != nil {
+				logger.WithField("error", err.Error()).Error("An error occured when trying to reconnect to resource")
+			}
 		}
 	}
 

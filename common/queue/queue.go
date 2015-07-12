@@ -703,6 +703,9 @@ func (q *Queue) keeper() {
 			case <-kTimer:
 				log.Info("Updating queue status and keeping jobs.")
 
+				// Run all resource manager keep routines
+				q.KeepAllResourceManagers()
+
 				// Get lock
 				q.Lock()
 
@@ -980,6 +983,9 @@ func (q *Queue) KeepAllResourceManagers() {
 	for manager := range i.Loop() {
 		// First we need to convert our resource manager over to the proper type
 		mgrtype := (manager.Val).(ResourceManager)
+
+		log.WithField("manager", mgrtype.SystemName()).Debug("Running resource manager keep function")
+
 		// Now for each resource manager, let's call it's Keep() function
 		mgrtype.Keep()
 	}
@@ -998,14 +1004,20 @@ func (q *Queue) ConnectResource(res *Resource, tlsconfig *tls.Config) error {
 
 	conn, err := tls.Dial("tcp", res.Address, tlsconfig)
 	if err != nil {
+		log.WithField("addr", res.Address).Debug("An error occured while dialing the resource")
 		return err
 	}
+
+	log.WithField("addr", res.Address).Debug("Dialed client, now building new connection")
 
 	// Build the RPC client for the resource
 	res.Client = rpc.NewClient(conn)
 	if err != nil {
+		log.WithField("addr", res.Address).Debug("An error occured while creating new client")
 		return err
 	}
+
+	log.WithField("addr", res.Address).Debug("Done connecting to resource")
 
 	return nil
 }
@@ -1101,6 +1113,7 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, e
 }
 
 func (q *Queue) GetResource(resUUID string) (*Resource, bool) {
+	log.WithField("resourceid", resUUID).Debug("Gathering data on resource.")
 	q.Lock()
 	defer q.Unlock()
 
@@ -1108,6 +1121,7 @@ func (q *Queue) GetResource(resUUID string) (*Resource, bool) {
 	if !ok {
 		return &Resource{}, false
 	}
+	log.WithField("resourceid", resUUID).Debug("Found resource.")
 	return &res, ok
 }
 
