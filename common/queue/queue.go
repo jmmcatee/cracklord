@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common"
+	"io"
 	"net/rpc"
 	"os"
 	"strings"
@@ -948,7 +949,10 @@ func (q *Queue) GetResourceManager(systemname string) (ResourceManager, bool) {
 
 // This function is used to add a resource manager to the map of all available
 // managers and is used to add resourcemanager plugins during their creation.
-func (q *Queue) AddResourceManager(id string, resmgr ResourceManager) error {
+func (q *Queue) AddResourceManager(resmgr ResourceManager) error {
+	//Get the ID of the manager we're adding
+	id := resmgr.SystemName()
+
 	//Let's check and see if it already exists, if so we should error
 	if _, ok := q.managers.Get(id); ok {
 		log.WithField("id", id).Error("ResourceManager cannot be added twice.")
@@ -983,38 +987,43 @@ func (q *Queue) KeepAllResourceManagers() {
 	log.Debug("ResourceManager keep loop complete.")
 }
 
-//This function will add a resource to the queue.  Returns the UUID.
-func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, error) {
-	// Create empty resource
-	res := NewResource()
-
+//This function will connect to a resource
+func (q *Queue) ConnectResource(res *Resource, tlsconfig *tls.Config) error {
 	//Check to see if we have a port, otherwise use the default 9443
-	if !strings.Contains(addr, ":") {
-		addr += ":9443"
+	if !strings.Contains(res.Address, ":") {
+		res.Address += ":9443"
 	}
 
-	// Check that the address is already in use
-	for _, v := range q.pool {
-		if v.Address == addr && v.Status != common.STATUS_QUIT {
-			// We have found a resource with the same address so error
-			log.WithField("address", addr).Debug("Resource already exists.")
-			return nil, errors.New("Resource already exists!")
-		}
-	}
+	log.WithField("addr", res.Address).Info("Connecting to resource")
 
-	log.Printf("Connecting to resource %s\n", addr)
-
-	conn, err := tls.Dial("tcp", addr, tlsconfig)
+	conn, err := tls.Dial("tcp", res.Address, tlsconfig)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Build the RPC client for the resource
 	res.Client = rpc.NewClient(conn)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	return nil
+}
+
+//Checks to see if our RPC connection to a resource is still valid, if not it
+//will return false, otherwise it will return true.
+func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {
+	var reply int64
+	err := res.Client.Call("Queue.Ping", 12345, &reply)
+	if err == rpc.ErrShutdown || err == io.EOF || err == io.ErrUnexpectedEOF {
+		return false
+	}
+
+	return true
+}
+
+//This loads all of the hardware for a remote resource
+func (q *Queue) LoadRemoteResourceHardware(res *Resource) {
 	// Get Hardware
 	res.Client.Call("Queue.ResourceHardware", common.RPCCall{}, &res.Hardware)
 
@@ -1022,7 +1031,9 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, e
 	for key, _ := range res.Hardware {
 		res.Hardware[key] = true
 	}
+}
 
+func (q *Queue) LoadRemoteResourceTools(res *Resource) {
 	// Get Tools
 	var tools []common.Tool
 	res.Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
@@ -1031,8 +1042,8 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, e
 		res.Tools[v.UUID] = v
 	}
 
-	q.Lock()
-	defer q.Unlock()
+	q.RLock()
+	defer q.RUnlock()
 
 	// Loop through new tools and look for those we already have
 	// If we find a tool we already have we need to make the UUID the same
@@ -1050,29 +1061,54 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, e
 			}
 		}
 	}
+}
+
+//This function will add a resource to the queue.  Returns the UUID.
+func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, error) {
+	// Check that the address is already in use
+	for _, v := range q.pool {
+		if v.Address == addr && v.Status != common.STATUS_QUIT {
+			// We have found a resource with the same address so error
+			log.WithField("address", addr).Debug("Resource already exists.")
+			return "", errors.New("Resource already exists!")
+		}
+	}
+
+	// Create empty resource
+	res := NewResource()
 
 	res.Name = name
 	res.Address = addr
 	res.Status = common.STATUS_RUNNING
 
+	err := q.ConnectResource(&res, tlsconfig)
+	if err != nil {
+		return "", err
+	}
+
+	q.LoadRemoteResourceHardware(&res)
+	q.LoadRemoteResourceTools(&res)
+
 	//Generate a UUID for the resource
 	resourceuuid := uuid.New()
 
 	// Add resource to resource pool with generated UUID
+	q.Lock()
 	q.pool[resourceuuid] = res
+	q.Unlock()
 
 	return resourceuuid, nil
 }
 
-func (q *Queue) GetResource(resUUID string) (Resource, bool) {
+func (q *Queue) GetResource(resUUID string) (*Resource, bool) {
 	q.Lock()
 	defer q.Unlock()
 
 	res, ok := q.pool[resUUID]
 	if !ok {
-		return Resource{}, false
+		return &Resource{}, false
 	}
-	return res, ok
+	return &res, ok
 }
 
 // RemoveResource closes the resource RPC client, and removes it from service.
