@@ -9,12 +9,12 @@ CrackLord is a system designed to provide a scalable, pluggable, and distributed
 Feel free to visit the CrackLord website on github.io: http://jmmcatee.github.io/cracklord/
 
 ## System Components ##
-![Components](http://jmmcatee.github.io/cracklord/img/about.png)
+<img src="http://jmmcatee.github.io/cracklord/img/about.png" width=300/>
 
 There are three primary components to CrackLord as shown in the above image: 
-* _Queue_ - The Queue is a service that runs on a single system, providing an interface for users to submit, pause, resume, and delete jobs. These jobs are then processed and sent to available Resources to perform the actual work and handle the results.
-* Resource / Resource Managers - Resources are the individual servers that are connected into the queue.  They are managed by a resource manager plugins.  These are code that allow various types of resources to be connected.  Managers can directly connect to physical resources you own, or use cloud services to spawn resources as necessary. 
-* Tools - Tools are a set of plugins, configured on resources, that perform the underlying tasks such as running oclHashcat to crack passwords. Tools are written in the Go programming language and have a standard interface to make them easy to write or enhance.  They are wrappers of the various tools used that require great deals of resources, such as John, HashCat, etc. 
+* **Queue** - The Queue is a service that runs on a single system, providing an interface for users to submit, pause, resume, and delete jobs. These jobs are then processed and sent to available Resources to perform the actual work and handle the results.
+* **Resource / Resource Managers** - Resources are the individual servers that are connected into the queue.  They are managed by a resource manager plugins.  These are code that allow various types of resources to be connected.  Managers can directly connect to physical resources you own, or use cloud services to spawn resources as necessary. 
+* **Tools** - Tools are a set of plugins, configured on resources, that perform the underlying tasks such as running oclHashcat to crack passwords. Tools are written in the Go programming language and have a standard interface to make them easy to write or enhance.  They are wrappers of the various tools used that require great deals of resources, such as John, HashCat, etc. 
 
 ## Server Installation ##
 
@@ -22,16 +22,16 @@ We have a set of packages built for every release we make, if you'd like to just
 
 If you'd like to get things build from source, it will first require you to have a working Go build environment with the GOPATH setup.  Additionally, you'll probably want Git and Mercurial setup to gather the various libraries and plugins that we've used in the code.  
 
-1. First, you'll need to get cracklord itself. 
-  `go get github.com/jmmcatee/cracklord`
+1. First, you'll need to get cracklord itself.    
+  `go get github.com/jmmcatee/cracklord`   
 
-2. Next we need to get all of the dependencies downloaded for both the resource daemon and queue daemon. 
-  `go get github.com/jmmcatee/cracklord/cmd/queued`
-  `go get github.com/jmmcatee/cracklord/cmd/resourced`
+2. Next we need to get all of the dependencies downloaded for both the resource daemon and queue daemon.    
+  `go get github.com/jmmcatee/cracklord/cmd/queued`   
+  `go get github.com/jmmcatee/cracklord/cmd/resourced`   
 
-3. Now we can actually build the queue daemon and resource daemon
-  `go build github.com/jmmcatee/cracklord/cmd/queued`
-  `go build github.com/jmmcatee/cracklord/cmd/resourced`
+3. Now we can actually build the queue daemon and resource daemon   
+  `go build github.com/jmmcatee/cracklord/cmd/queued`   
+  `go build github.com/jmmcatee/cracklord/cmd/resourced`   
 
 4. Finally, we can run both the resource and queue daemons, which will both be in the cmd/queued and cmd/resourced directories.  You will also need to setup the various configuration files, information for those can be found in [our wiki](https://github.com/jmmcatee/cracklord/wiki). 
 
