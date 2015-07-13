@@ -2,11 +2,11 @@
 [![GoDoc](https://godoc.org/github.com/jmmcatee/cracklord?status.svg)](http://godoc.org/github.com/jmmcatee/cracklord)
 [![Build Status](https://drone.io/github.com/jmmcatee/cracklord/status.png)](https://drone.io/github.com/jmmcatee/cracklord/latest)
 
+### http://jmmcatee.github.io/cracklord/ ###
+
 ## What Is It? ##
 
 CrackLord is a system designed to provide a scalable, pluggable, and distributed system for both password cracking as well as any other jobs needing lots of computing resources. Better said, CrackLord is a way to load balance the resources, such as CPU, GPU, Network, etc. from multiple hardware systems into a single queueing service across two primary services: the Resource and Queue.
-
-Feel free to visit the CrackLord website on github.io: http://jmmcatee.github.io/cracklord/
 
 ## System Components ##
 <img src="http://jmmcatee.github.io/cracklord/img/about.png" width=300/>
