@@ -1,7 +1,6 @@
 package nmap
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -22,11 +20,13 @@ import (
 
 var regHostsCompleted *regexp.Regexp
 var regTimeEstimate *regexp.Regexp
+var regPerformance *regexp.Regexp
 
 func init() {
 	var err error
 	regHostsCompleted, err = regexp.Compile(`(\d+) hosts completed`)
 	regTimeEstimate, err = regexp.Compile(`About (\d{1,3}\.\d\d)% done;.*\((.*)\)`)
+	regPerformance, err = regexp.Compile(`Current sending rates: ([\d\.]*) packets / s, ([\d\.]*) bytes / s.`)
 
 	if err != nil {
 		panic(err.Error())
@@ -50,7 +50,7 @@ type nmapTasker struct {
 	mux sync.Mutex
 }
 
-func newHashcatTask(j common.Job) (common.Tasker, error) {
+func newNmapTask(j common.Job) (common.Tasker, error) {
 	t := nmapTasker{}
 	t.waitChan = make(chan struct{}, 1)
 
@@ -58,7 +58,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 
 	// Build a working directory for this job
 	t.wd = filepath.Join(config.WorkDir, t.job.UUID)
-	err := os.Mkdir(h.wd, 0700)
+	err := os.Mkdir(t.wd, 0700)
 	if err != nil {
 		// Couldn't make a directory so kill the job
 		log.WithFields(log.Fields{
@@ -80,7 +80,6 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	if !ok {
 		log.WithFields(log.Fields{
 			"algoritm": t.job.Parameters["scantype"],
-			"err":      ok,
 		}).Error("Could not find the scan type provided")
 		return &nmapTasker{}, errors.New("Could not find the scan type provided.")
 	}
@@ -90,12 +89,39 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	timingkey, ok := t.job.Parameters["timing"]
 	if !ok {
 		log.WithFields(log.Fields{
-			"timing": t.job.Parameters["timing"]
-			"err":      ok,
+			"timing": t.job.Parameters["timing"],
 		}).Error("Could not find the scan type provided")
 		return &nmapTasker{}, errors.New("Could not find the scan type provided.")
 	}
-	args = append(args, scanTypes[timingkey])
+	args = append(args, timingSettings[timingkey])
+
+	// Time to setup the ports
+	portkey, ok := t.job.Parameters["ports"]
+	if !ok {
+		log.WithFields(log.Fields{
+			"timing": t.job.Parameters["ports"],
+		}).Error("Could not gather port definition from job parameters.")
+		return &nmapTasker{}, errors.New("Could not gather port definition from job parameters.")
+	}
+	if portkey == "Custom" {
+		customportdata, ok := t.job.Parameters["portscustom"]
+		if !ok {
+			log.WithFields(log.Fields{
+				"timing": t.job.Parameters["portscustom"],
+			}).Error("Could not find the custom port definitions.")
+			return &nmapTasker{}, errors.New("Could not find the custom port definitions.")
+		}
+		args = append(args, "-p", customportdata)
+	} else {
+		ports, ok := portSettings[portkey]
+		if !ok {
+			log.WithFields(log.Fields{
+				"timing": t.job.Parameters["portscustom"],
+			}).Error("Could not find the port definition requested.")
+			return &nmapTasker{}, errors.New("Could not find the port definition requested.")
+		}
+		args = append(args, "-p", ports)
+	}
 
 	serviceversion, ok := t.job.Parameters["serviceversion"]
 	if ok {
@@ -104,7 +130,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		}
 	}
 
-	hostdiscovery, ok := t.job.Parameters["hostdiscovery"]
+	hostdiscovery, ok := t.job.Parameters["skiphostdiscovery"]
 	if ok {
 		if hostdiscovery == "true" {
 			args = append(args, "-Pn")
@@ -112,8 +138,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	}
 
 	// Add our output files
-	args = append(args, "-oG", filepath.Join(t.wd, "greppable-output.txt"))
-	args = append(args, "-oX", filepath.Join(t.wd, "xml-output.xml"))
+	args = append(args, "-oG", filepath.Join(t.wd, "output.grep"))
+	args = append(args, "-oX", filepath.Join(t.wd, "output.xml"))
 
 	//Append config file arguments
 	if config.Arguments != "" {
@@ -121,7 +147,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	}
 
 	// Take the target addresses given and create a file
-	inFile, err := os.Create(filepath.Join(h.wd, "input.txt"))
+	inFile, err := os.Create(filepath.Join(t.wd, "input.txt"))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"file":  inFile,
@@ -133,14 +159,18 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	inFile.WriteString(t.job.Parameters["targets"])
 
 	// Append that file to the arguments
-	args = append(args, "-iL", filepath.Join(h.wd, "input.txt"))
+	args = append(args, "-iL", filepath.Join(t.wd, "input.txt"))
 
 	log.WithField("arguments", args).Debug("Arguments complete")
 
-	h.start = append(h.start, args...)
-	h.resume = append(h.resume, "--resume", filepath.Join(t.wd, "greppable-output.txt"))
+	t.job.PerformanceTitle = "Packets / sec"
+	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "Service"}
+	t.job.TotalHashes = 100
 
-	return &h, nil
+	t.start = append(t.start, args...)
+	t.resume = append(t.resume, "--resume", filepath.Join(t.wd, "output.grep"))
+
+	return &t, nil
 }
 
 func (v *nmapTasker) Status() common.Job {
@@ -148,152 +178,42 @@ func (v *nmapTasker) Status() common.Job {
 	v.mux.Lock()
 	defer v.mux.Unlock()
 
-	index := regLastStatusIndex.FindAllStringIndex(v.stdout.String(), -1)
-	if len(index) >= 1 {
-		// We found a status so start processing the last status in Stdout
-		status := string(v.stdout.Bytes()[index[len(index)-1][0]:])
+	status := string(v.stdout.Bytes())
 
-		//Time to gather the progress
-		progMatch := regProgress.FindStringSubmatch(status)
-		log.WithField("progMatch", progMatch).Debug("Matching progress info")
-
-		if len(progMatch) == 4 {
-			prog, err := strconv.ParseFloat(progMatch[3], 64)
-			if err == nil {
-				v.job.Progress = prog
-				log.WithField("progress", v.job.Progress).Debug("Job progress updated.")
-			} else {
-				log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
-			}
+	//Time to gather the progress
+	hostsDone := regHostsCompleted.FindStringSubmatch(status)
+	if len(hostsDone) == 1 {
+		prog, err := strconv.ParseInt(hostsDone[0], 10, 64)
+		if err == nil {
+			v.job.CrackedHashes = prog
+			log.WithField("progress", v.job.Progress).Debug("Nmap job progress updated.")
+		} else {
+			log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
 		}
+	}
 
-		etcMatch := regTimeEstimated.FindStringSubmatch(status)
-		log.WithField("etcMatch", etcMatch).Debug("Matching estimated time of completion.")
-		if len(etcMatch) == 2 {
-			v.job.ETC = etcMatch[1]
+	timing := regTimeEstimate.FindStringSubmatch(status)
+	if len(timing) == 2 {
+		percent, err := strconv.ParseFloat(timing[0], 64)
+		if err == nil {
+			v.job.Progress = percent
+			v.job.CrackedHashes = int64(percent)
+		} else {
+			log.Error("Unable to parse nmap percentage complete: " + err.Error())
 		}
+		v.job.ETC = timing[1] // Estimated time of completion
+	}
 
-		// Get the speed of one or more GPUs
-		speeds := regGPUSpeed.FindAllStringSubmatch(status, -1)
-		if len(speeds) > 1 {
-			// We have more than one GPU so loop through and find the combined total
-			for _, speedString := range speeds {
-				if speedString[1] == "*" && len(speedString) == 4 {
-					// We have the total so grab the pieces
-					timestamp := fmt.Sprintf("%d", time.Now().Unix())
-
-					// Check if we have a performance unit yet
-					if v.job.PerformanceTitle == "" {
-						// We don't so just take the one provided
-						v.job.PerformanceTitle = speedString[3]
-
-						v.job.PerformanceData[timestamp] = speedString[2]
-					} else {
-						// See what we need to do with the number to match our
-						// original units
-						var mag float64
-						switch v.job.PerformanceTitle {
-						case "H/s":
-							mag = speedMagH[speedString[3]]
-						case "kH/s":
-							mag = speedMagK[speedString[3]]
-						case "MH/s":
-							mag = speedMagM[speedString[3]]
-						case "GH/s":
-							mag = speedMagG[speedString[3]]
-						}
-
-						// Convert our string into a float
-						speed, err := strconv.ParseFloat(speedString[2], 64)
-						if err == nil {
-							// change magnitude and save as string
-							v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
-							log.WithFields(log.Fields{
-								"speed": speed,
-								"mag":   mag,
-							}).Debug("Speed calculated.")
-						}
-					}
-				}
-			}
-		} else if len(speeds) == 1 {
-			// We have just one GPU
-			speedString := speeds[0]
-			if speedString[1] == "1" && len(speedString) == 4 {
-				// We have the total so grab the pieces
-				timestamp := fmt.Sprintf("%d", time.Now().Unix())
-
-				// Check if we have a performance unit yet
-				if v.job.PerformanceTitle == "" {
-					// We don't so just take the one provided
-					v.job.PerformanceTitle = speedString[3]
-
-					v.job.PerformanceData[timestamp] = speedString[2]
-				} else {
-					// See what we need to do with the number to match our
-					// original units
-					var mag float64
-					switch v.job.PerformanceTitle {
-					case "H/s":
-						mag = speedMagH[speedString[3]]
-					case "kH/s":
-						mag = speedMagK[speedString[3]]
-					case "MH/s":
-						mag = speedMagM[speedString[3]]
-					case "GH/s":
-						mag = speedMagG[speedString[3]]
-					}
-
-					// Convert our string into a float
-					speed, err := strconv.ParseFloat(speedString[2], 64)
-					if err == nil {
-						// change magnitude and save as string
-						v.job.PerformanceData[timestamp] = fmt.Sprintf("%f", speed*mag)
-						log.WithFields(log.Fields{
-							"speed": speed,
-							"mag":   mag,
-						}).Debug("Speed calculated.")
-					}
-				}
-			}
-		}
-
-		// Check for number of recovered hashes
-		recovered := regRecovered.FindStringSubmatch(status)
-		log.WithField("recovered", recovered).Debug("Recovered hashes.")
-		if len(recovered) == 3 {
-			if r, err := strconv.ParseInt(recovered[1], 10, 64); err == nil {
-				v.job.CrackedHashes = r
-			}
-
-			if r, err := strconv.ParseInt(recovered[2], 10, 64); err == nil {
-				v.job.TotalHashes = r
-			}
-		}
+	performance := regPerformance.FindStringSubmatch(status)
+	if len(performance) == 2 {
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		v.job.PerformanceData[timestamp] = performance[0]
 	}
 
 	// Get the output results
-	if file, err := os.Open(filepath.Join(v.wd, "hashes-output.txt")); err == nil {
-		log.Debug("Checking hashes-output file")
-		linescanner := bufio.NewScanner(file)
-		var linetmp [][]string
-		for linescanner.Scan() {
-			var kvp []string
-			i := strings.LastIndex(linescanner.Text(), ":")
-			kvp = append(kvp, linescanner.Text()[:i])
-			kvp = append(kvp, linescanner.Text()[i+1:])
-
-			linetmp = append(linetmp, kvp)
-		}
-		if len(linetmp) > 0 {
-			v.job.OutputData = linetmp
-		}
+	if data, err := parseNmapXML(filepath.Join(v.wd, "output.xml")); err == nil {
+		v.job.OutputData = nmapToCSV(data)
 	}
-
-	log.WithFields(log.Fields{
-		"Stdout": v.stdout,
-		"Stderr": v.stderr,
-	}).Debug("Stdout & Stderr")
 
 	v.stdout.Reset()
 
@@ -302,7 +222,7 @@ func (v *nmapTasker) Status() common.Job {
 	log.WithFields(log.Fields{
 		"task":   v.job.UUID,
 		"status": v.job.Status,
-	}).Info("Ongoing task status")
+	}).Info("Ongoing nmap task status")
 
 	return v.job
 }
@@ -313,14 +233,13 @@ func (v *nmapTasker) Run() error {
 	// Check that we have not already finished this job
 	done := v.job.Status == common.STATUS_DONE || v.job.Status == common.STATUS_QUIT || v.job.Status == common.STATUS_FAILED
 	if done {
-		log.WithField("Status", v.job.Status).Debug("Unable to start hashcatdict job")
-		return errors.New("Job already finished.")
+		log.WithField("Status", v.job.Status).Debug("Unable to start nmap job, it has already finished.")
+		return errors.New("New nmap job already finished.")
 	}
 
 	// Check if this job is running
 	if v.job.Status == common.STATUS_RUNNING {
 		// Job already running so return no errors
-		log.Debug("hashcatdict job already running, doing nothing")
 		return nil
 	}
 
@@ -336,7 +255,7 @@ func (v *nmapTasker) Run() error {
 	log.WithFields(log.Fields{
 		"status": v.job.Status,
 		"dir":    v.cmd.Dir,
-	}).Debug("Setup exec.command")
+	}).Debug("Setup exec.command for nmap tool")
 
 	// Assign the stderr, stdout, stdin pipes
 	var err error
@@ -400,7 +319,7 @@ func (v *nmapTasker) Run() error {
 
 // Pause the hashcat run
 func (v *nmapTasker) Pause() error {
-	log.WithField("task", v.job.UUID).Debug("Attempting to pause hashcatdict task")
+	log.WithField("task", v.job.UUID).Debug("Attempting to pause nmap task")
 
 	// Call status to update the job internals before pausing
 	v.Status()
@@ -431,7 +350,7 @@ func (v *nmapTasker) Pause() error {
 }
 
 func (v *nmapTasker) Quit() common.Job {
-	log.WithField("task", v.job.UUID).Debug("Attempting to quit hashcatdict task")
+	log.WithField("task", v.job.UUID).Debug("Attempting to quit nmap task")
 
 	// Call status to update the job internals before quiting
 	v.Status()

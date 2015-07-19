@@ -1,4 +1,4 @@
-package hashcatdict
+package nmap
 
 import (
 	"testing"

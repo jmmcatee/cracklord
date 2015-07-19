@@ -1,13 +1,12 @@
 package nmap
 
 import (
-	"errors"
-	"fmt"
+	"encoding/xml"
+	"io/ioutil"
 	"os"
-	"xml"
 )
 
-// Parsing the XML requires a set of structs to match the data we'd like to have.  There are going tobe numerous structs involved in this procexss
+// Parsing the XML requires a set of structs to match the data we'd like to have.  There are going tobe numerous structs involved in this procexss as they represent all of the ways the data could come back from an NMap XML file.
 type NmapRun struct {
 	Info  ScanInfo `xml:"scaninfo>"`
 	Hosts []Host   `xml:"host>"`
@@ -56,14 +55,24 @@ type Service struct {
 }
 
 func parseNmapXML(inputFile string) (NmapRun, error) {
+	//Load the XML file that was given as a parameter
 	xmlFile, err := os.Open(inputFile)
 	if err != nil {
 		return NmapRun{}, err
 	}
 	defer xmlFile.Close()
 
+	//Get all of the data in the XML file
+	byteData, err := ioutil.ReadAll(xmlFile)
+	if err != nil {
+		return NmapRun{}, err
+	}
+
+	//Create a struct to hold the data and then unmarshal everything
 	var out NmapRun
-	xml.Unmarshal(xmlFile, &out)
+	xml.Unmarshal(byteData, &out)
+
+	return out, nil
 }
 
 func nmapToCSV(scandata NmapRun) [][]string {

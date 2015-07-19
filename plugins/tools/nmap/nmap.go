@@ -5,7 +5,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
-	"sort"
 )
 
 type nmapConfig struct {
@@ -84,7 +83,7 @@ func Setup(path string) error {
 		log.Error("No 'portrules' configuration section in nmap config.")
 		return errors.New("No portrules configuration section was found in the nmap configuration.")
 	}
-	for key, value := range dicts {
+	for key, value := range portrules {
 		log.WithFields(log.Fields{
 			"name":  key,
 			"ports": value,
@@ -114,11 +113,11 @@ func (this *nmapTooler) Version() string {
 }
 
 func (this *nmapTooler) UUID() string {
-	return h.toolUUID
+	return this.toolUUID
 }
 
 func (this *nmapTooler) SetUUID(s string) {
-	h.toolUUID = s
+	this.toolUUID = s
 }
 
 func (this *nmapTooler) Parameters() string {
