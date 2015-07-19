@@ -9,6 +9,7 @@ import (
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/plugins/tools/hashcatdict"
+	"github.com/jmmcatee/cracklord/plugins/tools/nmap"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimercpu"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimergpu"
 	"github.com/vaughan0/go-ini"
@@ -109,6 +110,10 @@ func main() {
 	if common.StripQuotes(pluginConf["hashcatdict"]) != "" {
 		hashcatdict.Setup(common.StripQuotes(pluginConf["hashcatdict"]))
 		resQueue.AddTool(hashcatdict.NewTooler())
+	}
+	if common.StripQuotes(pluginConf["nmap"]) != "" {
+		nmap.Setup(common.StripQuotes(pluginConf["nmap"]))
+		resQueue.AddTool(nmap.NewTooler())
 	}
 	if common.StripQuotes(pluginConf["testtimer"]) == "true" {
 		testtimergpu.Setup()

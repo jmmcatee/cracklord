@@ -5,6 +5,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
+	"sort"
 )
 
 type nmapConfig struct {
@@ -42,10 +43,19 @@ var timingSettings = map[string]string{
 	"Aggressive (4)": "-T4",
 	"Insane (5)":     "-T5",
 }
+var timingOrder [6]string
+
+func init() {
+	timingOrder[0] = "Paranoid (0)"
+	timingOrder[1] = "Sneaky (1)"
+	timingOrder[2] = "Polite (2)"
+	timingOrder[3] = "Normal (3)"
+	timingOrder[4] = "Aggressive (4)"
+	timingOrder[5] = "Insane (5)"
+}
 
 var portSettings = map[string]string{
-	"Default": "",
-	"Custom":  "",
+	"Custom Port Listing": "",
 }
 
 func Setup(path string) error {
@@ -197,13 +207,12 @@ func (this *nmapTooler) Parameters() string {
         "type": "string",
         "enum": [`
 	var first = true
-	for key, _ := range scanTypes {
+	for _, key := range getSortedKeys(scanTypes) {
 		if !first {
 			params += `,`
 		}
 
 		params += `"` + key + `"`
-
 		first = false
 	}
 	params += `]
@@ -212,26 +221,25 @@ func (this *nmapTooler) Parameters() string {
       "title": "Enable service versioning?",
       "type": "string",
       "description": "Attempt to determine service (-sV)",
-      "default": false
+      "default": "false"
     },
     "skiphostdiscovery": {
       "title": "Skip discovering hosts?",
       "description": "Assume hosts are up (-PN)",
       "type": "string",
-      "default": true
+      "default": "true"
     },
     "timing": {
         "title": "Scan timing and performance",
         "type": "string",
         "enum": [`
 	first = true
-	for key, _ := range timingSettings {
+	for _, key := range timingOrder {
 		if !first {
 			params += `,`
 		}
 
 		params += `"` + key + `"`
-
 		first = false
 	}
 	params += `],
@@ -243,16 +251,15 @@ func (this *nmapTooler) Parameters() string {
         "default": "Most Common 1,000",
         "enum": [`
 	first = true
-	for key, _ := range portSettings {
+	for _, key := range getSortedKeys(portSettings) {
 		if !first {
 			params += `,`
 		}
 
 		params += `"` + key + `"`
-
 		first = false
 	}
-	params += `,]
+	params += `]
     },
     "portscustom": {
         "title": "Custom port listing",
@@ -275,8 +282,8 @@ func (this *nmapTooler) Parameters() string {
     "ports",
     "targets"
   ]
+}
 }`
-
 	return params
 }
 
@@ -290,4 +297,16 @@ func (this *nmapTooler) NewTask(job common.Job) (common.Tasker, error) {
 
 func NewTooler() common.Tooler {
 	return &nmapTooler{}
+}
+
+func getSortedKeys(src map[string]string) []string {
+	keys := make([]string, len(src))
+
+	i := 0
+	for key, _ := range src {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }

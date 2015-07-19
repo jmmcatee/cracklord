@@ -26,7 +26,7 @@ func init() {
 	var err error
 	regHostsCompleted, err = regexp.Compile(`(\d+) hosts completed`)
 	regTimeEstimate, err = regexp.Compile(`About (\d{1,3}\.\d\d)% done;.*\((.*)\)`)
-	regPerformance, err = regexp.Compile(`Current sending rates: ([\d\.]*) packets / s, ([\d\.]*) bytes / s.`)
+	regPerformance, err = regexp.Compile(`Current sending rates: ([\d\.]*) packets / s`)
 
 	if err != nil {
 		panic(err.Error())
@@ -73,7 +73,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 	args := []string{}
 
 	//Setup our configuration items we always want
-	args = append(args, "--stats-every 30s")
+	args = append(args, "-d", "--stats-every=10s")
 
 	// Get the scan type from the job
 	scantypekey, ok := t.job.Parameters["scantype"]
@@ -99,7 +99,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 	portkey, ok := t.job.Parameters["ports"]
 	if !ok {
 		log.WithFields(log.Fields{
-			"timing": t.job.Parameters["ports"],
+			"ports": t.job.Parameters["ports"],
 		}).Error("Could not gather port definition from job parameters.")
 		return &nmapTasker{}, errors.New("Could not gather port definition from job parameters.")
 	}
@@ -111,7 +111,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 			}).Error("Could not find the custom port definitions.")
 			return &nmapTasker{}, errors.New("Could not find the custom port definitions.")
 		}
-		args = append(args, "-p", customportdata)
+		args = append(args, "-p"+customportdata)
 	} else {
 		ports, ok := portSettings[portkey]
 		if !ok {
@@ -120,7 +120,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 			}).Error("Could not find the port definition requested.")
 			return &nmapTasker{}, errors.New("Could not find the port definition requested.")
 		}
-		args = append(args, "-p", ports)
+		args = append(args, "-p"+ports)
 	}
 
 	serviceversion, ok := t.job.Parameters["serviceversion"]
@@ -182,47 +182,53 @@ func (v *nmapTasker) Status() common.Job {
 
 	//Time to gather the progress
 	hostsDone := regHostsCompleted.FindStringSubmatch(status)
-	if len(hostsDone) == 1 {
-		prog, err := strconv.ParseInt(hostsDone[0], 10, 64)
+	if len(hostsDone) == 2 {
+		prog, err := strconv.ParseInt(hostsDone[1], 10, 64)
 		if err == nil {
 			v.job.CrackedHashes = prog
-			log.WithField("progress", v.job.Progress).Debug("Nmap job progress updated.")
+			log.WithField("hostsfinished", v.job.CrackedHashes).Debug("Nmap job progress updated.")
 		} else {
 			log.WithField("error", err.Error()).Error("There was a problem converting progress to a number.")
 		}
+	} else {
+		log.WithField("hostsdone", hostsDone).Debug("Did not match hosts done.")
 	}
 
 	timing := regTimeEstimate.FindStringSubmatch(status)
-	if len(timing) == 2 {
-		percent, err := strconv.ParseFloat(timing[0], 64)
+	if len(timing) == 3 {
+		percent, err := strconv.ParseFloat(timing[1], 64)
 		if err == nil {
 			v.job.Progress = percent
-			v.job.CrackedHashes = int64(percent)
+			log.WithField("percent", percent).Debug("Nmap updated job progress")
 		} else {
 			log.Error("Unable to parse nmap percentage complete: " + err.Error())
 		}
 		v.job.ETC = timing[1] // Estimated time of completion
+	} else {
+		log.WithField("timing", timing).Debug("Did not match time estimate")
 	}
 
 	performance := regPerformance.FindStringSubmatch(status)
 	if len(performance) == 2 {
 		timestamp := fmt.Sprintf("%d", time.Now().Unix())
-		v.job.PerformanceData[timestamp] = performance[0]
+		log.WithFields(log.Fields{
+			"timestamp": timestamp,
+			"perfdata":  performance[1],
+		}).Debug("Updating performance data.")
+		v.job.PerformanceData[timestamp] = performance[1]
+	} else {
+		log.WithField("performance", performance).Debug("Did not match performance data")
 	}
-
-	// Get the output results
-	if data, err := parseNmapXML(filepath.Join(v.wd, "output.xml")); err == nil {
-		v.job.OutputData = nmapToCSV(data)
-	}
-
-	v.stdout.Reset()
 
 	v.job.Error = v.stderr.String()
-
 	log.WithFields(log.Fields{
 		"task":   v.job.UUID,
 		"status": v.job.Status,
+		"stdout": v.stdout,
+		"stderr": v.stderr,
 	}).Info("Ongoing nmap task status")
+
+	v.stdout.Reset()
 
 	return v.job
 }
@@ -302,19 +308,30 @@ func (v *nmapTasker) Run() error {
 	v.job.Status = common.STATUS_RUNNING
 
 	// Build goroutine to alert that the job has finished
-	go func() {
-		// Listen on commmand wait and then send signal when finished
-		// This will be read on the Status() function
-		v.cmd.Wait()
-
-		v.mux.Lock()
-		v.job.Status = common.STATUS_DONE
-		v.job.Progress = 100.00
-		v.waitChan <- struct{}{}
-		v.mux.Unlock()
-	}()
+	go v.onCmdComplete()
 
 	return nil
+}
+
+func (v *nmapTasker) onCmdComplete() {
+	// Listen on commmand wait and then send signal when finished
+	// This will be read on the Status() function
+	v.cmd.Wait()
+
+	v.mux.Lock()
+	defer v.mux.Unlock()
+
+	v.job.Status = common.STATUS_DONE
+	v.job.Progress = 100.00
+	v.waitChan <- struct{}{}
+
+	// Get the output results
+	data, err := parseNmapXML(filepath.Join(v.wd, "output.xml"))
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to parse NMap output data.")
+	}
+	v.job.OutputData = nmapToCSV(data)
+
 }
 
 // Pause the hashcat run
