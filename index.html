@@ -230,9 +230,7 @@
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
                   <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
                 </div>
-                <div class="col-sm-9">
-                  {{plugin.desc}}
-                </div>
+                <div class="col-sm-9" ng-bind-html="plugin.desc | unsafe"></div>
               </div>
             </li>
           </ul>
@@ -245,9 +243,7 @@
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
                   <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
                 </div>
-                <div class="col-sm-9">
-                  {{plugin.desc}}
-                </div>
+                <div class="col-sm-9" ng-bind-html="plugin.desc | unsafe"></div>
               </div>
             </li>
           </ul>

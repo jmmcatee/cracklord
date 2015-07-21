@@ -8,6 +8,7 @@ index.controller('PluginController', ['$scope', '$http', function ($scope, $http
 		$scope.plugins.resourcemanagers = data;
 	});
 }]);
+index.filter('unsafe', ['$sce', function($sce) { return $sce.trustAsHtml; }]);
 
 $('body').scrollspy({ target: '#navbar' })
 $('.carousel').carousel({
