@@ -13,7 +13,7 @@
 		"desc": "Runs <a href=\"http://nmap.org\">Nmap</a> scans of the network, parsing the results for the user.  Includes numerous Nmap options for the user, and can use both preset and custom port lists.",
 		"author_name": "emperorcow",
 		"author_link": "https://github.com/emperorcow/",
-		"author_icon": "github-alt"
+		"author_icon": "github"
 	},
 	{
 		"name": "Test Timers",
@@ -21,6 +21,6 @@
 		"desc": "A pair of simple tools that simulate using either GPU or CPU resources to allow for consistent testing of CrackLord code.",
 		"author_name": "emperorcow",
 		"author_link": "https://github.com/emperorcow/",
-		"author_icon": "github-alt"
+		"author_icon": "github"
 	}
 ]
