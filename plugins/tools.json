@@ -1,0 +1,26 @@
+[
+	{
+		"name": "oclHashcat Dictionary",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/hashcatdict",
+		"desc": "Runs the popular password cracking tool <a href=\"http://hashcat.net\">oclHashcat</a> to crack hashes using numerous different algorithms.  Runs hashcat from the command line in a managed process and automatically gathers the results.",
+		"author_name": "jmmcatee",
+		"author_link": "https://github.com/jmmcatee/",
+		"author_icon": "github-alt"
+	},
+	{
+		"name": "Nmap: The Network Mapper",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/hashcatbrute",
+		"desc": "Runs <a href=\"http://nmap.org\">Nmap</a> scans of the network, parsing the results for the user.  Includes numerous Nmap options for the user, and can use both preset and custom port lists.",
+		"author_name": "emperorcow",
+		"author_link": "https://github.com/emperorcow/",
+		"author_icon": "github-alt"
+	},
+	{
+		"name": "Test Timers",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/",
+		"desc": "A pair of simple tools that simulate using either GPU or CPU resources to allow for consistent testing of CrackLord code.",
+		"author_name": "emperorcow",
+		"author_link": "https://github.com/emperorcow/",
+		"author_icon": "github-alt"
+	}
+]

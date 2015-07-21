@@ -217,20 +217,36 @@
       </div>
     </div>
     </div>
-    <div class="container">
+    <div class="container" ng-app="index" ng-controller="PluginController">
       <h1>Plugins, Addons, and Tools</h1>
       <div class="row" id="plugins">
         <div class="col-md-12">
-          <p>Here is a list of all of the plugins and tools that we have configured within the resource server.  If you have one you'd like to see, you can either write it yourself and we'll get it in, or put in a request in our GitHub repository and we'll do our best to get it written, but we may need your help to figure out how.  We'll try and keep this list up to date with everything included in releases or any links sent to us.</p>
+          <h3>Tools</h3>
+          <p>Here is a list of all of the tool that have been configured wrapped for use within the resource server.  If you have one you'd like to see, you can either write it yourself and we'll get it in, or put in a request in our GitHub repository and we'll do our best to get it written, but we may need your help to figure out how.  We'll try and keep this list up to date with everything included in releases or any links sent to us.</p>
           <ul class="list-group plugins">
-            <li class="list-group-item">
+            <li class="list-group-item" ng-repeat="plugin in plugins.tools">
               <div class="row plugin">
                 <div class="col-sm-3">
-                  <h5><a href="https://github.com/jmmcatee/cracklord/plugins/hashcatdict">oclHashcat Dictionary</a></h5>
-                  <span class="author">Author: <a href="https://github.com/jmmcatee/"><i class="fa fa-github-alt"></i> jmmcatee</a></span>
+                  <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
+                  <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
                 </div>
                 <div class="col-sm-9">
-                  Runs the popular password cracking tool <a href="http://hashcat.net">oclHashcat</a> to crack hashes using numerous different algorithms.  Runs hashcat from the command line in a managed process and automatically gathers the results.
+                  {{plugin.desc}}
+                </div>
+              </div>
+            </li>
+          </ul>
+          <h3>Resource Managers</h3>
+          <p>This is a listing of all of the resource managers that have been included within the service, which allow for the creation, management, and removal of resources by the manager.</p>
+          <ul class="list-group plugins">
+            <li class="list-group-item" ng-repeat="plugin in plugins.resourcemanagers">
+              <div class="row plugin">
+                <div class="col-sm-3">
+                  <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
+                  <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
+                </div>
+                <div class="col-sm-9">
+                  {{plugin.desc}}
                 </div>
               </div>
             </li>
@@ -251,12 +267,7 @@
     </footer>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    <script>
-      $('body').scrollspy({ target: '#navbar' })
-      $('.carousel').carousel({
-        interval: 5000,
-        pause: "false"
-      })
-    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
+    <script src="index.js"></script>
   </body>
 </html>
