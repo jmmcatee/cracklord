@@ -8,7 +8,7 @@
 		"author_icon": "github-alt"
 	},
 	{
-		"name": "Nmap: The Network Mapper",
+		"name": "Nmap: Network Mapper",
 		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/hashcatbrute",
 		"desc": "Runs <a href=\"http://nmap.org\">Nmap</a> scans of the network, parsing the results for the user.  Includes numerous Nmap options for the user, and can use both preset and custom port lists.",
 		"author_name": "emperorcow",
