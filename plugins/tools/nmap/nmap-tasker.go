@@ -329,9 +329,11 @@ func (v *nmapTasker) onCmdComplete() {
 	data, err := parseNmapXML(filepath.Join(v.wd, "output.xml"))
 	if err != nil {
 		log.WithField("error", err.Error()).Error("Unable to parse NMap output data.")
+	} else {
+		v.job.OutputData = nmapToCSV(data)
+		log.WithField("nmapdata", data).Debug("Parsed nmap XML")
+		log.WithField("outdata", v.job.OutputData).Debug("Generated NMap output")
 	}
-	v.job.OutputData = nmapToCSV(data)
-
 }
 
 // Pause the hashcat run

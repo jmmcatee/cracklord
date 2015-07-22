@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="file://../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 6.40 scan initiated Wed Jul 22 14:51:21 2015 as: nmap -sT -T3 -p1-1024 -Pn -oG output.grep -oX output.xml -iL input.txt -->
+<nmaprun scanner="nmap" args="nmap -sT -T3 -p1-1024 -Pn -oG output.grep -oX output.xml -iL input.txt" start="1437594681" startstr="Wed Jul 22 14:51:21 2015" version="6.40" xmloutputversion="1.04">
+<scaninfo type="connect" protocol="tcp" numservices="1024" services="1-1024"/>
+<verbose level="1"/>
+<debugging level="1"/>
+<taskbegin task="Parallel DNS resolution of 1 host." time="1437594681"/>
+<taskend task="Parallel DNS resolution of 1 host." time="1437594681"/>
+<taskbegin task="Connect Scan" time="1437594681"/>
+<taskend task="Connect Scan" time="1437594681" extrainfo="1024 total ports"/>
+<host starttime="1437594681" endtime="1437594681"><status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="192.168.1.1" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="closed" count="1022">
+<extrareasons reason="conn-refused" count="1022"/>
+</extraports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="ssh" method="table" conf="3"/></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="https" method="table" conf="3"/></port>
+</ports>
+<times srtt="115" rttvar="105" to="100000"/>
+</host>
+<runstats><finished time="1437594681" timestr="Wed Jul 22 14:51:21 2015" elapsed="0.27" summary="Nmap done at Wed Jul 22 14:51:21 2015; 1 IP address (1 host up) scanned in 0.27 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

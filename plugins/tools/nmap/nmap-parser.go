@@ -20,10 +20,15 @@ type ScanInfo struct {
 }
 
 type Host struct {
-	Status    string     `xml:"status>state"`
+	Status    HostStatus `xml:"status"`
 	Addresses []Address  `xml:"address"`
 	Hostnames []Hostname `xml:"hostnames"`
-	Ports     []Port     `xml:"ports"`
+	Ports     []Port     `xml:"ports>port"`
+}
+
+type HostStatus struct {
+	State  string `xml:"state,attr"`
+	Reason string `xml:"reason,attr"`
 }
 
 type Address struct {
@@ -39,8 +44,8 @@ type Hostname struct {
 type Port struct {
 	Protocol    string  `xml:"protocol,attr"`
 	PortID      string  `xml:"portid,attr"`
-	StateInfo   State   `xml:"state,attr"`
-	ServiceInfo Service `xml:"service,attr"`
+	StateInfo   State   `xml:"state"`
+	ServiceInfo Service `xml:"service"`
 }
 
 type State struct {

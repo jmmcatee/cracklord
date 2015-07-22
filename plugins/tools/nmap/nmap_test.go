@@ -44,15 +44,14 @@ func TestGetSortedKeys(t *testing.T) {
 
 func TestParseNmapXML(t *testing.T) {
 	wd, _ := os.Getwd()
-	for i := 1; i <= 15; i++ {
-		nmap, err := parseNmapXML(fmt.Sprintf("%s/_test/xml_test%d.xml", wd, i))
+	for i := 1; i <= 16; i++ {
+		nmap, err := parseNmapXML(fmt.Sprintf("%s/test/xml_test%d.xml", wd, i))
 
 		assert.NoError(t, err, "Unable to parse file %d", i)
 		assert.NotEmpty(t, nmap.Hosts, "Unable to parse file %d", i)
 
 		if err == nil {
 			csv := nmapToCSV(nmap)
-
 			assert.NotEmpty(t, csv, "There was no output for %d", i)
 		}
 	}
