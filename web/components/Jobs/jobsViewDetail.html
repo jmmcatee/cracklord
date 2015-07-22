@@ -70,8 +70,8 @@
 						<tr ng-hide="detail.outputdata.length">
 							<td colspan={{detail.outputtitles.length}}>No results at this time.</td>
 						</tr>
-						<tr ng-repeat="row in detail.outputdata">
-							<td ng-repeat="cell in row">{{cell}}</td>
+						<tr ng-repeat="row in detail.outputdata track by $index">
+							<td ng-repeat="cell in row track by $index">{{cell}}</td>
 						</tr>
 					</tbody>
 				</table>
