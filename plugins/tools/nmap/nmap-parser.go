@@ -8,50 +8,51 @@ import (
 
 // Parsing the XML requires a set of structs to match the data we'd like to have.  There are going tobe numerous structs involved in this procexss as they represent all of the ways the data could come back from an NMap XML file.
 type NmapRun struct {
-	Info  ScanInfo `xml:"scaninfo>"`
-	Hosts []Host   `xml:"host>"`
+	Info  ScanInfo `xml:"scaninfo"`
+	Hosts []Host   `xml:"host"`
 }
 
 type ScanInfo struct {
-	Type        string
-	Protocol    string
-	NumServices string
-	Services    string
+	Type        string `xml:"type,attr"`
+	Protocol    string `xml:"protocol,attr"`
+	NumServices string `xml:"numservices,attr"`
+	Services    string `xml:"services,attr"`
 }
 
 type Host struct {
-	Addresses []Address `xml:"address>"`
-	Hostnames []Hostname
-	Ports     []Port
+	Status    string     `xml:"status>state"`
+	Addresses []Address  `xml:"address"`
+	Hostnames []Hostname `xml:"hostnames"`
+	Ports     []Port     `xml:"ports"`
 }
 
 type Address struct {
-	Addr     string
-	Addrtype string
+	Addr     string `xml:"addr,attr"`
+	Addrtype string `xml:"addrtype,attr"`
 }
 
 type Hostname struct {
-	Name string
-	Type string
+	Name string `xml:"name,attr"`
+	Type string `xml:"type,attr"`
 }
 
 type Port struct {
-	Protocol    string
-	PortID      string
-	StateInfo   State   `xml:"state>"`
-	ServiceInfo Service `xml:"service>"`
+	Protocol    string  `xml:"protocol,attr"`
+	PortID      string  `xml:"portid,attr"`
+	StateInfo   State   `xml:"state,attr"`
+	ServiceInfo Service `xml:"service,attr"`
 }
 
 type State struct {
-	State      string
-	Reason     string
-	Reason_TTL string
+	State      string `xml:"state,attr"`
+	Reason     string `xml:"reason,attr"`
+	Reason_TTL string `xml:"reason_ttl,attr"`
 }
 
 type Service struct {
-	Name   string
-	Method string
-	Conf   string
+	Name   string `xml:"name,attr"`
+	Method string `xml:"method,attr"`
+	Conf   string `xml:"conf,attr"`
 }
 
 func parseNmapXML(inputFile string) (NmapRun, error) {
@@ -70,9 +71,9 @@ func parseNmapXML(inputFile string) (NmapRun, error) {
 
 	//Create a struct to hold the data and then unmarshal everything
 	var out NmapRun
-	xml.Unmarshal(byteData, &out)
+	err = xml.Unmarshal(byteData, &out)
 
-	return out, nil
+	return out, err
 }
 
 func nmapToCSV(scandata NmapRun) [][]string {
@@ -95,6 +96,14 @@ func nmapToCSV(scandata NmapRun) [][]string {
 				ptr = hostname.Name
 				break
 			}
+		}
+
+		if len(host.Ports) <= 0 {
+			tmpRow := make([]string, 5)
+			tmpRow[0] = ip
+			tmpRow[1] = ptr
+			tmpRow[2] = "No services/ports up"
+			tmpData = append(tmpData, tmpRow)
 		}
 
 		//Finally loop through all of the ports and build a row slice of the data
