@@ -7,12 +7,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -165,7 +167,10 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 
 	t.job.PerformanceTitle = "Packets / sec"
 	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "Service"}
-	t.job.TotalHashes = 100
+	t.job.TotalHashes, err = calcTotalTargets(t.job.Parameters["targets"])
+	if err != nil {
+		return &nmapTasker{}, err
+	}
 
 	t.start = append(t.start, args...)
 	t.resume = append(t.resume, "--resume", filepath.Join(t.wd, "output.grep"))
@@ -398,4 +403,64 @@ func (v *nmapTasker) Quit() common.Job {
 
 func (v *nmapTasker) IOE() (io.Writer, io.Reader, io.Reader) {
 	return v.stdinPipe, v.stdoutPipe, v.stderrPipe
+}
+
+func calcTotalTargets(input string) (int64, error) {
+	lines := strings.Split(input, "\n")
+	total := 0
+
+	for _, line := range lines {
+		if strings.Contains(line, "-") {
+			cnt, err := getRangeTargetCount(line)
+			if err != nil {
+				return -1, err
+			}
+			total += cnt
+		} else if strings.Contains(line, "/") {
+			cnt, err := getCIDRTargetCount(line)
+			if err != nil {
+				return -1, err
+			}
+			total += cnt
+		} else {
+			total++
+		}
+	}
+
+	return int64(total), nil
+}
+
+func getCIDRTargetCount(cidr string) (int, error) {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return -1, err
+	}
+
+	ones, bits := ipnet.Mask.Size()
+	zeros := uint(bits - ones)
+
+	return 1 << zeros, nil
+}
+
+func getRangeTargetCount(ip string) (int, error) {
+	octets := strings.Split(ip, ".")
+	if len(octets) != 4 {
+		return -1, errors.New("Address did not parse out to 4 octets")
+	}
+
+	count := 1
+	for curoctet := 0; curoctet < 4; curoctet++ {
+		rng := strings.Split(octets[curoctet], "-")
+		if len(rng) == 2 {
+			one, _ := strconv.Atoi(rng[0])
+			two, _ := strconv.Atoi(rng[1])
+			if one > two {
+				count = count * (one - two + 1)
+			} else {
+				count = count * (two - one + 1)
+			}
+		}
+	}
+
+	return count, nil
 }

@@ -56,3 +56,43 @@ func TestParseNmapXML(t *testing.T) {
 		}
 	}
 }
+
+func TestGetCIDRTargetCount(t *testing.T) {
+	test := map[string]int{
+		"192.168.1.0/24":  256,
+		"10.0.0.0/8":      16777216,
+		"67.52.98.20/28":  16,
+		"172.16.14.72/30": 4,
+	}
+
+	for r, v := range test {
+		count, err := getCIDRTargetCount(r)
+		assert.NoError(t, err, "Unable to get CIDR range address count")
+		assert.Equal(t, v, count, "CIDR ranges did not match")
+	}
+}
+
+func TestGetRangeTargetCount(t *testing.T) {
+	test := map[string]int{
+		"192.168.1.1-255":         255,
+		"10.0.1-255.1-255":        65025,
+		"1-4.1-4.1-4.1-4":         256,
+		"65-67.1-255.1-255.1-255": 49744125,
+	}
+
+	for r, v := range test {
+		count, err := getRangeTargetCount(r)
+		assert.NoError(t, err, "Unable to get CIDR range address count")
+		assert.Equal(t, v, count, "CIDR ranges did not match")
+	}
+}
+
+func TestCalcTotalTargets(t *testing.T) {
+	data := `192.168.1.0/24
+10.0.1-255.1-255
+192.168.1.1`
+
+	count, err := calcTotalTargets(data)
+	assert.NoError(t, err, "Unable to get total count")
+	assert.Equal(t, 65282, count)
+}
