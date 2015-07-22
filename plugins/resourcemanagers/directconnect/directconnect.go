@@ -5,7 +5,6 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
-	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"time"
 )
@@ -71,7 +70,7 @@ func (this directResourceManager) ParametersSchema() string {
 			"notes": {
 				"title": "Notes",
 				"type": "string"
-			},
+			}
 		},
 		"required": [
 			"name",
@@ -222,11 +221,6 @@ func (this *directResourceManager) Keep() {
 		//otherwise, we'll want to see about reconnecting
 		if status {
 			localResource.lastGoodCheck = time.Now()
-		} else {
-			//Check if the queue thinks, the resource is running, if so, then let's try and do a graceful disconnect knowing this will probably fail due to connection issues.
-			if queueResource.Status == common.STATUS_RUNNING {
-				this.q.DisconnectResource(queueResource)
-			}
 		}
 
 		//Update our local data for the resource
