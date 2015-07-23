@@ -103,14 +103,6 @@ func nmapToCSV(scandata NmapRun) [][]string {
 			}
 		}
 
-		if len(host.Ports) <= 0 {
-			tmpRow := make([]string, 5)
-			tmpRow[0] = ip
-			tmpRow[1] = ptr
-			tmpRow[2] = "No services/ports up"
-			tmpData = append(tmpData, tmpRow)
-		}
-
 		//Finally loop through all of the ports and build a row slice of the data
 		for _, port := range host.Ports {
 			tmpRow := make([]string, 5)
