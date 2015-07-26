@@ -26,6 +26,47 @@ type JSONSchemaForm struct {
 	Schema json.RawMessage `json:"schema"`
 }
 
+// Function to determine if a status shows something is completed
+func IsDone(status string) bool {
+	switch status {
+	case STATUS_DONE, STATUS_FAILED, STATUS_QUIT:
+		return true
+	default:
+		return false
+	}
+
+}
+
+// Function to determine if a status shwos something is running
+func IsRunning(status string) bool {
+	switch status {
+	case STATUS_RUNNING:
+		return true
+	default:
+		return false
+	}
+}
+
+// Function to determine if a status shows something has failed
+func IsFailed(status string) bool {
+	switch status {
+	case STATUS_FAILED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Function to determine if a status shows something is newly created
+func IsNew(status string) bool {
+	switch status {
+	case STATUS_CREATED:
+		return true
+	default:
+		return false
+	}
+}
+
 func StripQuotes(str string) string {
 	if str == "" {
 		return str

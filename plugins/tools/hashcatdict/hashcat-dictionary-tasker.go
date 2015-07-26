@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"os"
 	"os/exec"
@@ -18,6 +16,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 var regLastStatusIndex *regexp.Regexp
@@ -246,7 +247,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h.resume = append(h.resume, args...)
 
 	// Configure the return values
-	h.job.OutputTitles = []string{"Hash", "Plaintext"}
+	h.job.OutputTitles = []string{"Plaintext", "Hash"}
 
 	return &h, nil
 }
@@ -388,8 +389,8 @@ func (v *hascatTasker) Status() common.Job {
 		for linescanner.Scan() {
 			var kvp []string
 			i := strings.LastIndex(linescanner.Text(), ":")
-			kvp = append(kvp, linescanner.Text()[:i])
 			kvp = append(kvp, linescanner.Text()[i+1:])
+			kvp = append(kvp, linescanner.Text()[:i])
 
 			linetmp = append(linetmp, kvp)
 		}

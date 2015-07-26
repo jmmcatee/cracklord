@@ -3,7 +3,6 @@ package johndict
 import (
 	"bytes"
 	"encoding/csv"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -48,8 +47,6 @@ whirlpool0, whirlpool1, wpapsk, xsha, xsha512, ZIP, crypt`
 		t.Error("Failed to parse." + err.Error())
 	}
 
-	fmt.Printf("%v\n%v\n", results, f)
-
 	if !reflect.DeepEqual(results, f) {
 		t.Error("Parsed data is not equal to known value.")
 	}
@@ -57,12 +54,6 @@ whirlpool0, whirlpool1, wpapsk, xsha, xsha512, ZIP, crypt`
 
 func TestParsingStatus(t *testing.T) {
 	/* UNIX
-	root@sb-gpu-01:/home/crowesec/john-1.8.0-jumbo-1/run# ./john --session=green --wordlist=/home/crowesec/example.dict /home/crowesec/example500.hash
-	Warning: detected hash type "md5crypt", but the string is also recognized as "aix-smd5"
-	Use the "--format=aix-smd5" option to force loading these as that type instead
-	Loaded 1 password hash (md5crypt, crypt(3) $1$ [MD5 128/128 SSE4.1 12x])
-	Will run 4 OpenMP threads
-	Press 'q' or Ctrl-C to abort, almost any other key for status
 	0g 0:00:00:08 16.01% (ETA: 15:51:27) 0g/s 29181p/s 29181c/s 29181C/s xp14589l..xxgswqas
 	0g 0:00:00:18 33.17% (ETA: 15:51:32) 0g/s 29197p/s 29197c/s 29197C/s 958674123..96zinger
 	0g 0:00:00:22 40.02% (ETA: 15:51:32) 0g/s 29195p/s 29195c/s 29195C/s 33538683..3441
@@ -78,11 +69,88 @@ func TestParsingStatus(t *testing.T) {
 	0g 0:00:00:54 94.84% (ETA: 15:51:34) 0g/s 29215p/s 29215c/s 29215C/s amparo..andersen85
 	0g 0:00:00:55 96.57% (ETA: 15:51:34) 0g/s 29212p/s 29212c/s 29212C/s hallol..hannah927
 	0g 0:00:00:56 98.28% (ETA: 15:51:34) 0g/s 29220p/s 29220c/s 29220C/s pasmo..patkoe
-	password         (?)
-	1g 0:00:00:57 DONE (2015-07-02 15:51) 0.01728g/s 29210p/s 29210c/s 29210C/s zz4420..password
 	*/
+	var unixTestOutput = []string{
+		"0g 0:00:00:08 16.01% (ETA: 15:51:27) 0g/s 29181p/s 29181c/s 29181C/s xp14589l..xxgswqas",
+		"0g 0:00:00:18 33.17% (ETA: 15:51:32) 0g/s 29197p/s 29197c/s 29197C/s 958674123..96zinger",
+		"0g 0:00:00:22 40.02% (ETA: 15:51:32) 0g/s 29195p/s 29195c/s 29195C/s 33538683..3441",
+		"0g 0:00:00:44 77.70% (ETA: 15:51:34) 0g/s 29213p/s 29213c/s 29213C/s 19511980..19730246",
+		"0g 0:00:00:45 79.41% (ETA: 15:51:34) 0g/s 29208p/s 29208c/s 29208C/s a7malp1..aalhamed",
+		"0g 0:00:00:46 81.11% (ETA: 15:51:34) 0g/s 29197p/s 29197c/s 29197C/s galqc..garrix",
+		"0g 0:00:00:47 82.81% (ETA: 15:51:34) 0g/s 29203p/s 29203c/s 29203C/s niklas06..nit",
+		"0g 0:00:00:49 86.28% (ETA: 15:51:34) 0g/s 29208p/s 29208c/s 29208C/s 753niky..76777777",
+		"0g 0:00:00:50 88.00% (ETA: 15:51:34) 0g/s 29213p/s 29213c/s 29213C/s cr20323v..crn37",
+		"0g 0:00:00:51 89.70% (ETA: 15:51:34) 0g/s 29213p/s 29213c/s 29213C/s laikinas..lancom",
+		"0g 0:00:00:52 91.40% (ETA: 15:51:34) 0g/s 29212p/s 29212c/s 29212C/s site1122..skiing",
+		"0g 0:00:00:53 93.14% (ETA: 15:51:34) 0g/s 29213p/s 29213c/s 29213C/s 231103..235846",
+		"0g 0:00:00:54 94.84% (ETA: 15:51:34) 0g/s 29215p/s 29215c/s 29215C/s amparo..andersen85",
+		"0g 0:00:00:55 96.57% (ETA: 15:51:34) 0g/s 29212p/s 29212c/s 29212C/s hallol..hannah927",
+		"0g 0:00:00:56 98.28% (ETA: 2019-04-11 21:51) 0g/s 29220p/s 29220c/s 29220C/s pasmo..patkoe",
+	}
+
+	// Loop through each example and match it
+	for _, s := range unixTestOutput {
+		found := regStatusLine.FindStringSubmatch(s)
+		if len(found) != 7 {
+			t.Errorf("Did not match enough fields, matched %d\n", len(found))
+		}
+	}
 
 	/* Windows
-
+	0g 0:00:02:01 1.00% (ETA: 01:23:58) 0g/s 3743Kp/s 3743Kc/s 3743KC/s
+	0g 0:00:02:01 1.00% (ETA: 01:24:01) 0g/s 3743Kp/s 3743Kc/s 3743KC/s
+	0g 0:00:03:01 2.00% (ETA: 00:33:06) 0g/s 3348Kp/s 3348Kc/s 3348KC/s
+	0g 0:00:03:01 2.00% (ETA: 00:33:31) 0g/s 3348Kp/s 3348Kc/s 3348KC/s
+	0g 0:00:03:01 2.00% (ETA: 00:33:37) 0g/s 3348Kp/s 3348Kc/s 3348KC/s
+	0g 0:00:04:01 2.00% (ETA: 01:23:29) 0g/s 3089Kp/s 3089Kc/s 3089KC/s
+	0g 0:00:07:01 5.00% (ETA: 00:22:58) 0g/s 2896Kp/s 2896Kc/s 2896KC/s
+	0g 0:00:10:01 7.00% (ETA: 00:25:50) 0g/s 3208Kp/s 3208Kc/s 3208KC/s
 	*/
+
+	var windowsTestOutput = []string{
+		"0g 0:00:02:01 1.00% (ETA: 01:23:58) 0g/s 3743Kp/s 3743Kc/s 3743KC/s",
+		"0g 0:00:02:01 1.00% (ETA: 01:24:01) 0g/s 3743Kp/s 3743Kc/s 3743KC/s",
+		"0g 0:00:03:01 2.00% (ETA: 00:33:06) 0g/s 3348Kp/s 3348Kc/s 3348KC/s",
+		"0g 0:00:03:01 2.00% (ETA: 00:33:31) 0g/s 3348Kp/s 3348Kc/s 3348KC/s",
+		"0g 0:00:03:01 2.00% (ETA: 00:33:37) 0g/s 3348Kp/s 3348Kc/s 3348KC/s",
+		"0g 0:00:04:01 2.00% (ETA: 01:23:29) 0g/s 3089Kp/s 3089Kc/s 3089KC/s",
+		"0g 0:00:07:01 5.00% (ETA: 00:22:58) 0g/s 2896Kp/s 2896Kc/s 2896KC/s",
+		"0g 0:00:10:01 7.00% (ETA: 2019-04-11 21:51) 0g/s 3208Kp/s 3208Kc/s 3208KC/s",
+	}
+
+	// Loop through each example and match it
+	for _, s := range windowsTestOutput {
+		found := regStatusLine.FindStringSubmatch(s)
+		if len(found) != 7 {
+			t.Errorf("[Windows] Did not match enough fields, matched %d\n", len(found))
+		}
+	}
+}
+
+// Test John ETA format parsing
+
+func TestParsingETA(t *testing.T) {
+	var timeTestTable = []struct {
+		in  string
+		out string
+	}{
+		{"01:24:01", "1 hours, 24 minutes"},
+		{"00:25:50", "25 minutes, 49 seconds"},
+		{"15:51:34", "15 hours, 51 minutes"},
+		// These will always change and should only be enabled during dev
+		// {"2019-07-01 14:02", "1443 days, 13 hours"},
+		// {"2019-04-11 21:51", "1362 days, 21 hours"},
+	}
+
+	for _, v := range timeTestTable {
+		// We have a full year time
+		nt, _ := parseJohnETA(v.in)
+
+		if printTimeUntil(nt) != v.out {
+			t.Errorf(printTimeUntil(nt) + " != " + v.out)
+		}
+
+		// d := time.Since(t)
+		// println(d.String())
+	}
 }

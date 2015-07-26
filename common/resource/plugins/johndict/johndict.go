@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/csv"
 	"errors"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
-	"github.com/vaughan0/go-ini"
 	"os/exec"
 	"sort"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/vaughan0/go-ini"
 )
 
 /*
@@ -17,6 +18,7 @@ import (
 */
 type johndictConfig struct {
 	BinPath         string
+	JohnConfDir     string
 	WorkingDir      string
 	Arguments       string
 	Dictionaries    map[string]string
@@ -31,9 +33,7 @@ type johndictConfig struct {
 */
 var config johndictConfig
 
-/*
-	Function to setup the
-*/
+// Setup function for the John Dictionary plugin
 func Setup(path string) error {
 	log.Debug("Setting up johndict tool")
 
@@ -95,27 +95,28 @@ func Setup(path string) error {
 	}
 
 	// Get the rule section
-	rules := confFile.Section("Rules")
-	if len(dicts) == 0 {
-		// Nothing retrieved, so return error
-		log.Debug("No 'rules' configuration section.")
-		return errors.New("No \"Rules\" configuration section.")
+	stdout, err = exec.Command(config.BinPath, "--list=rules").Output()
+	if err != nil {
+		// Something is wrong with our executable so log and fail
+		log.WithField("error", err.Error()).Error("Could not pull format list.")
+		return err
 	}
-	for key, value := range rules {
+	rules := strings.Split(string(stdout), "\n")
+	for _, value := range rules {
 		log.WithFields(log.Fields{
-			"name": key,
+			"name": value,
 			"path": value,
 		}).Debug("Added rule file")
-		config.Rules[key] = value
+		config.Rules[value] = value
 	}
 
 	// Setup sorted order for consistency
-	for key, _ := range config.Dictionaries {
+	for key := range config.Dictionaries {
 		config.DictionaryOrder = append(config.DictionaryOrder, key)
 	}
 	sort.Strings(config.DictionaryOrder)
 
-	for key, _ := range config.Rules {
+	for key := range config.Rules {
 		config.RulesOrder = append(config.RulesOrder, key)
 	}
 	sort.Strings(config.RulesOrder)
@@ -306,9 +307,7 @@ func (h *johndictTooler) NewTask(job common.Job) (common.Tasker, error) {
 	return newJohnDictTask(job)
 }
 
-/*
-	Return the tooler object for proper setup
-*/
+// NewTooler function for creating a common.Tooler for the John Dictionary Plugin
 func NewTooler() common.Tooler {
 	return &johndictTooler{}
 }
