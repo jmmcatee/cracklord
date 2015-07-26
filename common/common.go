@@ -15,6 +15,7 @@ const (
 
 	RES_CPU = "cpu"
 	RES_GPU = "gpu"
+	RES_NET = "net"
 )
 
 type RPCCall struct {

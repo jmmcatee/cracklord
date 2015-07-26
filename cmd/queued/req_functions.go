@@ -248,7 +248,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	jsonBuf := bytes.NewBuffer([]byte(tool.Parameters))
 	err := json.NewDecoder(jsonBuf).Decode(&form)
 	if err != nil {
-		log.Println(err)
+		log.WithField("error", err.Error()).Error("There was a problem parsing tool form schema JSON.")
 		resp.Status = RESP_CODE_ERROR
 		resp.Message = RESP_CODE_ERROR_T
 

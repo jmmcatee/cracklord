@@ -6,12 +6,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common/queue"
-	"strconv"
+	"time"
 )
 
 type resourceInfo struct {
-	Notes     string
-	Reconnect bool
+	notes         string
+	lastGoodCheck time.Time
 }
 
 type directResourceManager struct {
@@ -45,18 +45,6 @@ func (this directResourceManager) ParametersForm() string {
 		"name",
 		"address",
 		{
-		    "key": "reconnect",
-		    "type": "radiobuttons",
-		    "style": {
-		      "selected": "btn-info",
-		      "unselected": "btn-default"
-		    },
-		    "titleMap": {
-		        "true": "Reconnect",
-		        "false": "Stay Disconnected"
-		    }
-		},
-		{
 			"key": "notes",
 			"type": "textarea",
 			"placeholder": "OPTIONAL: Any notes you would like to include (location, primary contact, etc.)"
@@ -82,12 +70,6 @@ func (this directResourceManager) ParametersSchema() string {
 			"notes": {
 				"title": "Notes",
 				"type": "string"
-			},
-			"reconnect": {
-				"title": "Attempt automatic resource service reconnects:",
-				"type": "string",
-				"default": "true",
-				"description": "Should the system attempt to automatically reconnect in the event this resource becomes disconnected?"
 			}
 		},
 		"required": [
@@ -158,8 +140,7 @@ func (this directResourceManager) GetResource(resourceid string) (*queue.Resourc
 
 	//Parse our parameters struct back into a common string map
 	parameters := make(map[string]string)
-	parameters["notes"] = localres.Notes
-	parameters["reconnect"] = strconv.FormatBool(localres.Reconnect)
+	parameters["notes"] = localres.notes
 
 	return resource, parameters, nil
 }
@@ -231,13 +212,19 @@ func (this *directResourceManager) Keep() {
 		status := this.q.CheckResourceConnectionStatus(queueResource)
 		logger.WithField("status", status).Debug("Checked resource connection status")
 
-		if !status && localResource.Reconnect {
-			log.WithField("resource", queueResource.Name).Info("Attempting to reconnect to directly connected resource.")
-			err := this.q.ConnectResource(queueResource, this.tls)
-			if err != nil {
-				logger.WithField("error", err.Error()).Error("An error occured when trying to reconnect to resource")
-			}
+		logger.WithFields(log.Fields{
+			"notes":        localResource.notes,
+			"lastgoodtime": localResource.lastGoodCheck,
+		}).Debug("Processing resource.")
+
+		//If the connection to the resource is still good, let's flag when we last checked that
+		//otherwise, we'll want to see about reconnecting
+		if status {
+			localResource.lastGoodCheck = time.Now()
 		}
+
+		//Update our local data for the resource
+		this.resources.Set(data.Key, localResource)
 	}
 
 	log.Info("Direct connect resource manager has successfully updated resources.")
@@ -246,14 +233,7 @@ func (this *directResourceManager) Keep() {
 func (this *directResourceManager) parseParams(params map[string]string) resourceInfo {
 	//Let's create a temporary resource to hold the info
 	tempresource := resourceInfo{
-		Reconnect: false,
-		Notes:     params["notes"],
+		notes: params["notes"],
 	}
-
-	//Set the boolean parameter for reconnect if true.
-	if params["reconnect"] == "true" {
-		tempresource.Reconnect = true
-	}
-
 	return tempresource
 }
