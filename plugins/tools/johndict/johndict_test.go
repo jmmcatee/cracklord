@@ -154,3 +154,14 @@ func TestParsingETA(t *testing.T) {
 		// println(d.String())
 	}
 }
+
+var testingRoot = ""
+
+func TestConfigSetup(t *testing.T) {
+	err := Setup(testingRoot + "johndict.conf")
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// TODO: Configure fails for empty fields
+}

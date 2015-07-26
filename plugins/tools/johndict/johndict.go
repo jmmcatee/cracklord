@@ -37,6 +37,8 @@ var config johndictConfig
 func Setup(path string) error {
 	log.Debug("Setting up johndict tool")
 
+	config = johndictConfig{Dictionaries: map[string]string{}, Rules: map[string]string{}}
+
 	confFile, err := ini.LoadFile(path)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -63,7 +65,7 @@ func Setup(path string) error {
 	}).Debug("Basic configuration complete")
 
 	// Run the executable to get the supported formats
-	stdout, err := exec.Command(config.BinPath, "--list=format").Output()
+	stdout, err := exec.Command(config.BinPath, "--list=formats").Output()
 	if err != nil {
 		// Something is wrong with our executable so log and fail
 		log.WithField("error", err.Error()).Error("Could not pull format list.")
