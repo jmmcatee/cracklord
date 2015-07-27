@@ -145,7 +145,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	args = append(args, "--format="+format)
 	log.WithField("format", format).Debug("Added algorithm")
 
-	args = append(args, "--pot="+filepath.Join(v.wd, v.job.UUID+".pot"))
+	args = append(args, "--pot="+v.job.UUID)
 
 	// Add the dictionary files given
 	dictKey, ok := v.job.Parameters["dictionaries"]
@@ -225,7 +225,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	}
 	log.WithField("hashfile", hashFilePath).Debug("Created hashfile")
 
-	args = append(args)
+	args = append(args, hashFilePath)
 
 	hashFile.WriteString(v.job.Parameters["hashes"])
 
