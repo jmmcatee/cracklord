@@ -188,7 +188,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 
 	// Add dictionary to arguments
 	log.WithField("dictionary", dictPath).Debug("Dictionary added")
-	args = append(args, "wordlist="+dictPath)
+	args = append(args, "--wordlist="+dictPath)
 
 	// Add a rule file
 	var rule string
@@ -358,7 +358,7 @@ func (v *johndictTasker) Status() common.Job {
 func (v *johndictTasker) Run() error {
 	// Grab a Lock
 	v.mux.Lock()
-	defer v.mux.Lock()
+	defer v.mux.Unlock()
 
 	// Check for the status of this job
 	if common.IsDone(v.job.Status) {
