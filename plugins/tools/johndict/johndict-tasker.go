@@ -104,6 +104,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	log.Debug("Creating a new John Dict Tasker")
 
 	v := johndictTasker{}
+	v.doneWaitChan = make(chan struct{}, 1)
 
 	// Assign the job information
 	v.job = j
@@ -401,6 +402,9 @@ func (v *johndictTasker) Run() error {
 	if pipeError != nil {
 		return pipeError
 	}
+
+	v.stderr = bytes.NewBuffer([]byte(""))
+	v.stdout = bytes.NewBuffer([]byte(""))
 
 	// Start goroutine to copy data from stderr and stdout pipe
 	go func() {
