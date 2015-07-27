@@ -188,13 +188,13 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 
 	// Add dictionary to arguments
 	log.WithField("dictionary", dictPath).Debug("Dictionary added")
-	args = append(args, dictPath)
+	args = append(args, "wordlist="+dictPath)
 
 	// Add a rule file
 	var rule string
 	ok = false
 	for _, r := range config.Rules {
-		if v.job.Parameters["rule"] == r {
+		if v.job.Parameters["rules"] == r {
 			rule = r
 			ok = true
 		}
@@ -205,7 +205,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 		}).Error("Could not find rule provided")
 		return &johndictTasker{}, errors.New("Could not find rule provided")
 	}
-	args = append(args, "--rules="+format)
+	args = append(args, "--rules="+rule)
 	log.WithField("rules", rule).Debug("Added rule section")
 
 	// Append config file arguments
@@ -214,15 +214,18 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	}
 
 	// Take the hashes given and create a file
-	hashFile, err := os.Create(filepath.Join(v.wd, "hashes.txt"))
+	hashFilePath := filepath.Join(v.wd, "hashes.txt")
+	hashFile, err := os.Create(hashFilePath)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"file":  hashFile,
+			"file":  hashFilePath,
 			"error": err.Error(),
 		}).Error("Unable to create hash file")
 		return &johndictTasker{}, err
 	}
-	log.WithField("hashfile", hashFile).Debug("Created hashfile")
+	log.WithField("hashfile", hashFilePath).Debug("Created hashfile")
+
+	args = append(args)
 
 	hashFile.WriteString(v.job.Parameters["hashes"])
 
