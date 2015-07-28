@@ -21,18 +21,26 @@ const (
 	INSTANCE_STATE_STOPPED       int64 = 80
 )
 
+func getEC2Client(key, private, region string) *ec2.EC2 {
+	creds := credentials.NewStaticCredentials(key, private, "")
+
+	return ec2.New(&aws.Config{
+		Region:      region,
+		Credentials: creds,
+	})
+}
+
 // This function will take several pieces of information and launch a new AWS instance
 // It requires the ID of the image, the security group to apply, the subnet ID to
 // start the instance in, the name of the key for authentication, the type of instance
 // as well as the number of instances to start.  It'll return the reservation object
 // That we get back from the API.
-func launchInstance(amiid, secgrpid, subnet, keyname, instancetype string, number int, ec2client *ec2.EC2) (ec2.Reservation, error) {
+func launchInstance(amiid, secgrpid, subnet, instancetype string, number int, ec2client *ec2.EC2) (ec2.Reservation, error) {
 	// Build our request, converting the go base types into the pointers required by the SDK
 	instanceReq := ec2.RunInstancesInput{
 		ImageID:      aws.String(amiid),
 		MaxCount:     aws.Long(int64(number)),
 		MinCount:     aws.Long(int64(number)),
-		KeyName:      aws.String(keyname),
 		InstanceType: aws.String(instancetype),
 		// Because we're making this VPC aware, we also have to include a network interface specification
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
@@ -45,6 +53,7 @@ func launchInstance(amiid, secgrpid, subnet, keyname, instancetype string, numbe
 				},
 			},
 		},
+		//UserData: TODO
 	}
 
 	// Finally, we make our request
@@ -113,7 +122,7 @@ func termInstance(instanceids []string, ec2client *ec2.EC2) error {
 	// Loop through all the instances and check the state
 	for _, instance := range instanceResp.TerminatingInstances {
 		if *instance.CurrentState.Code != INSTANCE_STATE_TERMINATED && *instance.CurrentState.Code != INSTANCE_STATE_SHUTTING_DOWN {
-			allterminated = allterminated + " " + *instance.InstanceID)
+			allterminated = allterminated + " " + *instance.InstanceID
 		}
 	}
 
@@ -181,6 +190,23 @@ func getAllVPCs(ec2client *ec2.EC2) ([]*ec2.VPC, error) {
 	return vpcs.VPCs, nil
 }
 
+// Get a single VPC by it's id.
+func getVPCByID(id string, ec2client *ec2.EC2) (ec2.VPC, error) {
+	vpcs, err := getAllVPCs(ec2client)
+
+	if err != nil {
+		return ec2.VPC{}, err
+	}
+
+	for _, vpc := range vpcs {
+		if *vpc.VPCID == id {
+			return *vpc, nil
+		}
+	}
+
+	return ec2.VPC{}, errors.New("Unable to find VPC with id " + id)
+}
+
 // Gets the default VPC for the currently connected region
 func getDefaultVPC(ec2client *ec2.EC2) (ec2.VPC, error) {
 	vpcs, err := getAllVPCs(ec2client)
@@ -208,7 +234,7 @@ func getSubnetNamesInVPC(vpcid string, ec2client *ec2.EC2) (map[string]string, e
 	tmpMap := make(map[string]string)
 
 	for _, subnet := range subnets {
-		tmpMap[subnet.SubnetID] = subnet.CIDRBlock
+		tmpMap[*subnet.SubnetID] = *subnet.CIDRBlock
 	}
 
 	return tmpMap, nil
@@ -229,7 +255,7 @@ func getSubnetsInVPC(vpcid string, ec2client *ec2.EC2) ([]*ec2.Subnet, error) {
 
 	subnetResp, err := ec2client.DescribeSubnets(&subnetReq)
 	if err != nil {
-		return ec2.Subnet{}, err
+		return []*ec2.Subnet{}, err
 	}
 
 	return subnetResp.Subnets, nil
@@ -357,6 +383,17 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.Securit
 	//Return an error
 	if !ok {
 		return ec2.SecurityGroup{}, errors.New("Unable to find newly created security group")
+	}
+
+	authReq := ec2.AuthorizeSecurityGroupIngressInput{
+		CIDRIP:   aws.String("0.0.0.0/0"),
+		FromPort: aws.Long(9443),
+		ToPort:   aws.Long(9443),
+		GroupID:  newgroup.GroupID,
+	}
+	_, err = ec2client.AuthorizeSecurityGroupIngress(&authReq)
+	if err != nil {
+		return ec2.SecurityGroup{}, err
 	}
 
 	return newgroup, nil

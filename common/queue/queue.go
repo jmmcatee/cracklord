@@ -244,6 +244,20 @@ func (q *Queue) AllJobs() []common.Job {
 	return q.stack
 }
 
+// Get a list of all jobs assigned to a resource
+func (q *Queue) AllJobsByResource(resourceid string) []common.Job {
+	jobs := q.AllJobs()
+	outJobs := make([]common.Job, 0)
+
+	for _, job := range jobs {
+		if job.ResAssigned == resourceid {
+			outJobs = append(outJobs, job)
+		}
+	}
+
+	return outJobs
+}
+
 // Get one specific job
 func (q *Queue) JobInfo(jobUUID string) common.Job {
 	log.WithField("job", jobUUID).Debug("Gathering information on job.")
