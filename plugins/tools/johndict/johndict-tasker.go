@@ -409,27 +409,12 @@ func (v *johndictTasker) Run() error {
 	// Start goroutine to copy data from stderr and stdout pipe
 	go func() {
 		for {
-			v.mux.Lock()
-			if common.IsRunning(v.job.Status) {
-				v.mux.Unlock()
-				io.Copy(v.stderr, v.stderrPipe)
-			} else {
-				break
-			}
-			v.mux.Unlock()
+			io.Copy(v.stderr, v.stderrPipe)
 		}
 	}()
-
 	go func() {
 		for {
-			v.mux.Lock()
-			if common.IsRunning(v.job.Status) {
-				v.mux.Unlock()
-				io.Copy(v.stdout, v.stdoutPipe)
-			} else {
-				break
-			}
-			v.mux.Unlock()
+			io.Copy(v.stdout, v.stdoutPipe)
 		}
 	}()
 
