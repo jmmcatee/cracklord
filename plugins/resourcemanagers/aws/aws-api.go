@@ -1,11 +1,11 @@
-package aws
+package awsresourcemanager
 
 import (
+	"encoding/base64"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -35,7 +35,23 @@ func getEC2Client(key, private, region string) *ec2.EC2 {
 // start the instance in, the name of the key for authentication, the type of instance
 // as well as the number of instances to start.  It'll return the reservation object
 // That we get back from the API.
-func launchInstance(amiid, secgrpid, subnet, instancetype string, number int, ec2client *ec2.EC2) (ec2.Reservation, error) {
+func launchInstance(amiid, secgrpid, subnet, instancetype, ca, crt, key string, number int, ec2client *ec2.EC2) (ec2.Reservation, error) {
+	cloudconfig := `#cloud-config
+# vim: syntax=yaml
+#
+write_files:
+-   content: |
+` + ca + `
+    path: /etc/cracklord/ssl/cracklord_ca.pem
+-   content: |
+` + crt + `
+    path: /etc/cracklord/ssl/resource.pem
+-   content: |
+` + key + `
+    path: /etc/cracklord/ssl/resource.key`
+
+	userdata := base64.StdEncoding.EncodeToString([]byte(cloudconfig))
+
 	// Build our request, converting the go base types into the pointers required by the SDK
 	instanceReq := ec2.RunInstancesInput{
 		ImageID:      aws.String(amiid),
@@ -53,7 +69,8 @@ func launchInstance(amiid, secgrpid, subnet, instancetype string, number int, ec
 				},
 			},
 		},
-		//UserData: TODO
+		KeyName:  aws.String("Lucas AWS Key"),
+		UserData: aws.String(userdata),
 	}
 
 	// Finally, we make our request
@@ -63,6 +80,34 @@ func launchInstance(amiid, secgrpid, subnet, instancetype string, number int, ec
 	}
 
 	return *instanceResp, nil
+}
+
+// Returns a single insance when given it's ID
+func getInstanceByID(instanceid string, ec2client *ec2.EC2) (ec2.Instance, error) {
+	instanceReq := ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceid),
+		},
+	}
+
+	instanceResp, err := ec2client.DescribeInstances(&instanceReq)
+	if err != nil {
+		return ec2.Instance{}, err
+	}
+
+	//We only requested one instance, so we should only get one
+	if len(instanceResp.Reservations) != 1 {
+		return ec2.Instance{}, errors.New("The total number of reservations did not match the request")
+	}
+	reservation := instanceResp.Reservations[0]
+
+	// Now let's make sure we only got one instance in this reservation
+	if len(reservation.Instances) != 1 {
+		return ec2.Instance{}, errors.New("The total number of instances did not match the request for full instance data")
+	}
+
+	instance := reservation.Instances[0]
+	return *instance, nil
 }
 
 // This function gets the state of a single instance and returns the code for it.
@@ -339,18 +384,47 @@ func getAllKeys(ec2client *ec2.EC2) ([]*ec2.KeyPairInfo, error) {
 	return keys.KeyPairs, nil
 }
 
-// Get a security group by name from the EC2 environment
-func getSecurityGroupByName(name string, ec2client *ec2.EC2) (ec2.SecurityGroup, bool) {
+// Get all security groups from the environment
+func getAllSecurityGroups(ec2client *ec2.EC2) ([]*ec2.SecurityGroup, error) {
 	//Connect to aws and attempt to get all security groups
 	dsgResp, err := ec2client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 
 	// If we got an error while gathering all of the groups, return it.
 	if err != nil {
+		return []*ec2.SecurityGroup{}, err
+	}
+
+	return dsgResp.SecurityGroups, nil
+}
+
+// Get a security group by ID from the EC2 environment
+func getSecurityGroupByID(id string, ec2client *ec2.EC2) (ec2.SecurityGroup, bool) {
+	groups, err := getAllSecurityGroups(ec2client)
+	if err != nil {
 		return ec2.SecurityGroup{}, false
 	}
 
 	//Loop through all of the found security groups and check if the name matches.
-	for _, sg := range dsgResp.SecurityGroups {
+	for _, sg := range groups {
+		if *sg.GroupID == id {
+			//If it matches, return the group object.
+			return *sg, true
+		}
+	}
+
+	//Return return an error that we couldn't find a group
+	return ec2.SecurityGroup{}, false
+}
+
+// Get a security group by name from the EC2 environment
+func getSecurityGroupByName(name string, ec2client *ec2.EC2) (ec2.SecurityGroup, bool) {
+	groups, err := getAllSecurityGroups(ec2client)
+	if err != nil {
+		return ec2.SecurityGroup{}, false
+	}
+
+	//Loop through all of the found security groups and check if the name matches.
+	for _, sg := range groups {
 		if *sg.GroupName == name {
 			//If it matches, return the group object.
 			return *sg, true
@@ -376,24 +450,22 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.Securit
 		return ec2.SecurityGroup{}, err
 	}
 
-	//Get the name to double check on our new group
-	newname := awsutil.StringValue(sgResp.GroupID)
-	newgroup, ok := getSecurityGroupByName(newname, ec2client)
-
-	//Return an error
-	if !ok {
-		return ec2.SecurityGroup{}, errors.New("Unable to find newly created security group")
-	}
-
 	authReq := ec2.AuthorizeSecurityGroupIngressInput{
-		CIDRIP:   aws.String("0.0.0.0/0"),
-		FromPort: aws.Long(9443),
-		ToPort:   aws.Long(9443),
-		GroupID:  newgroup.GroupID,
+		CIDRIP:     aws.String("0.0.0.0/0"),
+		FromPort:   aws.Long(9443),
+		ToPort:     aws.Long(9443),
+		IPProtocol: aws.String("tcp"),
+		GroupID:    sgResp.GroupID,
 	}
 	_, err = ec2client.AuthorizeSecurityGroupIngress(&authReq)
 	if err != nil {
 		return ec2.SecurityGroup{}, err
+	}
+
+	//Get the name to double check on our new group
+	newgroup, ok := getSecurityGroupByID(*sgResp.GroupID, ec2client)
+	if !ok {
+		return ec2.SecurityGroup{}, errors.New("Unable to find newly created security group '" + *sgResp.GroupID + "'")
 	}
 
 	return newgroup, nil

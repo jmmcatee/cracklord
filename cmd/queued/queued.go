@@ -9,6 +9,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/queue"
+	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws"
 	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
@@ -280,9 +281,29 @@ func main() {
 	})
 
 	// SETUP RESOURCE MANAGERS
-	// Setup Direct Connect Manager
-	resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
-	server.Q.AddResourceManager(resmgr_dc)
+	// Get the Authentication configuration
+	confResMgr := confFile.Section("ResourceManagers")
+	if confResMgr == nil {
+		println("Error: Resource manager configuration is required.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+		return
+	}
+
+	// First, let's setup the direct connect manager if we have anything there
+	if _, ok := confResMgr["directconnect"]; ok {
+		resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
+		server.Q.AddResourceManager(resmgr_dc)
+	}
+
+	// Now let's setup the AWS manager if we have a config file
+	if resDC, ok := confResMgr["aws"]; ok {
+		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
+		} else {
+			server.Q.AddResourceManager(resmgr_aws)
+		}
+	}
 
 	// Build the Negroni handler
 	n := negroni.New(negroni.NewRecovery(),

@@ -1,4 +1,4 @@
-package aws
+package awsresourcemanager
 
 import (
 	"crypto/tls"
@@ -118,6 +118,7 @@ func Setup(confpath string, qpointer *queue.Queue, tlspointer *tls.Config) (queu
 		tls:       tlspointer,
 		ec2client: getEC2Client(conf.AccessKey, conf.AccessSecret, conf.Region),
 	}
+
 	aws.gatherAPIData()
 
 	return &aws, nil
@@ -140,16 +141,15 @@ func (this awsResourceManager) ParametersForm() string {
 	{
 		"key": "subnet",
 		"type": "select",
-		titleMap: [`
-
+		"titleMap": {`
 	for i, v := range this.subnets {
 		if i > 0 {
 			form += ","
 		}
-		form += "{\"" + *v.SubnetID + "\": \"" + *v.SubnetID + " (" + *v.CIDRBlock + ")\""
+		form += "\"" + *v.SubnetID + "\": \"" + *v.SubnetID + " (" + *v.CIDRBlock + ")\""
 	}
 
-	form += `]
+	form += `}
 	},
 	{
 		"type": "section",
@@ -207,7 +207,6 @@ func (this awsResourceManager) ParametersSchema() string {
 			"title": "Subnet",
 			"type": "string",
 			"enum": [`
-
 	for i, v := range this.subnets {
 		if i > 0 {
 			schema += ","
@@ -215,7 +214,8 @@ func (this awsResourceManager) ParametersSchema() string {
 		schema += "\"" + *v.SubnetID + "\""
 	}
 	schema += `
-			]
+			],
+			"default": "` + *this.subnets[0].SubnetID + `"
 	   },
 		"disconnect": {
 			"title": "Terminate Host When Unused?",
@@ -226,8 +226,8 @@ func (this awsResourceManager) ParametersSchema() string {
 		"disconnecttime": {
 			"title": "Terminate Time",
 			"description": "How many minutes to wait until unused instance is terminated",
-			"type": "integer",
-			"default": 15
+			"type": "string",
+			"default": "15"
 		},
 		"instancetype": {
 			"title": "Instance Type",
@@ -245,8 +245,8 @@ func (this awsResourceManager) ParametersSchema() string {
 		"number": {
 			"title": "Number of Instances",
 			"description": "How many instances should be started and connected to CrackLord?",
-			"default": 1,
-			"type": "integer"
+			"default": "1",
+			"type": "string"
 		}
 	},
 	"required": [
@@ -307,7 +307,7 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 	}
 
 	// Now that we have all of our data, let's actually launch the instance in the API.
-	res, err := launchInstance(conf.AMIID, conf.SecurityGroup, subnet, instancetype, num, this.ec2client)
+	res, err := launchInstance(conf.AMIID, *this.secgrp.GroupID, subnet, instancetype, ca, crt, key, num, this.ec2client)
 	if err != nil {
 		return errors.New("Unable to start instance: " + err.Error())
 	}
@@ -315,7 +315,7 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 	//Now we start a goroutine that waits for the instance to be in a ready state, and then we'll do the rest.
 	//For now, let's return to the user that we're trying.
 	for _, instance := range res.Instances {
-		go this.waitForResourceReady(disconTime, instance, this.ec2client)
+		go this.waitForResourceReady(disconTime, *instance.InstanceID, this.ec2client)
 	}
 
 	return nil
@@ -323,7 +323,7 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 
 // This function will be run in a goroutine and will check every 30 seconds to see
 // if the instance we just started is ready.
-func (this *awsResourceManager) waitForResourceReady(disconnect int, instance *ec2.Instance, ec2client *ec2.EC2) {
+func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid string, ec2client *ec2.EC2) {
 	// Setup a ticker that will hit every 30 seconds
 	ticker := time.NewTicker(30 * time.Second)
 
@@ -333,13 +333,12 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instance *e
 	for {
 		select {
 		case <-ticker.C:
-
 			//Lookup the state of the instance to determine if we're running yet
-			state, err := getInstanceState(*instance.InstanceID, ec2client)
+			state, err := getInstanceState(instanceid, ec2client)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error":      err.Error(),
-					"instanceid": *instance.InstanceID,
+					"instanceid": instanceid,
 				}).Error("Unable to gather the state of the instance")
 
 				ticker.Stop()
@@ -348,8 +347,17 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instance *e
 
 			//If we're running, then we can actually add the instance to the queue manager
 			if state == INSTANCE_STATE_RUNNING {
+				// First, let's load our instance
+				instance, err := getInstanceByID(instanceid, this.ec2client)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":      err.Error(),
+						"instanceid": instanceid,
+					}).Error("Unable to gather instance information")
+				}
+
 				// Build a name for our instance that is relevant
-				name := fmt.Sprintf("aws-instance-%d-%s", this.resources.Count(), *instance.PublicIPAddress)
+				name := fmt.Sprintf("aws-instance-%s", *instance.PublicIPAddress)
 
 				//Let's actually add and connect to the resource
 				resUUID, err := this.q.AddResource(*instance.PublicIPAddress, name, this.tls)
@@ -368,7 +376,7 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instance *e
 
 				// If we successfully connected, then create storage for our local data in the resource manager
 				resourceData := resourceInfo{
-					Instance:       *instance,
+					Instance:       instance,
 					State:          state,
 					StartTime:      time.Now(),
 					LastUseTime:    time.Now(),
@@ -501,6 +509,8 @@ func (this awsResourceManager) GetManagedResources() []string {
 3. Check and see if there are any resources that have timed out and terminate them
 */
 func (this awsResourceManager) Keep() {
+	this.gatherAPIData()
+
 	iter := this.resources.Iterator()
 	for data := range iter.Loop() {
 		resourceID := data.Key
@@ -549,16 +559,31 @@ func (this awsResourceManager) Keep() {
 // This function will gather API data that we'll need for our forms, etc on a regular basis.
 // It should be called when the keeper is run, but only once a day or so.
 func (this *awsResourceManager) gatherAPIData() {
+	log.Debug("Updating AWS API information")
+
 	var err error
 
-	this.vpc, err = getVPCByID(conf.VPCID, this.ec2client)
-	if err != nil {
-		log.WithField("error", err.Error()).Error("ResMgr (AWS): Unable to gather VPC")
+	if conf.VPCID != "" {
+		this.vpc, err = getVPCByID(conf.VPCID, this.ec2client)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+				"id":    conf.VPCID,
+			}).Error("ResMgr (AWS): Unable to gather VPC with ID")
+			return
+		}
+	} else {
+		this.vpc, err = getDefaultVPC(this.ec2client)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("ResMgr (AWS): Unable to gather default VPC.")
+			return
+		}
 	}
 
 	this.subnets, err = getSubnetsInVPC(*this.vpc.VPCID, this.ec2client)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("ResMgr (AWS): Unable to enumerate subnets in the configured VPC")
+		return
 	}
 
 	var ok bool

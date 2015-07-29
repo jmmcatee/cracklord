@@ -406,7 +406,10 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 	// Write out the HTTP OK header
 	rw.WriteHeader(RESP_CODE_OK)
 	//Encode and write out our response
-	respJSON.Encode(resp)
+	err := respJSON.Encode(resp)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to encode resource manager details.")
+	}
 
 	log.WithField("id", resmgr.SystemName()).Info("Detailed information on resource manager sent to API")
 }
