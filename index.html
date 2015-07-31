@@ -229,7 +229,9 @@
               <div class="row plugin">
                 <div class="col-sm-3">
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
-                  <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
+                  <span class="author">Author(s):
+                    <a ng-repeat="author in plugin.authors" href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>
+                  </span>
                 </div>
                 <div class="col-sm-9" ng-bind-html="plugin.desc | unsafe"></div>
               </div>
@@ -242,7 +244,9 @@
               <div class="row plugin">
                 <div class="col-sm-3">
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
-                  <span class="author">Author: <a href="{{plugin.author_link}}"><i class="fa fa-{{plugin.author_icon}}"></i> {{plugin.author_name}}</a></span>
+                  <span class="author">Author(s):
+                    <a ng-repeat="author in plugin.authors" href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>
+                  </span>
                 </div>
                 <div class="col-sm-9" ng-bind-html="plugin.desc | unsafe"></div>
               </div>
