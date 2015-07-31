@@ -75,12 +75,7 @@ cracklord.directive('playbutton', ['growl', 'AuthService', 'USER_ROLES', functio
                         }
                     }, 
                     function error(errorResult) {
-                        switch (errorResult.status) {
-                            case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-                            case 403: growl.error("You're not allowed to do that..."); break;
-                            case 409: growl.error("The request could not be completed because there was a conflict with the existing job."); break;
-                            case 500: growl.error("An internal server error occured while trying restart the target."); break;
-                        }
+                        growl.error(errorResult.data.message);
                     }
                 );
             }
@@ -129,12 +124,7 @@ cracklord.directive('stopbutton', ['growl', 'AuthService', 'USER_ROLES', functio
                     },
                     function error(errorResult) {
                         $scope.target.status = oldstatus;
-                        switch (errorResult.status) {
-                            case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-                            case 403: growl.error("You're not allowed to do that..."); break;
-                            case 409: growl.error("The request could not be completed because there was a conflict."); break;
-                            case 500: growl.error("An internal server error occured while trying to stop."); break;
-                        }
+                        growl.error(errorResult.data.message);
                     }
                 );
             }   
@@ -170,12 +160,7 @@ cracklord.directive('trashbutton', ['growl', 'AuthService', 'USER_ROLES', functi
                         $scope.targetlist.splice(index, 1);
                     }, 
                     function error(errorResult) {
-                        switch (errorResult.status) {
-                            case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-                            case 403: growl.error("You're not allowed to do that..."); break;
-                            case 409: growl.error("The request could not be completed because there was a conflict."); break;
-                            case 500: growl.error("An internal server error occured while trying to delete the target."); break;
-                        } 
+                        growl.error(errorResult.data.message)
                     }
                 );
             }

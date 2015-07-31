@@ -20,12 +20,12 @@ const (
 	RESP_CODE_CREATED_T      = "Created"
 	RESP_CODE_NOCONTENT_T    = "No Content"
 	RESP_CODE_NOTMODIFIED_T  = "Not Modified"
-	RESP_CODE_BADREQ_T       = "Bad Request"
-	RESP_CODE_UNAUTHORIZED_T = "Unauthorized"
-	RESP_CODE_FORBIDDEN_T    = "Forbidden"
+	RESP_CODE_BADREQ_T       = "The system could not process your request, the expected data was incorrect."
+	RESP_CODE_UNAUTHORIZED_T = "You are not authorized to perform that action."
+	RESP_CODE_FORBIDDEN_T    = "You are not authorized to perform that action."
 	RESP_CODE_NOTFOUND_T     = "Not Found"
 	RESP_CODE_CONFLICT_T     = "Conflict"
-	RESP_CODE_ERROR_T        = "Internal Server Error"
+	RESP_CODE_ERROR_T        = "An internal server error occured, please refer to the server log."
 )
 
 // // Response Code Interface

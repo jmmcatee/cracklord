@@ -15,7 +15,7 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 			$scope.manager = data.resourcemanager
 		}, 
 		function(error) {
-			growl.error("Unable to load resource manager parameters: "+error.message);
+			growl.error(error.data.message);
 		}
 	)
 
@@ -37,11 +37,7 @@ cracklord.controller('ConnectResourceController', ['$scope', '$state', 'Resource
 			}, 
 			function(error) {
 				$scope.displayWait = false;
-				switch (error.status) {
-					case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-					case 403: growl.error("You're not allowed to do that..."); break;
-					default: growl.error(error.message); break;
-				}
+				growl.error(error.data.message);
 			}
 		);
 	}	
