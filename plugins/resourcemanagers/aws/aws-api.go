@@ -45,7 +45,7 @@ write_files:
     path: /etc/cracklord/ssl/cracklord_ca.pem
 -   content: |
 ` + crt + `
-    path: /etc/cracklord/ssl/resource.pem
+    path: /etc/cracklord/ssl/resource.crt
 -   content: |
 ` + key + `
     path: /etc/cracklord/ssl/resource.key`
