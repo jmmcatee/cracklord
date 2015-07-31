@@ -9,6 +9,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/queue"
+	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws"
 	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
 	"github.com/unrolled/secure"
 	"github.com/vaughan0/go-ini"
@@ -18,22 +19,9 @@ import (
 	"strconv"
 )
 
-const (
-	QUEUED_INIT_FILE = "/etc/cracklord/queued.conf"
-	CA_CERT_FILE     = "/etc/cracklord/ssl/cracklord_ca.pem"
-	QUEUED_KEY_FILE  = "/etc/cracklord/ssl/queued.key"
-	QUEUED_CERT_FILE = "/etc/cracklord/ssl/queued.crt"
-)
-
 func main() {
 	// Define the flags
 	var confPath = flag.String("conf", "", "Configuration file to use")
-	var webRoot = flag.String("webroot", "./public", "Location of the web server root")
-	var runIP = flag.String("host", "0.0.0.0", "IP to bind to")
-	var runPort = flag.String("port", "443", "Port to bind to")
-	var caCertPath = flag.String("cacert", "", "CA Certficate to use for validation")
-	var KeyPath = flag.String("key", "", "Private key for the resource to use over TLS")
-	var CertPath = flag.String("cert", "", "Certicate to use with the resource for TLS")
 
 	// Parse the flags
 	flag.Parse()
@@ -42,10 +30,10 @@ func main() {
 	var confFile ini.File
 	var confErr error
 	if *confPath == "" {
-		confFile, confErr = ini.LoadFile(QUEUED_INIT_FILE)
-	} else {
-		confFile, confErr = ini.LoadFile(*confPath)
+		log.Error("A configuration file was not defined.")
+		flag.PrintDefaults()
 	}
+	confFile, confErr = ini.LoadFile(*confPath)
 
 	// Build the App Controller
 	var server AppController
@@ -58,6 +46,51 @@ func main() {
 	}
 
 	genConf := confFile.Section("General")
+
+	// Load the CA Certificate, Resource Key, and Resource Certificate from the config
+	webRoot, ok := genConf["WebRoot"]
+	if !ok {
+		log.Error("The WebRoot directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	webRoot = common.StripQuotes(webRoot)
+
+	// Load the CA Certificate, Resource Key, and Resource Certificate from the config
+	caCertPath, ok := genConf["CACertFile"]
+	if !ok {
+		log.Error("The CACertFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	caCertPath = common.StripQuotes(caCertPath)
+
+	KeyPath, ok := genConf["KeyFile"]
+	if !ok {
+		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	KeyPath = common.StripQuotes(KeyPath)
+
+	CertPath, ok := genConf["CertFile"]
+	if !ok {
+		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	CertPath = common.StripQuotes(CertPath)
+
+	runIP, ok := genConf["BindIP"]
+	if !ok {
+		runIP = "0.0.0.0"
+	} else {
+		runIP = common.StripQuotes(runIP)
+	}
+
+	runPort, ok := genConf["BindPort"]
+	if !ok {
+		runPort = "9443"
+	} else {
+		runPort = common.StripQuotes(runPort)
+	}
+
 	switch common.StripQuotes(genConf["LogLevel"]) {
 	case "Debug":
 		log.SetLevel(log.DebugLevel)
@@ -115,8 +148,8 @@ func main() {
 	}
 
 	log.WithFields(log.Fields{
-		"ip":   *runIP,
-		"port": *runPort,
+		"ip":   runIP,
+		"port": runPort,
 	}).Info("Starting queue server up.")
 
 	// Get the Authentication configuration
@@ -127,9 +160,9 @@ func main() {
 		return
 	}
 
-	_, weberr := os.Stat(*webRoot)
+	_, weberr := os.Stat(webRoot)
 	if weberr != nil {
-		println("Error: Public web root '" + *webRoot + "' does not exist.")
+		println("Error: Public web root '" + webRoot + "' does not exist.")
 		return
 	}
 
@@ -227,13 +260,7 @@ func main() {
 	// Configure the Queue
 	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout)
 
-	// Get the CA
-	if *caCertPath == "" {
-		// Use default path to get the CA certificate
-		*caCertPath = CA_CERT_FILE
-	}
-
-	caBytes, err := ioutil.ReadFile(*caCertPath)
+	caBytes, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
 		println("ERROR: " + err.Error())
 	}
@@ -241,14 +268,7 @@ func main() {
 	caPool := x509.NewCertPool()
 	caPool.AppendCertsFromPEM(caBytes)
 
-	// Get the certificates and private key
-	if *CertPath == "" || *KeyPath == "" {
-		// The private key and/or the certificate were not given so go with defaults
-		*KeyPath = QUEUED_KEY_FILE
-		*CertPath = QUEUED_CERT_FILE
-	}
-
-	tlscert, err := tls.LoadX509KeyPair(*CertPath, *KeyPath)
+	tlscert, err := tls.LoadX509KeyPair(CertPath, KeyPath)
 
 	// Setup TLS connection
 	tlsconfig := &tls.Config{}
@@ -280,22 +300,42 @@ func main() {
 	})
 
 	// SETUP RESOURCE MANAGERS
-	// Setup Direct Connect Manager
-	resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
-	server.Q.AddResourceManager(resmgr_dc)
+	// Get the Authentication configuration
+	confResMgr := confFile.Section("ResourceManagers")
+	if confResMgr == nil {
+		println("Error: Resource manager configuration is required.")
+		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+		return
+	}
+
+	// First, let's setup the direct connect manager if we have anything there
+	if _, ok := confResMgr["directconnect"]; ok {
+		resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
+		server.Q.AddResourceManager(resmgr_dc)
+	}
+
+	// Now let's setup the AWS manager if we have a config file
+	if resDC, ok := confResMgr["aws"]; ok {
+		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
+		} else {
+			server.Q.AddResourceManager(resmgr_aws)
+		}
+	}
 
 	// Build the Negroni handler
 	n := negroni.New(negroni.NewRecovery(),
 		cracklog.NewNegroniLogger(),
-		negroni.NewStatic(http.Dir(*webRoot)))
+		negroni.NewStatic(http.Dir(webRoot)))
 
 	n.Use(negroni.HandlerFunc(secureMiddleware.HandlerFuncWithNext))
 	n.UseHandler(server.Router())
 	log.Debug("Negroni handler started.")
 
-	listen, err := tls.Listen("tcp", *runIP+":"+*runPort, tlsconfig)
+	listen, err := tls.Listen("tcp", runIP+":"+runPort, tlsconfig)
 	if err != nil {
-		println("ERROR: Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
+		println("ERROR: Unable to bind to '" + runIP + ":" + runPort + "':" + err.Error())
 		return
 	}
 

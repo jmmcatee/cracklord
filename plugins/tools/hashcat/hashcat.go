@@ -1,4 +1,4 @@
-package hashcatdict
+package hashcat
 
 import (
 	"errors"
@@ -18,6 +18,8 @@ type hcConfig struct {
 	RulesOrder   []string
 	HashTypes    map[string]string
 	HashOrder    []string
+	CharSet      map[string]string
+	CharSetOrder []string
 }
 
 var config = hcConfig{
@@ -30,6 +32,8 @@ var config = hcConfig{
 	RulesOrder:   []string{},
 	HashTypes:    map[string]string{},
 	HashOrder:    []string{},
+	CharSet:      map[string]string{},
+	CharSetOrder: []string{},
 }
 
 var supportedHash = map[string]string{
@@ -327,10 +331,10 @@ var supportedHashInt = map[string]int{
 }
 
 /*
-	Read the hascatdict init file to setup hashcatdict
+	Read the hascatdict init file to setup hashcat
 */
 func Setup(path string) error {
-	log.Debug("Setting up hashcatdict tool")
+	log.Debug("Setting up hashcat tool")
 	// Join the path provided
 	confFile, err := ini.LoadFile(path)
 	if err != nil {
@@ -374,7 +378,7 @@ func Setup(path string) error {
 
 	// Get the rule section
 	rules := confFile.Section("Rules")
-	if len(dicts) == 0 {
+	if len(rules) == 0 {
 		// Nothing retrieved, so return error
 		log.Debug("No 'rules' configuration section.")
 		return errors.New("No \"Rules\" configuration section.")
@@ -387,73 +391,101 @@ func Setup(path string) error {
 		config.Rules[key] = value
 	}
 
+	// Store the character sets configured for brute forcing in the config file
+	charset := confFile.Section("BruteCharset")
+	if len(charset) == 0 {
+		// Nothing retrieved, so return error
+		log.Debug("No 'charset' configuration section.")
+		return errors.New("No \"charset\" configuration section.")
+	}
+	for key, value := range charset {
+		log.WithFields(log.Fields{
+			"name": key,
+			"path": value,
+		}).Debug("Added charset to hashcat")
+		config.CharSet[key] = value
+	}
+
 	// Setup the hashes
 	config.HashTypes = supportedHash
 
 	// Setup sorted order for consistency
-	for key, _ := range config.Dictionaries {
-		config.DictOrder = append(config.DictOrder, key)
-	}
-	sort.Strings(config.DictOrder)
+	config.DictOrder = getSortedKeys(config.Dictionaries)
+	config.RulesOrder = getSortedKeys(config.Rules)
+	config.HashOrder = getSortedKeys(config.HashTypes)
+	config.CharSetOrder = getSortedKeys(config.CharSet)
 
-	for key, _ := range config.Rules {
-		config.RulesOrder = append(config.RulesOrder, key)
-	}
-	sort.Strings(config.RulesOrder)
-
-	for key, _ := range config.HashTypes {
-		config.HashOrder = append(config.HashOrder, key)
-	}
-	sort.Strings(config.HashOrder)
-
-	log.Info("Hashcatdict tool successfully setup")
+	log.Info("Hashcat tool successfully setup")
 
 	return nil
 }
 
-type hashcatDictTooler struct {
+type hashcatTooler struct {
 	toolUUID string
 }
 
-func (h *hashcatDictTooler) Name() string {
-	return "Hashcat Dictionary Attack"
+func (h *hashcatTooler) Name() string {
+	return "Hashcat"
 }
 
-func (h *hashcatDictTooler) Type() string {
-	return "Dictionary"
+func (h *hashcatTooler) Type() string {
+	return "Password Cracking"
 }
 
-func (h *hashcatDictTooler) Version() string {
-	return "1.33"
+func (h *hashcatTooler) Version() string {
+	return "1.36"
 }
 
-func (h *hashcatDictTooler) UUID() string {
+func (h *hashcatTooler) UUID() string {
 	return h.toolUUID
 }
 
-func (h *hashcatDictTooler) SetUUID(s string) {
+func (h *hashcatTooler) SetUUID(s string) {
 	h.toolUUID = s
 }
 
-func (h *hashcatDictTooler) Parameters() string {
+func (h *hashcatTooler) Parameters() string {
 	params := `{
 		"form": [
-		  "algorithm",
-		  "dictionaries",
-		  "rules",
-		  {
-		    "key": "hashes",
-		    "type": "textarea",
-		    "placeholder": "Add in Hashcat required format"
-		  }
+		    "algorithm",
+		    {
+		        "type": "fieldset",
+		        "title": "Attack Type",
+		        "items": [
+		            {
+		                "type": "tabs",
+		                "tabs": [
+		                    {
+		                        "title": "Dictionary",
+		                        "items": [
+		                            "dict_dictionaries",
+		                            "dict_rules"
+		                        ]
+		                    },
+		                    {
+		                        "title": "Brute Force",
+		                        "items": [
+		                            "brute_charset",
+		                            "brute_length"
+		                        ]
+		                    }
+		                ]
+		            }
+		        ]
+		    },
+		    {
+		        "type": "help",
+		        "helpvalue": "<hr>"
+		    },
+		    {
+		        "key": "hashes",
+		        "type": "textarea",
+		        "placeholder": "Add in Hashcat required format"
+		    }
 		],
 		"schema": {
 		"type": "object",
 		  "properties": {
-		    "name": {
-		      "title": "Name",
-		      "type": "string"
-		    },
 		    "algorithm": {
 		      "title": "Select hash type to attack",
 		      "type": "string",
@@ -472,7 +504,7 @@ func (h *hashcatDictTooler) Parameters() string {
 	params += `
 		]
 	   },
-	    "dictionaries": {
+	    "dict_dictionaries": {
 	      "title": "Select dictionary to use",
 	      "type": "string",
 	      "enum": [ `
@@ -491,7 +523,7 @@ func (h *hashcatDictTooler) Parameters() string {
 	params += `
       ]
     },
-    "rules": {
+    "dict_rules": {
       "title": "Select rule file to use",
       "type": "string",
       "enum": [ `
@@ -509,34 +541,64 @@ func (h *hashcatDictTooler) Parameters() string {
 
 	params += ` ]
 	    },
-	    "customdictadd": {
-	      "title": "Custom Dictionary Additions",
-	      "type": "string"
-	    },
+		 "brute_charset": {
+            "title": "Select character set",
+            "type": "string",
+            "enum": [`
+
+	first = true
+	for _, key := range config.CharSetOrder {
+		if !first {
+			params += `,`
+		}
+
+		params += `"` + key + `"`
+
+		first = false
+	}
+
+	params += `]
+        },
+        "brute_length": {
+            "title": "Select the length of the charset",
+            "type": "string",
+            "default": "8"
+        },
 	    "hashes": {
 	      "title": "Hashes",
 	      "type": "string"
 	    }
 	  },
 	  "required": [
-	    "name",
 	    "algorithm",
-	    "dictionaries",
 	    "hashes"
 	  ]
-	} } `
+	}
+}`
 
 	return params
 }
 
-func (h *hashcatDictTooler) Requirements() string {
+func (h *hashcatTooler) Requirements() string {
 	return common.RES_GPU
 }
 
-func (h *hashcatDictTooler) NewTask(job common.Job) (common.Tasker, error) {
+func (h *hashcatTooler) NewTask(job common.Job) (common.Tasker, error) {
 	return newHashcatTask(job)
 }
 
 func NewTooler() common.Tooler {
-	return &hashcatDictTooler{}
+	return &hashcatTooler{}
+}
+
+func getSortedKeys(src map[string]string) []string {
+	keys := make([]string, len(src))
+
+	i := 0
+	for key, _ := range src {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }

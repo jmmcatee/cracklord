@@ -250,7 +250,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithField("error", err.Error()).Error("There was a problem parsing tool form schema JSON.")
 		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
+		resp.Message = "There was an error parsing the tool form information: " + err.Error()
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
@@ -382,7 +382,7 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 	if !ok {
 		// The resource manager was not found, let's return that in proper HTTP
 		resp.Status = RESP_CODE_NOTFOUND
-		resp.Message = RESP_CODE_NOTFOUND_T
+		resp.Message = "That resource manager could not be found."
 
 		rw.WriteHeader(RESP_CODE_NOTFOUND)
 		respJSON.Encode(resp)
@@ -406,7 +406,10 @@ func (a *AppController) GetResourceManager(rw http.ResponseWriter, r *http.Reque
 	// Write out the HTTP OK header
 	rw.WriteHeader(RESP_CODE_OK)
 	//Encode and write out our response
-	respJSON.Encode(resp)
+	err := respJSON.Encode(resp)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Unable to encode resource manager details.")
+	}
 
 	log.WithField("id", resmgr.SystemName()).Info("Detailed information on resource manager sent to API")
 }
@@ -517,7 +520,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err.Error())
 		resp.Status = RESP_CODE_BADREQ
-		resp.Message = RESP_CODE_BADREQ_T
+		resp.Message = "An error occured when trying to create the job: " + err.Error()
 
 		rw.WriteHeader(RESP_CODE_BADREQ)
 		respJSON.Encode(resp)
@@ -659,7 +662,7 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 		err = a.Q.PauseJob(jobid)
 		if err != nil {
 			resp.Status = RESP_CODE_ERROR
-			resp.Message = RESP_CODE_ERROR_T
+			resp.Message = "Unable to pause the job: " + err.Error()
 
 			rw.WriteHeader(RESP_CODE_ERROR)
 			respJSON.Encode(resp)
@@ -670,7 +673,7 @@ func (a *AppController) UpdateJob(rw http.ResponseWriter, r *http.Request) {
 		err = a.Q.QuitJob(jobid)
 		if err != nil {
 			resp.Status = RESP_CODE_ERROR
-			resp.Message = RESP_CODE_ERROR_T
+			resp.Message = "Unable to stop the job: " + err.Error()
 
 			rw.WriteHeader(RESP_CODE_ERROR)
 			respJSON.Encode(resp)
@@ -748,7 +751,7 @@ func (a *AppController) DeleteJob(rw http.ResponseWriter, r *http.Request) {
 	err := a.Q.RemoveJob(jobid)
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
+		resp.Message = "An error occured while trying to delete a job: " + err.Error()
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
@@ -931,7 +934,7 @@ func (a *AppController) CreateResource(rw http.ResponseWriter, r *http.Request) 
 	// If there was an error returned by the resource manager, let's go ahead and return an error to the user.
 	if err != nil {
 		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
+		resp.Message = "An error occured when trying to add the resource: " + err.Error()
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)
@@ -1331,7 +1334,7 @@ func (a *AppController) ReorderQueue(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		//If there was an error, send the code to the API
 		resp.Status = RESP_CODE_ERROR
-		resp.Message = RESP_CODE_ERROR_T
+		resp.Message = err.Error()
 
 		rw.WriteHeader(RESP_CODE_ERROR)
 		respJSON.Encode(resp)

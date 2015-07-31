@@ -1,4 +1,4 @@
-package hashcatdict
+package hashcat
 
 import (
 	"bufio"
@@ -111,24 +111,28 @@ type hascatTasker struct {
 	mux sync.Mutex
 }
 
+func createWorkingDir(workdir, uuid string) (string, error) {
+	// Build a working directory for this job
+	fullpath := filepath.Join(workdir, uuid)
+	err := os.Mkdir(fullpath, 0700)
+
+	if err != nil {
+		// Couldn't make a directory so kill the job
+		return "", errors.New("Unable to create working directory: " + err.Error())
+	}
+	log.WithField("path", fullpath).Debug("Tool (hashcat): Working directory created")
+
+	return fullpath, nil
+}
+
 func newHashcatTask(j common.Job) (common.Tasker, error) {
 	h := hascatTasker{}
 	h.waitChan = make(chan struct{}, 1)
 
 	h.job = j
 
-	// Build a working directory for this job
-	h.wd = filepath.Join(config.WorkDir, h.job.UUID)
-	err := os.Mkdir(h.wd, 0700)
-	if err != nil {
-		// Couldn't make a directory so kill the job
-		log.WithFields(log.Fields{
-			"path":  h.wd,
-			"error": err.Error(),
-		}).Error("hashcatdict could not create a working directory")
-		return &hascatTasker{}, errors.New("Could not create a working directory.")
-	}
-	log.WithField("path", h.wd).Debug("Working directory created")
+	var err error
+	h.wd, err = createWorkingDir(config.WorkDir, h.job.UUID)
 
 	// Build the arguements for hashcat
 	args := []string{}
@@ -142,32 +146,6 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		}).Error("Could not find the algorithm provided")
 		return &hascatTasker{}, errors.New("Could not find the algorithm provided.")
 	}
-	log.WithField("algorithm", htype).Debug("Added algorithm")
-
-	args = append(args, "-m", htype)
-
-	// Add the rule file to use if one was given
-	ruleKey, ok := h.job.Parameters["rules"]
-	if ok {
-		// We have a rule file, check for blank
-		if ruleKey != "" {
-			rulePath, ok := config.Rules[ruleKey]
-			if ok {
-				args = append(args, "-r", rulePath)
-			}
-		}
-	}
-	log.WithField("rules", ruleKey).Debug("Added rules")
-
-	args = append(args, "--status", "--status-timer=10", "--force")
-
-	// Add an output file
-	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt"))
-
-	//Append config file arguments
-	if config.Arguments != "" {
-		args = append(args, config.Arguments)
-	}
 
 	// Take the hashes given and create a file
 	hashFile, err := os.Create(filepath.Join(h.wd, "hashes.txt"))
@@ -178,65 +156,122 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		}).Error("Unable to create hash file")
 		return &hascatTasker{}, err
 	}
-	log.WithField("hashfile", hashFile).Debug("Created hashfile")
-
 	hashFile.WriteString(h.job.Parameters["hashes"])
 
+	// Calculate the total number of input hashes that were provided
 	var lines int64
 	linescanner := bufio.NewScanner(hashFile)
 	for linescanner.Scan() {
 		lines++
 	}
-
 	h.job.TotalHashes = lines
 
-	// Append that file to the arguments
-	args = append(args, filepath.Join(h.wd, "hashes.txt"))
-
+	/****************************************************************************
+	* DICTIONARY ATTACK
+	****************************************************************************/
 	// Check for dictionary given
-	dictKey, ok := h.job.Parameters["dictionaries"]
+	var dictPath string
+	dictKey, ok := h.job.Parameters["dict_dictionaries"]
 	if !ok {
-		log.Error("No dictionary was provided.")
-		return &hascatTasker{}, errors.New("No dictionary provided.")
+		log.Debug("No dictionary was provided.")
+
+		dictPath, ok = config.Dictionaries[dictKey]
+		if !ok {
+			log.Debug("Dictionary key provided was not present")
+		}
 	}
 
-	dictPath, ok := config.Dictionaries[dictKey]
-	if !ok {
-		log.Error("Dictionary key provided was not present")
-		return &hascatTasker{}, errors.New("Dictionary key provided was not present.")
+	// Add the rule file to use if one was given
+	var ruleFile string
+	ruleKey, ok := h.job.Parameters["dict_rules"]
+	if ok {
+		// We have a rule file, check for blank
+		if ruleKey != "" {
+			rulePath, ok := config.Rules[ruleKey]
+			if ok {
+				ruleFile = rulePath
+			}
+		}
 	}
 
 	// Check for additions to the dictionary
-	if h.job.Parameters["customdictadd"] != "" {
-		// We need to prepend the values here to a dictionary
-		newDictPath := filepath.Join(h.wd, "custom-dict-"+dictKey+".txt")
-		newDict, err := os.Create(newDictPath)
-		if err != nil {
-			log.Error("Custom dictionary file could not be created.")
-			return &hascatTasker{}, errors.New("Custom dictionary file could not be created.")
+	/*
+		if h.job.Parameters["customdictadd"] != "" {
+			// We need to prepend the values here to a dictionary
+			newDictPath := filepath.Join(h.wd, "custom-dict-"+dictKey+".txt")
+			newDict, err := os.Create(newDictPath)
+			if err != nil {
+				log.Error("Custom dictionary file could not be created.")
+				return &hascatTasker{}, errors.New("Custom dictionary file could not be created.")
+			}
+
+			// Copy the user content into the file
+			newDict.WriteString(h.job.Parameters["customdictadd"])
+
+			// Get the contents of the dictionary and append it to the new file
+			dictFile, err := os.Open(dictPath)
+			if err != nil {
+				log.Error("Dictionary could not be opened to copy to the custom dictionary.")
+				return &hascatTasker{}, errors.New("Dictionary could not be opened to copy to the custom dictionary.")
+			}
+
+			io.Copy(newDict, dictFile)
+
+			// Finally let's change the dictPath to the new file
+			dictPath = newDictPath
+		}*/
+
+	/****************************************************************************
+	* BRUTE FORCE ATTACK
+	****************************************************************************/
+	var bruteCharSet string
+	charsetKey, ok := h.job.Parameters["brute_charset"]
+	if !ok {
+		log.Debug("No brute force charset was provided")
+
+		bruteCharSet, ok = config.CharSet[charsetKey]
+		if !ok {
+			log.Debug("Brute force charset provided does not exist")
 		}
-
-		// Copy the user content into the file
-		newDict.WriteString(h.job.Parameters["customdictadd"])
-
-		// Get the contents of the dictionary and append it to the new file
-		dictFile, err := os.Open(dictPath)
-		if err != nil {
-			log.Error("Dictionary could not be opened to copy to the custom dictionary.")
-			return &hascatTasker{}, errors.New("Dictionary could not be opened to copy to the custom dictionary.")
-		}
-
-		io.Copy(newDict, dictFile)
-
-		// Finally let's change the dictPath to the new file
-		dictPath = newDictPath
 	}
 
-	// Add dictionary to arguments
-	log.WithField("dictionary", dictPath).Debug("Dictionary added")
-	args = append(args, dictPath)
+	var bruteLength string
+	bruteLengthChar, ok := h.job.Parameters["brute_length"]
+	if !ok {
+		log.Debug("No brute force length was provided.")
 
-	log.WithField("arguments", args).Debug("Arguments complete")
+		bruteLengthInt, err := strconv.Atoi(bruteLengthChar)
+		if err != nil {
+			log.Debug("Unable to parse the length of the brute force length provided")
+		} else {
+			for i := 0; i < bruteLengthInt; i++ {
+				bruteLength += "?1"
+			}
+		}
+	}
+
+	// Process the arguments for the command and add them together
+	args = append(args, "-m", htype)                                    // Algorithm
+	args = append(args, "--status", "--status-timer=10", "--force")     // Status type and forcing of output
+	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt")) // Output file
+
+	if config.Arguments != "" {
+		args = append(args, config.Arguments) // Config file arguments
+	}
+
+	if ruleFile != "" && dictPath != "" {
+		args = append(args, "-r", ruleFile)                    // Rules file
+		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
+		args = append(args, dictPath)                          // Dictionary file
+	} else if bruteCharSet != "" && bruteLength != "" {
+		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
+		args = append(args, "-1", bruteCharSet)
+		args = append(args, bruteLength)
+	} else {
+		return &hascatTasker{}, errors.New("Arguments were not provided to allow running either a brute force or dictionary attack.")
+	}
+
+	log.WithField("arguments", args).Debug("Tool (hashcat): Arguments finalized and built.")
 
 	// Get everything except the session identifier because the Resume command will be different
 	h.start = append(h.start, "--session="+h.job.UUID)
@@ -422,14 +457,14 @@ func (v *hascatTasker) Run() error {
 	// Check that we have not already finished this job
 	done := v.job.Status == common.STATUS_DONE || v.job.Status == common.STATUS_QUIT || v.job.Status == common.STATUS_FAILED
 	if done {
-		log.WithField("Status", v.job.Status).Debug("Unable to start hashcatdict job")
+		log.WithField("Status", v.job.Status).Debug("Unable to start hashcat job")
 		return errors.New("Job already finished.")
 	}
 
 	// Check if this job is running
 	if v.job.Status == common.STATUS_RUNNING {
 		// Job already running so return no errors
-		log.Debug("hashcatdict job already running, doing nothing")
+		log.Debug("hashcat job already running, doing nothing")
 		return nil
 	}
 
@@ -509,7 +544,7 @@ func (v *hascatTasker) Run() error {
 
 // Pause the hashcat run
 func (v *hascatTasker) Pause() error {
-	log.WithField("task", v.job.UUID).Debug("Attempting to pause hashcatdict task")
+	log.WithField("task", v.job.UUID).Debug("Attempting to pause hashcat task")
 
 	// Call status to update the job internals before pausing
 	v.Status()
@@ -540,7 +575,7 @@ func (v *hascatTasker) Pause() error {
 }
 
 func (v *hascatTasker) Quit() common.Job {
-	log.WithField("task", v.job.UUID).Debug("Attempting to quit hashcatdict task")
+	log.WithField("task", v.job.UUID).Debug("Attempting to quit hashcat task")
 
 	// Call status to update the job internals before quiting
 	v.Status()

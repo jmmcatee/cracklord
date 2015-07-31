@@ -57,13 +57,7 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 			},
 			//Our error handler
 			function(error) {
-				switch (error.status) {
-					case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-					case 403: growl.warning("You're not allowed to do that..."); break;
-					case 404: growl.error("That object was not found."); break;
-					case 409: growl.error("The request could not be completed because there was a conflict with the existing resource."); break;
-					case 500: growl.error("An internal server error occured while trying to add the resource."); break;
-				}
+				growl.error(error.data.message)
 			}
 		);
 	}
@@ -116,13 +110,7 @@ cracklord.directive('jobReorderConfirm', ['QueueService', 'growl', function jobR
 						$scope.reload();
 					})
 					.error(function(data, status, headers, config) {
-						switch (status) {
-							case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-							case 403: growl.warning("You're not allowed to do that..."); break;
-							case 404: growl.error("Somehow the queue object was not found... this is bad."); break;
-							case 409: growl.error("The request could not be completed because there was a conflict."); break;
-							case 500: growl.error("An internal server error occured while trying to reorder the queue."); break;
-						}
+						growl.error(data.message);
 						$scope.dragstatus = false;
 					});
 			}
@@ -207,7 +195,7 @@ cracklord.directive('jobDetail', ['JobsService', 'ToolsService', 'growl', 'Resou
 							resolve();
 						},
 						function error(error) {
-							growl.error("There was a problem loading job details.")
+							growl.error(error.data.message);
 							$($element).find('div.slider').slideUp("slow", function() {
 								$element.parent().hide();
 							});
@@ -271,7 +259,7 @@ cracklord.controller('CreateJobController', ['$scope', '$state', 'ToolsService',
 				$scope.tool = data.tool;
 			}, 
 			function(error) {
-				growl.error("An error occured while trying to load tool information.");
+				growl.error(error.data.message);
 			}
 		);
 	}
@@ -289,13 +277,7 @@ cracklord.controller('CreateJobController', ['$scope', '$state', 'ToolsService',
 				$state.transitionTo('jobs');
 			}, 
 			function(error) {
-				switch (error.status) {
-					case 400: growl.error("You sent bad data, check your input and if it's correct get in touch with us on github"); break;
-					case 403: growl.warning("You're not allowed to do that..."); break;
-					case 404: growl.error("That object was not found."); break;
-					case 409: growl.error("The request could not be completed because there was a conflict with the existing resource."); break;
-					case 500: growl.error("An internal server error occured while trying to add the resource."); break;
-				}
+				growl.error(error.data.message);
 			}
 		);
 	}	
