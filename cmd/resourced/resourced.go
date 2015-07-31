@@ -8,7 +8,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
-	"github.com/jmmcatee/cracklord/plugins/tools/hashcatdict"
+	"github.com/jmmcatee/cracklord/plugins/tools/hashcat"
 	"github.com/jmmcatee/cracklord/plugins/tools/nmap"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimercpu"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimergpu"
@@ -107,9 +107,9 @@ func main() {
 		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
-	if common.StripQuotes(pluginConf["hashcatdict"]) != "" {
-		hashcatdict.Setup(common.StripQuotes(pluginConf["hashcatdict"]))
-		resQueue.AddTool(hashcatdict.NewTooler())
+	if common.StripQuotes(pluginConf["hashcat"]) != "" {
+		hashcat.Setup(common.StripQuotes(pluginConf["hashcat"]))
+		resQueue.AddTool(hashcat.NewTooler())
 	}
 	if common.StripQuotes(pluginConf["nmap"]) != "" {
 		nmap.Setup(common.StripQuotes(pluginConf["nmap"]))
