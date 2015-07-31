@@ -229,7 +229,7 @@
               <div class="row plugin">
                 <div class="col-sm-3">
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
-                  <span class="author">Author(s):
+                  <span class="author">Author{{plugin.authors.length > 1 ? 's': ''}}:
                     <span ng-repeat="author in plugin.authors"><a href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>{{$last ? '' : ','}} </span>
                   </span>
                 </div>
@@ -244,7 +244,7 @@
               <div class="row plugin">
                 <div class="col-sm-3">
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
-                  <span class="author">Author(s):
+                  <span class="author">Author{{plugin.authors.length > 1 ? 's': ''}}:
                     <a ng-repeat="author in plugin.authors" href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>
                   </span>
                 </div>
