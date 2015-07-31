@@ -18,24 +18,12 @@ import (
 	"os"
 )
 
-const (
-	RESOURCED_INIT_FILE = "/etc/cracklord/resourced.conf"
-	CA_CERT_FILE        = "/etc/cracklord/ssl/cracklord_ca.pem"
-	RESOURCED_KEY_FILE  = "/etc/cracklord/ssl/resourced.key"
-	RESOURCED_CERT_FILE = "/etc/cracklord/ssl/resourced.crt"
-)
-
 func main() {
 	//Set our logger to STDERR and level
 	log.SetOutput(os.Stderr)
 
 	// Define the flags
 	var confPath = flag.String("conf", "", "Configuration file to use")
-	var runIP = flag.String("host", "0.0.0.0", "IP to bind to")
-	var runPort = flag.String("port", "9443", "Port to bind to")
-	var caCertPath = flag.String("cacert", "", "CA Certficate to use for validation")
-	var resKeyPath = flag.String("key", "", "Private key for the resource to use over TLS")
-	var resCertPath = flag.String("cert", "", "Certicate to use with the resource for TLS")
 
 	// Parse the flags
 	flag.Parse()
@@ -44,10 +32,11 @@ func main() {
 	var confFile ini.File
 	var confError error
 	if *confPath == "" {
-		confFile, confError = ini.LoadFile(RESOURCED_INIT_FILE)
-	} else {
-		confFile, confError = ini.LoadFile(*confPath)
+		log.Error("A configuration file was not included on the command line.")
+		flag.PrintDefaults()
+		return
 	}
+	confFile, confError = ini.LoadFile(*confPath)
 
 	if confError != nil {
 		log.Error("Unable to load configuration file:" + confError.Error())
@@ -62,6 +51,42 @@ func main() {
 		log.Error("There was a problem parsing the 'General' section of the configuration file.")
 		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
+	}
+
+	// Load the CA Certificate, Resource Key, and Resource Certificate from the config
+	caCertPath, ok := resConf["CACertFile"]
+	if !ok {
+		log.Error("The CACertFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	caCertPath = common.StripQuotes(caCertPath)
+
+	resKeyPath, ok := resConf["KeyFile"]
+	if !ok {
+		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	resKeyPath = common.StripQuotes(resKeyPath)
+
+	resCertPath, ok := resConf["CertFile"]
+	if !ok {
+		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	resCertPath = common.StripQuotes(resCertPath)
+
+	runIP, ok := resConf["BindIP"]
+	if !ok {
+		runIP = "0.0.0.0"
+	} else {
+		runIP = common.StripQuotes(runIP)
+	}
+
+	runPort, ok := resConf["BindPort"]
+	if !ok {
+		runPort = "9443"
+	} else {
+		runPort = common.StripQuotes(runPort)
 	}
 
 	switch common.StripQuotes(resConf["LogLevel"]) {
@@ -93,8 +118,8 @@ func main() {
 
 	log.WithFields(log.Fields{
 		"conf": *confPath,
-		"ip":   *runIP,
-		"port": *runPort,
+		"ip":   runIP,
+		"port": runPort,
 	}).Debug("Config file setup")
 
 	// Create a resource queue
@@ -128,31 +153,20 @@ func main() {
 	// Register the RPC endpoints
 	res.Register(&resQueue)
 
-	// Get the CA
-	if *caCertPath == "" {
-		// Use default path to get the CA certificate
-		*caCertPath = CA_CERT_FILE
-	}
-
-	caBytes, err := ioutil.ReadFile(*caCertPath)
+	caBytes, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
 		log.Error("Unable to read CA certificate: " + err.Error())
 		return
 	}
 
+	// Load the CA file
 	caPool := x509.NewCertPool()
 	caPool.AppendCertsFromPEM(caBytes)
 
-	// Get the certificates and private key
-	if *resCertPath == "" || *resKeyPath == "" {
-		// The private key and/or the certificate were not given so go with defaults
-		*resKeyPath = RESOURCED_KEY_FILE
-		*resCertPath = RESOURCED_CERT_FILE
-	}
-
-	tlscert, err := tls.LoadX509KeyPair(*resCertPath, *resKeyPath)
+	// Load the cert and key files
+	tlscert, err := tls.LoadX509KeyPair(resCertPath, resKeyPath)
 	if err != nil {
-		log.Error("Unable to load the resource certificate or key file: " + err.Error())
+		log.Error("There was an error loading the resource key or certificate files: " + err.Error())
 		return
 	}
 
@@ -174,15 +188,15 @@ func main() {
 	tlsconfig.MinVersion = tls.VersionTLS12
 	tlsconfig.SessionTicketsDisabled = true
 
-	listen, err := tls.Listen("tcp", *runIP+":"+*runPort, tlsconfig)
+	listen, err := tls.Listen("tcp", runIP+":"+runPort, tlsconfig)
 	if err != nil {
-		log.Error("Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
+		log.Error("Unable to bind to '" + runIP + ":" + runPort + "':" + err.Error())
 		return
 	}
 
 	log.WithFields(log.Fields{
-		"ip":   *runIP,
-		"port": *runPort,
+		"ip":   runIP,
+		"port": runPort,
 	}).Info("Listening for queueserver connection.")
 
 	// Accept only one connection at a time
