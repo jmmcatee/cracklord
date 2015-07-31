@@ -230,7 +230,7 @@
                 <div class="col-sm-3">
                   <h5><a href="{{plugin.link}}">{{plugin.name}}</a></h5>
                   <span class="author">Author(s):
-                    <a ng-repeat="author in plugin.authors" href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>
+                    <span ng-repeat="author in plugin.authors"><a href="{{author.link}}"><i class="fa fa-{{author.icon}}"></i> {{author.name}}</a>{{$last ? '' : ','}} </span>
                   </span>
                 </div>
                 <div class="col-sm-9" ng-bind-html="plugin.desc | unsafe"></div>
