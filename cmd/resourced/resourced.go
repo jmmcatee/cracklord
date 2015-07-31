@@ -50,8 +50,8 @@ func main() {
 	}
 
 	if confError != nil {
-		println("ERROR: Unable to " + confError.Error())
-		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+		log.Error("Unable to load configuration file:" + confError.Error())
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
@@ -59,8 +59,8 @@ func main() {
 	resConf := confFile.Section("General")
 	if len(resConf) == 0 {
 		// We do not have configuration data to quit
-		println("ERROR: There was a problem with your configuration file.")
-		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+		log.Error("There was a problem parsing the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 
@@ -85,7 +85,7 @@ func main() {
 	if lf != "" {
 		hook, err := cracklog.NewFileHook(lf)
 		if err != nil {
-			println("ERROR: Unable to open log file: " + err.Error())
+			log.Error("Unable to open log file: " + err.Error())
 		} else {
 			log.AddHook(hook)
 		}
@@ -103,8 +103,8 @@ func main() {
 	//Get the configuration section for plugins
 	pluginConf := confFile.Section("Plugins")
 	if len(pluginConf) == 0 {
-		println("ERROR: No plugin section in the resource server config file.")
-		println("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+		log.Error("No plugin section in the resource server config file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 		return
 	}
 	if common.StripQuotes(pluginConf["hashcat"]) != "" {
@@ -136,7 +136,8 @@ func main() {
 
 	caBytes, err := ioutil.ReadFile(*caCertPath)
 	if err != nil {
-		println("ERROR: " + err.Error())
+		log.Error("Unable to read CA certificate: " + err.Error())
+		return
 	}
 
 	caPool := x509.NewCertPool()
@@ -150,6 +151,10 @@ func main() {
 	}
 
 	tlscert, err := tls.LoadX509KeyPair(*resCertPath, *resKeyPath)
+	if err != nil {
+		log.Error("Unable to load the resource certificate or key file: " + err.Error())
+		return
+	}
 
 	// Setup TLS connection
 	tlsconfig := &tls.Config{}
@@ -171,7 +176,7 @@ func main() {
 
 	listen, err := tls.Listen("tcp", *runIP+":"+*runPort, tlsconfig)
 	if err != nil {
-		println("ERROR: Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
+		log.Error("Unable to bind to '" + *runIP + ":" + *runPort + "':" + err.Error())
 		return
 	}
 
@@ -184,7 +189,7 @@ func main() {
 	for {
 		conn, err := listen.Accept()
 		if err != nil {
-			println("ERROR: Failed to accept connection: " + err.Error())
+			log.Error("Failed to accept connection: " + err.Error())
 			return
 		}
 
