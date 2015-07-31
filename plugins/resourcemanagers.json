@@ -3,8 +3,24 @@
 		"name": "Direct Connect",
 		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/resourcemanagers/directconnect",
 		"desc": "Allows for directly connecting resources to the queue.  This is for resources that are physically owned and controlled and need to always be connected.",
-		"author_name": "emperorcow",
-		"author_link": "https://github.com/emperorcow/",
-		"author_icon": "github"
+		"authors": [
+			{
+				"name": "emperorcow",
+				"link": "https://github.com/emperorcow/",
+				"icon": "github-alt"
+			}
+		]
+	},
+	{
+		"name": "Amazon Web Services",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/resourcemanagers/aws",
+		"desc": "Automatically creates AWS EC2 instances, connecting them to the queue to take your cracking into the cloud.  Tracks instance use and will terminate them if unused to control costs.  A default community AMI is available or a custom one can be used. ",
+		"authors": [
+			{
+				"name": "emperorcow",
+				"link": "https://github.com/emperorcow/",
+				"icon": "github-alt"
+			}
+		]
 	}
 ]
