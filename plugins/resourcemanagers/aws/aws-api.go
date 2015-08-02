@@ -25,7 +25,7 @@ func getEC2Client(key, private, region string) *ec2.EC2 {
 	creds := credentials.NewStaticCredentials(key, private, "")
 
 	return ec2.New(&aws.Config{
-		Region:      region,
+		Region:      aws.String(region),
 		Credentials: creds,
 	})
 }
@@ -55,14 +55,14 @@ write_files:
 	// Build our request, converting the go base types into the pointers required by the SDK
 	instanceReq := ec2.RunInstancesInput{
 		ImageID:      aws.String(amiid),
-		MaxCount:     aws.Long(int64(number)),
-		MinCount:     aws.Long(int64(number)),
+		MaxCount:     aws.Int64(int64(number)),
+		MinCount:     aws.Int64(int64(number)),
 		InstanceType: aws.String(instancetype),
 		// Because we're making this VPC aware, we also have to include a network interface specification
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
 			{
-				AssociatePublicIPAddress: aws.Boolean(true),
-				DeviceIndex:              aws.Long(0),
+				AssociatePublicIPAddress: aws.Bool(true),
+				DeviceIndex:              aws.Int64(0),
 				SubnetID:                 aws.String(subnet),
 				Groups: []*string{
 					aws.String(secgrpid),
@@ -205,7 +205,7 @@ func getAllRegions(creds *credentials.Credentials) ([]*ec2.Region, error) {
 	//Make a connection using our credentials. We will make a separate connection
 	//beacuse it's just a temp one to gather regions.
 	ec2client := ec2.New(&aws.Config{
-		Region:      "us-west-1",
+		Region:      aws.String("us-west-1"),
 		Credentials: creds,
 	})
 
@@ -452,8 +452,8 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.Securit
 
 	authReq := ec2.AuthorizeSecurityGroupIngressInput{
 		CIDRIP:     aws.String("0.0.0.0/0"),
-		FromPort:   aws.Long(9443),
-		ToPort:     aws.Long(9443),
+		FromPort:   aws.Int64(9443),
+		ToPort:     aws.Int64(9443),
 		IPProtocol: aws.String("tcp"),
 		GroupID:    sgResp.GroupID,
 	}
