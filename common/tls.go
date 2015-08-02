@@ -1,11 +1,13 @@
 package common
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"io"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -98,27 +100,56 @@ func GetCertandKey(certPath, keyPath string) (*x509.Certificate, *rsa.PrivateKey
 }
 
 // WriteCertificateToPEM converts a certificate to PEM and writes to filepath
-func WriteCertificateToPEM(cert *x509.Certificate, filepath string) error {
-	return writePemFile(cert.Raw, filepath, "Certificate")
+func WriteCertificateToFile(cert *x509.Certificate, filepath string) error {
+	return writePEMFile(cert.Raw, filepath, "CERTIFICATE")
 }
 
 // WriteRSAPrivateKeyToPEM converts a RSA Private Key to PEM and writes to filepath
-func WriteRSAPrivateKeyToPEM(key *rsa.PrivateKey, filepath string) error {
-	return writePemFile(x509.MarshalPKCS1PrivateKey(key), filepath, "Certificate")
+func WriteRSAPrivateKeyToFile(key *rsa.PrivateKey, filepath string) error {
+	return writePEMFile(x509.MarshalPKCS1PrivateKey(key), filepath, "RSA PRIVATE KEY")
 }
 
-func writePemFile(raw []byte, filepath string, pemtype string) error {
+// Converts a certificate to the PEM encoding format and puts it into a string
+func WriteCertificateToString(cert *x509.Certificate) (string, error) {
+	var b bytes.Buffer
+	err := writePEMBytes(cert.Raw, &b, "CERTIFICATE")
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+// Converts a private key to the PEM format and puts it into a string
+func WriteRSAPrivateKeyToString(key *rsa.PrivateKey) (string, error) {
+	var b bytes.Buffer
+	err := writePEMBytes(x509.MarshalPKCS1PrivateKey(key), &b, "RSA PRIVATE KEY")
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+func writePEMBytes(raw []byte, writer io.Writer, pemtype string) error {
 	pemBlock := pem.Block{
 		Type:  pemtype,
 		Bytes: raw,
 	}
 
+	err := pem.Encode(writer, &pemBlock)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writePEMFile(raw []byte, filepath string, pemtype string) error {
 	pemFile, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
 
-	err = pem.Encode(pemFile, &pemBlock)
+	err = writePEMBytes(raw, pemFile, pemtype)
 	if err != nil {
 		return err
 	}

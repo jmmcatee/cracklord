@@ -63,6 +63,14 @@ func main() {
 	}
 	caCertPath = common.StripQuotes(caCertPath)
 
+	// Load the CA Certificate, Resource Key, and Resource Certificate from the config
+	caKeyPath, ok := genConf["CAKeyFile"]
+	if !ok {
+		log.Error("The CAKeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
+	}
+	caKeyPath = common.StripQuotes(caKeyPath)
+
 	KeyPath, ok := genConf["KeyFile"]
 	if !ok {
 		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
@@ -316,7 +324,7 @@ func main() {
 
 	// Now let's setup the AWS manager if we have a config file
 	if resDC, ok := confResMgr["aws"]; ok {
-		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS)
+		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS, caKeyPath, caCertPath)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
 		} else {

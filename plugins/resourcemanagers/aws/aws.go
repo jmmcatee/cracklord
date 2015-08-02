@@ -1,12 +1,15 @@
 package awsresourcemanager
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/emperorcow/protectedmap"
+	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/vaughan0/go-ini"
 	"sort"
@@ -31,6 +34,8 @@ type config struct {
 	SecurityGroup      string
 	InstanceTypes      map[string]string
 	InstanceTypesOrder []string
+	CACert             *x509.Certificate
+	CAKey              *rsa.PrivateKey
 }
 
 var conf = config{}
@@ -46,7 +51,7 @@ type awsResourceManager struct {
 	ec2client     *ec2.EC2
 }
 
-func Setup(confpath string, qpointer *queue.Queue, tlspointer *tls.Config) (queue.ResourceManager, error) {
+func Setup(confpath string, qpointer *queue.Queue, tlspointer *tls.Config, caCertPath, caKeyPath string) (queue.ResourceManager, error) {
 	log.Debug("Setting up AWS resource manager")
 
 	// Load the configuration file from the path provided during the setup function
@@ -111,6 +116,11 @@ func Setup(confpath string, qpointer *queue.Queue, tlspointer *tls.Config) (queu
 		conf.InstanceTypes[value] = key
 	}
 	conf.InstanceTypesOrder = getSortedKeys(conf.InstanceTypes)
+
+	conf.CACert, conf.CAKey, err = common.GetCertandKey(caCertPath, caKeyPath)
+	if err != nil {
+		return &awsResourceManager{}, err
+	}
 
 	aws := awsResourceManager{
 		resources: protectedmap.New(),
@@ -306,8 +316,27 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 		return errors.New("Instance type (" + typeKey + ") is unknown.")
 	}
 
+	// Gather the PEM format (in strings) of the CA cert, private key, and public cert.
+	// These will be submitted in the user data and will end up being loaded into the
+	// AMI as a certificate to authenticate the queue to the resource.
+	cert, key, err := common.GenerateResourceKeys(conf.CACert, conf.CAKey, "*.*.compute.amazonaws.com")
+	certString, err := common.WriteCertificateToString(cert)
+	if err != nil {
+		return err
+	}
+
+	keyString, err := common.WriteRSAPrivateKeyToString(key)
+	if err != nil {
+		return err
+	}
+
+	caCertString, err := common.WriteCertificateToString(conf.CACert)
+	if err != nil {
+		return err
+	}
+
 	// Now that we have all of our data, let's actually launch the instance in the API.
-	res, err := launchInstance(conf.AMIID, *this.secgrp.GroupID, subnet, instancetype, ca, crt, key, num, this.ec2client)
+	res, err := launchInstance(conf.AMIID, *this.secgrp.GroupID, subnet, instancetype, caCertString, certString, keyString, num, this.ec2client)
 	if err != nil {
 		return errors.New("Unable to start instance: " + err.Error())
 	}
