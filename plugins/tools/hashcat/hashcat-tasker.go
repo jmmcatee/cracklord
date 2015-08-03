@@ -187,6 +187,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	var ruleFile string
 	ruleKey, ok := h.job.Parameters["dict_rules"]
 	if !ok {
+		log.Debug("No rule file was not provided.")
+	} else {
 		// We have a rule file, check for blank
 		if ruleKey != "" {
 			rulePath, ok := config.Rules[ruleKey]
@@ -235,6 +237,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		if !ok {
 			log.Debug("Brute force charset provided does not exist")
 		}
+	}
 
 	var bruteLength string
 	bruteLengthChar, ok := h.job.Parameters["brute_length"]
@@ -612,4 +615,3 @@ func (v *hascatTasker) Quit() common.Job {
 func (v *hascatTasker) IOE() (io.Writer, io.Reader, io.Reader) {
 	return v.stdinPipe, v.stdoutPipe, v.stderrPipe
 }
-
