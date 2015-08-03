@@ -30,3 +30,5 @@ fi
 
 # Reload upstart configuration so our service appears and works
 initctl reload-configuration
+
+service cracklord-queued start
