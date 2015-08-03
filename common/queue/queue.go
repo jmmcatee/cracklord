@@ -513,6 +513,9 @@ func (q *Queue) PauseQueue() []error {
 
 	var e []error
 
+	// Let's run the keep functions on all of our resource managers
+	q.KeepAllResourceManagers()
+
 	// First order of business is to kill the keeper
 	q.qk <- true
 	q.Lock()
@@ -521,9 +524,6 @@ func (q *Queue) PauseQueue() []error {
 
 	// Now we need to be 100% up-to-date
 	q.updateQueue()
-
-	// Let's run the keep functions on all of our resource managers
-	q.KeepAllResourceManagers()
 
 	log.Debug("Queue update completed.")
 
