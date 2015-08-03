@@ -69,7 +69,7 @@ func init() {
 	// 4 - The estimated time to completion
 	// 5 - Number of guesses per second
 	// 6 - Units for guesses per second
-	regStatusLine, err = regexp.Compile(`(\d+)g (\d+:\d+:\d+:\d+) (\d+.\d+)% \(ETA: ((?:\d+\-\d+\-\d+ \d+:\d+)|(?:\d+:\d+:\d+))\) \d+g\/s \d+.?p\/s \d+.?c\/s (\d+)(.?C/s)`)
+	regStatusLine, err = regexp.Compile(`(\d+)g (\d+:\d+:\d+:\d+) (?:(\d+.\d+)% \(ETA: ((?:\d+\-\d+\-\d+ \d+:\d+)|(?:\d+:\d+:\d+))\))? \d+g\/s \d+.?p\/s \d+.?c\/s (\d+)(.?C/s)`)
 
 	if err != nil {
 		panic("Error during John Dict setup: " + err.Error())
@@ -146,6 +146,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	args = append(args, "--format="+format)
 	log.WithField("format", format).Debug("Added algorithm")
 
+	args = append(args, "--session="+v.job.UUID)
 	args = append(args, "--pot="+v.job.UUID)
 
 	// Add the dictionary files given
@@ -258,15 +259,21 @@ func (v *johndictTasker) Status() common.Job {
 	defer v.mux.Unlock()
 
 	// Run john --status command
-	status, err := exec.Command(config.BinPath, "--status="+v.job.UUID).Output()
+	statusExec := exec.Command(config.BinPath, "--status="+v.job.UUID)
+	statusExec.Dir = v.wd
+	status, err := statusExec.CombinedOutput()
 	if err != nil {
 		v.job.Error = err.Error()
+		log.WithField("Error", err.Error()).Debug("Error running john status command.")
 		return v.job
 	}
+
+	log.WithField("StatusStdout", string(status)).Debug("Stdout status return of john call")
 
 	timestamp := fmt.Sprintf("%d", time.Now().Unix())
 
 	match := regStatusLine.FindStringSubmatch(string(status))
+	log.WithField("StatusMatch", match).Debug("Regex match of john status call")
 	if len(match) == 6 {
 		// Get # of cracked hashes
 		crackedHashes, err := strconv.ParseInt(match[1], 10, 64)
@@ -314,6 +321,8 @@ func (v *johndictTasker) Status() common.Job {
 			}).Debug("Speed calculated.")
 		}
 
+	} else {
+		log.WithField("MatchCount", len(match)).Debug("Did not match enough items in the status")
 	}
 
 	// Now get any hashes we might have cracked. Because of how John works we will
