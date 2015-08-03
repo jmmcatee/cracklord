@@ -158,7 +158,6 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	}
 	hashFile.WriteString(h.job.Parameters["hashes"])
 	hashFile.Close()
-
 	hashFile, _ = os.Open(filepath.Join(h.wd, "hashes.txt"))
 
 	// Calculate the total number of input hashes that were provided
@@ -177,7 +176,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	dictKey, ok := h.job.Parameters["dict_dictionaries"]
 	if !ok {
 		log.Debug("No dictionary was provided.")
-
+	} else {
 		dictPath, ok = config.Dictionaries[dictKey]
 		if !ok {
 			log.Debug("Dictionary key provided was not present")
@@ -187,7 +186,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Add the rule file to use if one was given
 	var ruleFile string
 	ruleKey, ok := h.job.Parameters["dict_rules"]
-	if ok {
+	if !ok {
 		// We have a rule file, check for blank
 		if ruleKey != "" {
 			rulePath, ok := config.Rules[ruleKey]
@@ -231,18 +230,17 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	charsetKey, ok := h.job.Parameters["brute_charset"]
 	if !ok {
 		log.Debug("No brute force charset was provided")
-
+	} else {
 		bruteCharSet, ok = config.CharSet[charsetKey]
 		if !ok {
 			log.Debug("Brute force charset provided does not exist")
 		}
-	}
 
 	var bruteLength string
 	bruteLengthChar, ok := h.job.Parameters["brute_length"]
 	if !ok {
 		log.Debug("No brute force length was provided.")
-
+	} else {
 		bruteLengthInt, err := strconv.Atoi(bruteLengthChar)
 		if err != nil {
 			log.Debug("Unable to parse the length of the brute force length provided")
@@ -271,6 +269,12 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		args = append(args, "-1", bruteCharSet)
 		args = append(args, bruteLength)
 	} else {
+		log.WithFields(log.Fields{
+			"ruleFile":     ruleFile,
+			"dictPath":     dictPath,
+			"bruteCharSet": bruteCharSet,
+			"bruteLength":  bruteLength,
+		}).Debug("Did not receive enough arguments to start hashcat.")
 		return &hascatTasker{}, errors.New("Arguments were not provided to allow running either a brute force or dictionary attack.")
 	}
 
@@ -608,3 +612,4 @@ func (v *hascatTasker) Quit() common.Job {
 func (v *hascatTasker) IOE() (io.Writer, io.Reader, io.Reader) {
 	return v.stdinPipe, v.stdoutPipe, v.stderrPipe
 }
+

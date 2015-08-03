@@ -324,7 +324,7 @@ func main() {
 
 	// Now let's setup the AWS manager if we have a config file
 	if resDC, ok := confResMgr["aws"]; ok {
-		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS, caKeyPath, caCertPath)
+		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS, caCertPath, caKeyPath)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
 		} else {

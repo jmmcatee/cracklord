@@ -389,7 +389,7 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid 
 				name := fmt.Sprintf("aws-instance-%s", *instance.PublicIPAddress)
 
 				//Let's actually add and connect to the resource
-				resUUID, err := this.q.AddResource(*instance.PublicIPAddress, name, this.tls)
+				resUUID, err := this.q.AddResource(*instance.PublicDNSName, name, this.tls)
 
 				//If there was an error, stop everything and return that we have an error
 				if err != nil {

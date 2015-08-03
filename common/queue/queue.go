@@ -202,6 +202,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &j)
 				if err != nil {
 					logger.WithField("error", err.Error()).Error("There was a problem making an RPC call.")
+					q.DeleteJobFromStackByIndex(jobIndex)
 					return err
 				}
 
@@ -232,6 +233,13 @@ func (q *Queue) AddJob(j common.Job) error {
 
 	// If the queue is running or paused all we need to have done is add it to the queue
 	return nil
+}
+
+func (q *Queue) DeleteJobFromStackByIndex(idx int) {
+	tmp := make([]common.Job, len(q.stack))
+	copy(tmp, q.stack)
+	q.stack = make([]common.Job, len(tmp)-1)
+	q.stack = append(tmp[:idx], tmp[idx+1:]...)
 }
 
 // Get the full queue stack

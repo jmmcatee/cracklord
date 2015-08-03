@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"strings"
 )
 
 // We'll use this constant to define the states of our instances.  There doesn't appear
@@ -39,16 +40,18 @@ func launchInstance(amiid, secgrpid, subnet, instancetype, ca, crt, key string, 
 	cloudconfig := `#cloud-config
 # vim: syntax=yaml
 #
+package_update: true
+package_upgrade: true
 write_files:
 -   content: |
-` + ca + `
+` + addSpacesToUserDataFile(ca) + `
     path: /etc/cracklord/ssl/cracklord_ca.pem
 -   content: |
-` + crt + `
-    path: /etc/cracklord/ssl/resource.crt
+` + addSpacesToUserDataFile(crt) + `
+    path: /etc/cracklord/ssl/resourced.crt
 -   content: |
-` + key + `
-    path: /etc/cracklord/ssl/resource.key`
+` + addSpacesToUserDataFile(key) + `
+    path: /etc/cracklord/ssl/resourced.key`
 
 	userdata := base64.StdEncoding.EncodeToString([]byte(cloudconfig))
 
@@ -80,6 +83,18 @@ write_files:
 	}
 
 	return *instanceResp, nil
+}
+
+// This function will take a string that is to be written as a file to the userdata
+// file and will add the relevant spaces to it so that is is proper YAML
+func addSpacesToUserDataFile(src string) string {
+	buf := ""                            // Create a temp buffer to hold our output
+	srclines := strings.Split(src, "\n") // Split the input string on newlines
+	for _, line := range srclines {      // Loop over each line, adding 8 spaces to the front it if
+		buf += "        " + line + "\n"
+	}
+
+	return buf // Return the buffer
 }
 
 // Returns a single insance when given it's ID

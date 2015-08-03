@@ -58,11 +58,6 @@ func (u *User) EffectiveRole() string {
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"user": u.Username,
-		"role": role,
-	}).Debug("Determining users effective role.")
-
 	return role
 }
 
@@ -117,7 +112,7 @@ func (t *TokenStore) AddToken(token string, user User) {
 	t.store[token].Timeout = time.Now().Add(30 * time.Minute)
 
 	log.WithFields(log.Fields{
-		"user": user.Username, 
+		"user":  user.Username,
 		"token": token,
 	}).Debug("Token added to user store.")
 }
@@ -127,41 +122,33 @@ func (t *TokenStore) RemoveToken(token string) {
 	defer t.Unlock()
 
 	delete(t.store, token)
-
-	log.WithField("token", token).Debug("Token deleted.")
 }
 
 func (t *TokenStore) CheckToken(token string) bool {
 	t.Lock()
 	defer t.Unlock()
 
-	logger := log.WithField("token", token)
-
 	if user, ok := t.store[token]; ok {
 		// Check that this ticket hasn't timed out
 		if 0 > user.Timeout.Sub(time.Now()) {
 			// Token has expired so we should return false and remove the token
 			delete(t.store, token)
-			logger.Debug("Token has timed out and is no longer valid.")
+			log.Warn("Token was attempted that has timed out and is no longer valid.")
 			return false
 		}
 
 		// Token exists and has not timed out so return true and reset time
 		t.store[token].Timeout = time.Now().Add(30 * time.Minute)
-		logger.Debug("Token identified.")
 		return true
 	}
 
 	// Token did not exist to return false
-	logger.Debug("Token not found.")
 	return false
 }
 
 func (t *TokenStore) GetUser(token string) (User, error) {
 	t.Lock()
 	defer t.Unlock()
-
-	log.WithField("token", token).Debug("Gathering user for token.")
 
 	// Check for valid token
 	if user, ok := t.store[token]; ok {
