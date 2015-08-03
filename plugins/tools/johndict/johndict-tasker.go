@@ -274,6 +274,20 @@ func (v *johndictTasker) Status() common.Job {
 
 	match := regStatusLine.FindStringSubmatch(string(status))
 	log.WithField("StatusMatch", match).Debug("Regex match of john status call")
+
+	if len(match) != 6 {
+		// The ETA might not be printing so let's try form STDOUT
+		ic, err := io.WriteString(v.stdinPipe, "nnn")
+		if err != nil {
+			log.Debug("Error writing to StdinPipe")
+		}
+		log.WithField("numBytes", ic).Debug("Bytes written to john's stdin")
+		i := strings.LastIndex(v.stdout.String(), "\n")
+		if i != -1 {
+			match = regStatusLine.FindStringSubmatch(v.stdout.String()[i:])
+		}
+	}
+
 	if len(match) == 6 {
 		// Get # of cracked hashes
 		crackedHashes, err := strconv.ParseInt(match[1], 10, 64)
@@ -492,20 +506,25 @@ func (v *johndictTasker) Quit() common.Job {
 	log.WithField("Task", v.job.UUID).Debug("Attempting to quit johndict task.")
 
 	// Update the jobs status
+	log.Debug("Getting status before quit")
 	v.Status()
 
 	v.mux.Lock()
 
 	// Kill the process after a SIGHUP
+	log.Debug("Sending SIGHUP before process kill")
 	v.cmd.Process.Signal(syscall.SIGHUP)
+	log.Debug("Sending kill signal to process")
 	v.cmd.Process.Kill()
 
 	v.mux.Unlock()
 
 	// Wait for the program to actually exit
+	log.Debug("Waiting on the process to finish")
 	<-v.doneWaitChan
 
 	// Change the status to paused
+	log.Debug("Change status")
 	v.mux.Lock()
 	v.job.Status = common.STATUS_QUIT
 	v.mux.Unlock()
