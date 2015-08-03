@@ -230,6 +230,9 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	args = append(args, hashFilePath)
 
 	hashFile.WriteString(v.job.Parameters["hashes"])
+	hashFile.Close()
+
+	hashFile, _ = os.Open(hashFilePath)
 
 	var lines int64
 	linescanner := bufio.NewScanner(hashFile)
@@ -293,6 +296,8 @@ func (v *johndictTasker) Status() common.Job {
 		eta, err := parseJohnETA(match[4])
 		if err == nil {
 			v.job.ETC = printTimeUntil(eta)
+		} else {
+			v.job.ETC = "Not Available"
 		}
 
 		// Get guesses / second

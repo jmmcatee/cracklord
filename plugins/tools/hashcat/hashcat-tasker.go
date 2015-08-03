@@ -157,6 +157,9 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		return &hascatTasker{}, err
 	}
 	hashFile.WriteString(h.job.Parameters["hashes"])
+	hashFile.Close()
+
+	hashFile, _ = os.Open(filepath.Join(h.wd, "hashes.txt"))
 
 	// Calculate the total number of input hashes that were provided
 	var lines int64
