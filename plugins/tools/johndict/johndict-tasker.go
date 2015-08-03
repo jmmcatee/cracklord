@@ -147,7 +147,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 	log.WithField("format", format).Debug("Added algorithm")
 
 	args = append(args, "--session="+v.job.UUID)
-	args = append(args, "--pot="+v.job.UUID)
+	args = append(args, "--pot="+v.job.UUID+".pot")
 
 	// Add the dictionary files given
 	dictKey, ok := v.job.Parameters["dictionaries"]
@@ -237,6 +237,7 @@ func newJohnDictTask(j common.Job) (common.Tasker, error) {
 		lines++
 	}
 
+	log.WithField("lines", lines).Debug("Hashes copied.")
 	v.job.TotalHashes = lines
 
 	// Setup start and resume arguements
@@ -275,20 +276,7 @@ func (v *johndictTasker) Status() common.Job {
 	match := regStatusLine.FindStringSubmatch(string(status))
 	log.WithField("StatusMatch", match).Debug("Regex match of john status call")
 
-	if len(match) != 6 {
-		// The ETA might not be printing so let's try form STDOUT
-		ic, err := io.WriteString(v.stdinPipe, "nnn")
-		if err != nil {
-			log.Debug("Error writing to StdinPipe")
-		}
-		log.WithField("numBytes", ic).Debug("Bytes written to john's stdin")
-		i := strings.LastIndex(v.stdout.String(), "\n")
-		if i != -1 {
-			match = regStatusLine.FindStringSubmatch(v.stdout.String()[i:])
-		}
-	}
-
-	if len(match) == 6 {
+	if len(match) == 7 {
 		// Get # of cracked hashes
 		crackedHashes, err := strconv.ParseInt(match[1], 10, 64)
 		if err == nil {
@@ -443,6 +431,7 @@ func (v *johndictTasker) Run() error {
 
 	// Start the command
 	log.WithField("Arguments", v.cmd.Args).Debug("Running the command")
+
 	err := v.cmd.Start()
 	if err != nil {
 		v.job.Status = common.STATUS_FAILED
