@@ -55,7 +55,7 @@ func init() {
 }
 
 var portSettings = map[string]string{
-	"Custom Port Listing": "",
+	"* Custom Port Listing": "",
 }
 
 func Setup(path string) error {
@@ -192,7 +192,7 @@ func (this *nmapTooler) Parameters() string {
   "ports",
   {
       "key": "portscustom",
-      "condition": "model.ports == 'Custom'"
+      "condition": "model.ports == '* Custom Port Listing'"
   },
   {
       "key": "targets",

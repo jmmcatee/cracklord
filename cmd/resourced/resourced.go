@@ -9,6 +9,7 @@ import (
 	"github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/plugins/tools/hashcat"
+	"github.com/jmmcatee/cracklord/plugins/tools/johndict"
 	"github.com/jmmcatee/cracklord/plugins/tools/nmap"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimercpu"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimergpu"
@@ -139,6 +140,10 @@ func main() {
 	if common.StripQuotes(pluginConf["nmap"]) != "" {
 		nmap.Setup(common.StripQuotes(pluginConf["nmap"]))
 		resQueue.AddTool(nmap.NewTooler())
+	}
+	if common.StripQuotes(pluginConf["johndict"]) != "" {
+		johndict.Setup(common.StripQuotes(pluginConf["johndict"]))
+		resQueue.AddTool(johndict.NewTooler())
 	}
 	if common.StripQuotes(pluginConf["testtimer"]) == "true" {
 		testtimergpu.Setup()
