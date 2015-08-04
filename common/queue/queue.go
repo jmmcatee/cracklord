@@ -1034,25 +1034,40 @@ func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) err
 	log.WithField("addr", target).Info("Connecting to resource")
 
 	// Dial the target and see if we get a connection in 15 seconds
-	conn, err := net.DialTimeout("tcp", target, time.Second*15)
-	if err != nil {
-		log.WithField("addr", target).Debug("Unable to dial the resource.")
-		return err
+	/*
+		conn, err := net.DialTimeout("tcp", target, time.Second*15)
+		if err != nil {
+			log.WithField("addr", target).Debug("Unable to dial the resource.")
+			return err
+		}
+
+		// Now we need to set the ServerName in the tls config.  We'll make a copy
+		// to make sure we don't mess with anything
+		localConfig := *tlsconfig
+		localConfig.ServerName = localRes.Address
+
+		// Now let's build a TLS connection object and force a handshake to make
+		// sure it's working
+		tlsConn := tls.Client(conn, &localConfig)
+		err = tlsConn.Handshake()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"addr":       target,
+				"servername": localRes.Address,
+			}).Debug("An error occured while building the TLS connection")
+			return err
+		}
+	*/
+
+	dialer := &net.Dialer{
+		Timeout: 15 * time.Second,
 	}
 
-	// Now we need to set the ServerName in the tls config.  We'll make a copy
-	// to make sure we don't mess with anything
-	localConfig := *tlsconfig
-	localConfig.ServerName = localRes.Address
-
-	// Now let's build a TLS connection object and force a handshake to make
-	// sure it's working
-	tlsConn := tls.Client(conn, &localConfig)
-	err = tlsConn.Handshake()
+	conn, err := tls.DialWithDialer(dialer, "tcp", target, tlsconfig)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"addr":       target,
-			"servername": q.pool[resUUID].Address,
+			"servername": localRes.Address,
 		}).Debug("An error occured while building the TLS connection")
 		return err
 	}
@@ -1120,9 +1135,13 @@ func (q *Queue) LoadRemoteResourceHardware(resUUID string) {
 }
 
 func (q *Queue) LoadRemoteResourceTools(resUUID string) {
+	q.RLock()
+	localRes := q.pool[resUUID]
+	q.RUnlock()
+
 	// Get Tools
 	var tools []common.Tool
-	err := q.pool[resUUID].Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
+	err := localRes.Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":    err.Error(),
@@ -1132,29 +1151,36 @@ func (q *Queue) LoadRemoteResourceTools(resUUID string) {
 	}
 
 	for _, v := range tools {
-		q.pool[resUUID].Tools[v.UUID] = v
+		localRes.Tools[v.UUID] = v
 	}
 
 	q.RLock()
-	defer q.RUnlock()
-
 	// Loop through new tools and look for those we already have
 	// If we find a tool we already have we need to make the UUID the same
 	// If we don't already have this we can just leave the UUID assigned by the resource
-	for _, aValue := range q.pool[resUUID].Tools {
+	for _, aValue := range localRes.Tools {
 		// Loop through the pool
 	ToolBreak:
 		for i, _ := range q.pool {
 			for _, cValue := range q.pool[i].Tools {
+				if i == resUUID {
+					continue
+				}
 				if common.CompareTools(aValue, cValue) {
-					q.pool[resUUID].Tools[cValue.UUID] = aValue
-					delete(q.pool[resUUID].Tools, aValue.UUID)
+					localRes.Tools[cValue.UUID] = aValue
+					delete(localRes.Tools, aValue.UUID)
 					break ToolBreak
 				}
 			}
 		}
 	}
-	log.WithField("tools", q.pool[resUUID].Tools).Debug("Loaded tools for resource")
+	q.RUnlock()
+
+	q.Lock()
+	q.pool[resUUID] = localRes
+	q.Unlock()
+
+	log.WithField("resource", resUUID).Debug("Loaded tools for resource")
 }
 
 //This function will add a resource to the queue.  Returns the UUID.

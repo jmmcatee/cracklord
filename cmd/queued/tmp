@@ -1,0 +1,422 @@
+time="2015-08-04T12:22:53-05:00" level=warning msg="Please note the debug level logs may contain sensitive information!" 
+time="2015-08-04T12:22:53-05:00" level=info msg="Starting queue server up." ip=0.0.0.0 port=443 
+time="2015-08-04T12:22:53-05:00" level=debug msg="INI authentication setup" 
+time="2015-08-04T12:22:53-05:00" level=info msg="INI authentication setup complete." 
+time="2015-08-04T12:22:53-05:00" level=debug msg="Setup a new queue" keepertime=30s nettimeout=5s statefile= 
+time="2015-08-04T12:22:54-05:00" level=info msg="Added resource manager into the queue." id=directconnect 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Setting up AWS resource manager" 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Added instance type to AWS resource manager configuration" id=g2.2xlarge name="Single GPU Instance" 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Added instance type to AWS resource manager configuration" id=g2.8xlarge name="Quad GPU Instance" 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Added instance type to AWS resource manager configuration" id=c4.large name="Compute Optimized Instance" 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Added instance type to AWS resource manager configuration" id=t2.micro name="Small Instance (Minimal Resources)" 
+time="2015-08-04T12:22:54-05:00" level=debug msg="Updating AWS API information" 
+time="2015-08-04T12:22:55-05:00" level=info msg="Added resource manager into the queue." id=aws 
+time="2015-08-04T12:22:55-05:00" level=debug msg="Application router handlers configured." 
+time="2015-08-04T12:22:55-05:00" level=debug msg="Negroni handler started." 
+time="2015-08-04T12:22:56-05:00" level=info msg="Handled request: /" latency=57.271µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/jquery-ui.min.js" latency=116.057µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/Chart.min.js" latency=150.115µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/tv4.min.js" latency=27.701µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/bootstrap.min.js" latency=35.518µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular.min.js" latency=49.682µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-ui-router.min.js" latency=52.368µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-ui-sortable.js" latency=54.782µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/ObjectPath.js" latency=49.82µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-ui-bootstrap.min.js" latency=51.3µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-sanitize.min.js" latency=57.477µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-relative-date.min.js" latency=58.315µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-mocks.js" latency=46.852µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-cookies.min.js" latency=32.002µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-animate.min.js" latency=14.675µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-resource.min.js" latency=38.815µs method=GET remote="192.168.1.112:65231" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-ng-csv.min.js" latency=18.023µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-chart.min.js" latency=24.928µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/angular-growl.min.js" latency=44.463µs method=GET remote="192.168.1.112:65232" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Tools/toolsService.js" latency=25.677µs method=GET remote="192.168.1.112:65232" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/app.routes.js" latency=19.909µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/app.directives.js" latency=118.284µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/app.module.js" latency=17.627µs method=GET remote="192.168.1.112:65231" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/bootstrap-decorator.min.js" latency=18.734µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Queue/queueService.js" latency=20.92µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Jobs/jobsService.js" latency=19.599µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Jobs/jobsController.js" latency=19.793µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/User/userService.js" latency=19.364µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/User/userController.js" latency=18.108µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/schema-form.min.js" latency=35.79µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/bootstrap-theme.min.css" latency=20.316µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/font-awesome.min.css" latency=28.183µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/ng-sortable.min.css" latency=29.131µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/bootstrap.min.css" latency=16.372µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Resources/resourcesService.js" latency=17.292µs method=GET remote="192.168.1.112:65231" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Resources/resourcesController.js" latency=18.813µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/ResourceManagers/resourcemanagersService.js" latency=29.926µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Tools/toolsController.js" latency=16.727µs method=GET remote="192.168.1.112:65232" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/angular-growl.min.css" latency=16.298µs method=GET remote="192.168.1.112:65229" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /libs/jquery-2.1.3.min.js" latency=15.593µs method=GET remote="192.168.1.112:65228" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/base.css" latency=20.357µs method=GET remote="192.168.1.112:65231" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /css/angular-chart.css" latency=15.81µs method=GET remote="192.168.1.112:65230" status=304 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /components/Resources/resourcesView.html" latency=53.176µs method=GET remote="192.168.1.112:65227" status=304 
+time="2015-08-04T12:22:57-05:00" level=warning msg="An unknown user token attempted to list resources." token=a34cad69b738d9156d85a208f90d03b39dc53826a22ac43975e0abe0bddeb2cece6a84781c8b497b0a041395a0cd37a78b67efdb1a462eece334ac1764d488f08a8a51217ab629f2a823e56a5eb573ab38c39112c5461a23daca0b0d53a8753b7919e0d21ddd3e2f22709590a64381feac90bcc35c85332e29f5a9ffe3f15930b353eeb57e9f4fece5e8c6389c77b05d6a4327190cecfcf1025db0ca06a56a77931c337cae1080fc717eb5364f40835844d256e2e80f743d3f32503c068b89a3869b622dd6a9620286080f5c0276ba5625262577b73f122080ae4b251bede0f6747d5fab1bd6b87fb5f0f597c14adea964df50c943974664eeb697d9453db947e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /api/resources" latency=258.829µs method=GET remote="192.168.1.112:65228" status=401 
+time="2015-08-04T12:22:57-05:00" level=warning msg="An unknown user token attempted to list resources." token=a34cad69b738d9156d85a208f90d03b39dc53826a22ac43975e0abe0bddeb2cece6a84781c8b497b0a041395a0cd37a78b67efdb1a462eece334ac1764d488f08a8a51217ab629f2a823e56a5eb573ab38c39112c5461a23daca0b0d53a8753b7919e0d21ddd3e2f22709590a64381feac90bcc35c85332e29f5a9ffe3f15930b353eeb57e9f4fece5e8c6389c77b05d6a4327190cecfcf1025db0ca06a56a77931c337cae1080fc717eb5364f40835844d256e2e80f743d3f32503c068b89a3869b622dd6a9620286080f5c0276ba5625262577b73f122080ae4b251bede0f6747d5fab1bd6b87fb5f0f597c14adea964df50c943974664eeb697d9453db947e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /api/resources" latency=152.012µs method=GET remote="192.168.1.112:65229" status=401 
+time="2015-08-04T12:22:57-05:00" level=warning msg="An unknown user token attempted to list resource managers." token=a34cad69b738d9156d85a208f90d03b39dc53826a22ac43975e0abe0bddeb2cece6a84781c8b497b0a041395a0cd37a78b67efdb1a462eece334ac1764d488f08a8a51217ab629f2a823e56a5eb573ab38c39112c5461a23daca0b0d53a8753b7919e0d21ddd3e2f22709590a64381feac90bcc35c85332e29f5a9ffe3f15930b353eeb57e9f4fece5e8c6389c77b05d6a4327190cecfcf1025db0ca06a56a77931c337cae1080fc717eb5364f40835844d256e2e80f743d3f32503c068b89a3869b622dd6a9620286080f5c0276ba5625262577b73f122080ae4b251bede0f6747d5fab1bd6b87fb5f0f597c14adea964df50c943974664eeb697d9453db947e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 
+time="2015-08-04T12:22:57-05:00" level=info msg="Handled request: /api/resourcemanagers" latency=74.78µs method=GET remote="192.168.1.112:65228" status=401 
+time="2015-08-04T12:23:00-05:00" level=info msg="User successfully logged in." groups=[Administrator] logontime=2015-08-04 12:23:00.241573273 -0500 CDT user=admin 
+time="2015-08-04T12:23:00-05:00" level=debug msg="Token added to user store." token=c009781721e354fd545bc8248ef9a744e2d70af8b52615b22e6d2705c671bbe0d6ba1f0f440b89ada51c398c526cd256f4f99bf9fedb3882ee74b5e4c279e9383483105d6d43eec0412706a98c5ec57ebb05ce06ec71bc0e78969ee92752831cfaacde127ec176c15a3e0cc867de0c7e4f51b8b23e9344c0bb99416b7a5ec152347a212ec919f0d6a04058aebcaae24808ea34f9b1cb39e78f309e04a76f2cdb1a15e82ace181cce6619081e64044a855e83fb6bcfb7be016f577aed6f40f07a529e9cf849b5c146000f17f53a153a052e116507854ef3008a2e609f0e7b97ce3e9f8939d3b5e276bbf9e0066d66d21f77c06c8782436c16e922133e631ddb4fe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 user=admin 
+time="2015-08-04T12:23:00-05:00" level=info msg="User successfully logged in" username=admin 
+time="2015-08-04T12:23:00-05:00" level=info msg="Handled request: /api/login" latency=719.812µs method=POST remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:00-05:00" level=debug msg="Gathering all jobs from queue." 
+time="2015-08-04T12:23:00-05:00" level=info msg="Handled request: /api/jobs" latency=218.18µs method=GET remote="192.168.1.112:65229" status=200 
+time="2015-08-04T12:23:00-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:00-05:00" level=info msg="Handled request: /api/resources" latency=78.457µs method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:01-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:01-05:00" level=info msg="Handled request: /api/resources" latency=510.713µs method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:01-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:01-05:00" level=info msg="Handled request: /api/resources" latency=137.878µs method=GET remote="192.168.1.112:65229" status=200 
+time="2015-08-04T12:23:01-05:00" level=debug msg="Added resource manager to list" id=directconnect name="Direct Connect" 
+time="2015-08-04T12:23:01-05:00" level=debug msg="Added resource manager to list" id=aws name="Amazon Web Services" 
+time="2015-08-04T12:23:01-05:00" level=info msg="Provided a resource manager listing to API" 
+time="2015-08-04T12:23:01-05:00" level=info msg="Handled request: /api/resourcemanagers" latency=117.866µs method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:02-05:00" level=info msg="Detailed information on resource manager sent to API" id=aws 
+time="2015-08-04T12:23:02-05:00" level=info msg="Handled request: /api/resourcemanagers/aws" latency=567.309µs method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:10-05:00" level=info msg="Resource successfully added." manager=aws 
+time="2015-08-04T12:23:10-05:00" level=info msg="Handled request: /api/resources" latency=4.199301823s method=POST remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:11-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:11-05:00" level=info msg="Handled request: /api/resources" latency=1.833329ms method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:11-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:11-05:00" level=info msg="Handled request: /api/resources" latency=143.157µs method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:23:11-05:00" level=info msg="Listing of resources provided to API." 
+time="2015-08-04T12:23:11-05:00" level=info msg="Handled request: /api/resources" latency=91.377µs method=GET remote="192.168.1.112:65229" status=200 
+time="2015-08-04T12:23:11-05:00" level=debug msg="Added resource manager to list" id=directconnect name="Direct Connect" 
+time="2015-08-04T12:23:11-05:00" level=debug msg="Added resource manager to list" id=aws name="Amazon Web Services" 
+time="2015-08-04T12:23:11-05:00" level=info msg="Provided a resource manager listing to API" 
+time="2015-08-04T12:23:11-05:00" level=info msg="Handled request: /api/resourcemanagers" latency=1.028134ms method=GET remote="192.168.1.112:65228" status=200 
+time="2015-08-04T12:24:10-05:00" level=info msg="Connecting to resource" addr="ec2-52-27-249-241.us-west-2.compute.amazonaws.com:9443" 
+time="2015-08-04T12:24:25-05:00" level=debug msg="An error occured while building the TLS connection" addr="ec2-52-27-249-241.us-west-2.compute.amazonaws.com:9443" servername=ec2-52-27-249-241.us-west-2.compute.amazonaws.com 
+time="2015-08-04T12:24:25-05:00" level=debug msg="An error occured while creating new client" addr="ec2-52-27-249-241.us-west-2.compute.amazonaws.com:9443" 
+time="2015-08-04T12:24:25-05:00" level=warning msg="Unable to connect to AWS resource, trying again in 60 seconds." address=0xc208297838 error="dial tcp 52.27.249.241:9443: i/o timeout" resource=be5bf27c-2dba-4bfc-981d-dffbc12ae087 
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal 0xb code=0x1 addr=0x0 pc=0x520b98]
+
+goroutine 42 [running]:
+crypto/tls.(*Conn).Handshake(0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:967 +0x1c8
+crypto/tls.(*Conn).Read(0x0, 0xc2081c6000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:887 +0x7b
+bufio.(*Reader).fill(0xc2081d2720)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).Read(0xc2081d2720, 0xc20827cb60, 0x1, 0x9, 0x10, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:174 +0x26c
+io.ReadAtLeast(0x7f06ff67a750, 0xc2081d2720, 0xc20827cb60, 0x1, 0x9, 0x1, 0x0, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:298 +0xf1
+io.ReadFull(0x7f06ff67a750, 0xc2081d2720, 0xc20827cb60, 0x1, 0x9, 0x849800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:316 +0x6d
+encoding/gob.decodeUintReader(0x7f06ff67a750, 0xc2081d2720, 0xc20827cb60, 0x9, 0x9, 0x0, 0x1, 0x0, 0x0)
+	/usr/local/go/src/encoding/gob/decode.go:121 +0x99
+encoding/gob.(*Decoder).recvMessage(0xc208322e00, 0x0)
+	/usr/local/go/src/encoding/gob/decoder.go:76 +0x55
+encoding/gob.(*Decoder).decodeTypeSequence(0xc208322e00, 0xc2081e6b00, 0x16)
+	/usr/local/go/src/encoding/gob/decoder.go:140 +0x47
+encoding/gob.(*Decoder).DecodeValue(0xc208322e00, 0x82aa80, 0xc2081e6b10, 0x16, 0x0, 0x0)
+	/usr/local/go/src/encoding/gob/decoder.go:208 +0x192
+encoding/gob.(*Decoder).Decode(0xc208322e00, 0x82aa80, 0xc2081e6b10, 0x0, 0x0)
+	/usr/local/go/src/encoding/gob/decoder.go:185 +0x297
+net/rpc.(*gobClientCodec).ReadResponseHeader(0xc2081e6780, 0xc2081e6b10, 0x0, 0x0)
+	/usr/local/go/src/net/rpc/client.go:223 +0x5e
+net/rpc.(*Client).input(0xc2081d27e0)
+	/usr/local/go/src/net/rpc/client.go:109 +0xb6
+created by net/rpc.NewClientWithCodec
+	/usr/local/go/src/net/rpc/client.go:201 +0xd0
+
+goroutine 1 [IO wait, 1 minutes]:
+net.(*pollDesc).Wait(0xc2082e8370, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2082e8370, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).accept(0xc2082e8310, 0x0, 0x7f06ff676d70, 0xc20829e4a0)
+	/usr/local/go/src/net/fd_unix.go:419 +0x40b
+net.(*TCPListener).AcceptTCP(0xc20802c828, 0xc2081d30e0, 0x0, 0x0)
+	/usr/local/go/src/net/tcpsock_posix.go:234 +0x4e
+net.(*TCPListener).Accept(0xc20802c828, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/tcpsock_posix.go:244 +0x4c
+crypto/tls.(*listener).Accept(0xc20825d6a0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/tls.go:46 +0x6b
+net/http.(*Server).Serve(0xc2082c8f00, 0x7f06ff67fba0, 0xc20825d6a0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:1728 +0x92
+net/http.Serve(0x7f06ff67fba0, 0xc20825d6a0, 0x7f06ff67fbd8, 0xc20826dc20, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:1606 +0xa1
+main.main()
+	/mnt/hgfs/go/src/github.com/jmmcatee/cracklord/cmd/queued/queued.go:350 +0x41db
+
+goroutine 12 [IO wait, 1 minutes]:
+net.(*pollDesc).Wait(0xc2082e83e0, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2082e83e0, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2082e8380, 0xc20827e000, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc208271f28)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c830, 0xc20827e000, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc20826c030, 0x7f06ff67a778, 0xc20802c830, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc208228b00, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc208228b00, 0xc20822b000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec0e8, 0xc20822b000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc20825d6e0, 0xc20822b000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2082c8f60)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2082c8f60, 0xc2081e630a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2082c8f60, 0x0, 0x0, 0x0, 0xc2081e6300, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc20826c510, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc20826c510, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2082c8f60, 0xc20815f040, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec0a0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec0a0)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 10 [IO wait]:
+net.(*pollDesc).Wait(0xc2080b8bc0, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2080b8bc0, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2080b8b60, 0xc20824bc00, 0x400, 0x400, 0x0, 0x7f06ff676d70, 0xc20827c930)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c148, 0xc20824bc00, 0x400, 0x400, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc2081a35c0, 0x7f06ff67a778, 0xc20802c148, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc208084580, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc208084580, 0xc20800f000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.noteEOFReader.Read(0x7f06ff67f1d8, 0xc208084580, 0xc208082d68, 0xc20800f000, 0x1000, 0x1000, 0x8e7880, 0x0, 0x0)
+	/usr/local/go/src/net/http/transport.go:1270 +0x6e
+net/http.(*noteEOFReader).Read(0xc2081b5760, 0xc20800f000, 0x1000, 0x1000, 0xc208012000, 0x0, 0x0)
+	<autogenerated>:125 +0xd4
+bufio.(*Reader).fill(0xc20805d2c0)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).Peek(0xc20805d2c0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:132 +0xf0
+net/http.(*persistConn).readLoop(0xc208082d10)
+	/usr/local/go/src/net/http/transport.go:842 +0xa4
+created by net/http.(*Transport).dialConn
+	/usr/local/go/src/net/http/transport.go:660 +0xc9f
+
+goroutine 17 [syscall, 1 minutes, locked to thread]:
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:2232 +0x1
+
+goroutine 11 [select]:
+net/http.(*persistConn).writeLoop(0xc208082d10)
+	/usr/local/go/src/net/http/transport.go:945 +0x41d
+created by net/http.(*Transport).dialConn
+	/usr/local/go/src/net/http/transport.go:661 +0xcbc
+
+goroutine 13 [IO wait]:
+net.(*pollDesc).Wait(0xc2082e2a70, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2082e2a70, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2082e2a10, 0xc2081fe800, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc20828f778)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c0d0, 0xc2081fe800, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc208292030, 0x7f06ff67a778, 0xc20802c0d0, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc208228000, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc208228000, 0xc20822a000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec688, 0xc20822a000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc208290f80, 0xc20822a000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2082c8720)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2082c8720, 0xc20826d30a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2082c8720, 0x0, 0x0, 0x0, 0xc20826d300, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc20826c5d0, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc20826c5d0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2082c8720, 0xc2083bc4e0, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec640, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec640)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 14 [IO wait]:
+net.(*pollDesc).Wait(0xc2080d7870, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2080d7870, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2080d7810, 0xc2081ea800, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc20828ef80)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c020, 0xc2081ea800, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc208292e10, 0x7f06ff67a778, 0xc20802c020, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc208085600, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc208085600, 0xc2082ef000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec7c8, 0xc2082ef000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc2081b47e0, 0xc2082ef000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2081d2fc0)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2081d2fc0, 0xc208293a0a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2081d2fc0, 0x0, 0x0, 0x0, 0xc208293a00, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc208293470, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc208293470, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2081d2fc0, 0xc2083bc410, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec780, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec780)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 15 [IO wait, 1 minutes]:
+net.(*pollDesc).Wait(0xc2080d78e0, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2080d78e0, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2080d7880, 0xc2081ff000, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc208271af8)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c048, 0xc2081ff000, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc208293950, 0x7f06ff67a778, 0xc20802c048, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc2080858c0, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc2080858c0, 0xc208307000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec868, 0xc208307000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc2081b4840, 0xc208307000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2081d3020)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2081d3020, 0xc20826ca0a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2081d3020, 0x0, 0x0, 0x0, 0xc20826ca00, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc208293e30, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc208293e30, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2081d3020, 0xc20815edd0, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec820, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec820)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 16 [IO wait, 1 minutes]:
+net.(*pollDesc).Wait(0xc2080d7950, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2080d7950, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2080d78f0, 0xc20820d800, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc2082715b8)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c0c0, 0xc20820d800, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc20826c750, 0x7f06ff67a778, 0xc20802c0c0, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc208085b80, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc208085b80, 0xc208309000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec908, 0xc208309000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc2081b48e0, 0xc208309000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2081d3080)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2081d3080, 0xc20826d00a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2081d3080, 0x0, 0x0, 0x0, 0xc20826d000, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc20826cc90, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc20826cc90, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2081d3080, 0xc20815eb60, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec8c0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec8c0)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 18 [IO wait, 1 minutes]:
+net.(*pollDesc).Wait(0xc2080d79c0, 0x72, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:84 +0x47
+net.(*pollDesc).WaitRead(0xc2080d79c0, 0x0, 0x0)
+	/usr/local/go/src/net/fd_poll_runtime.go:89 +0x43
+net.(*netFD).Read(0xc2080d7960, 0xc2081ea000, 0x800, 0x800, 0x0, 0x7f06ff676d70, 0xc2082708b8)
+	/usr/local/go/src/net/fd_unix.go:242 +0x40f
+net.(*conn).Read(0xc20802c0c8, 0xc2081ea000, 0x800, 0x800, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/net.go:121 +0xdc
+crypto/tls.(*block).readFromUntil(0xc20826d8c0, 0x7f06ff67a778, 0xc20802c0c8, 0x5, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:454 +0xe6
+crypto/tls.(*Conn).readRecord(0xc2082282c0, 0x17, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:539 +0x2da
+crypto/tls.(*Conn).Read(0xc2082282c0, 0xc20830b000, 0x1000, 0x1000, 0x0, 0x0, 0x0)
+	/usr/local/go/src/crypto/tls/conn.go:904 +0x166
+net/http.(*liveSwitchReader).Read(0xc2082ec9a8, 0xc20830b000, 0x1000, 0x1000, 0x8, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:214 +0xab
+io.(*LimitedReader).Read(0xc2081b4920, 0xc20830b000, 0x1000, 0x1000, 0x800, 0x0, 0x0)
+	/usr/local/go/src/io/io.go:408 +0xce
+bufio.(*Reader).fill(0xc2081d30e0)
+	/usr/local/go/src/bufio/bufio.go:97 +0x1ce
+bufio.(*Reader).ReadSlice(0xc2081d30e0, 0xc20829240a, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:295 +0x257
+bufio.(*Reader).ReadLine(0xc2081d30e0, 0x0, 0x0, 0x0, 0xc208292400, 0x0, 0x0)
+	/usr/local/go/src/bufio/bufio.go:324 +0x62
+net/textproto.(*Reader).readLineSlice(0xc208216240, 0x0, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:55 +0x9e
+net/textproto.(*Reader).ReadLine(0xc208216240, 0x0, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/textproto/reader.go:36 +0x4f
+net/http.ReadRequest(0xc2081d30e0, 0xc20815e410, 0x0, 0x0)
+	/usr/local/go/src/net/http/request.go:598 +0xcb
+net/http.(*conn).readRequest(0xc2082ec960, 0x0, 0x0, 0x0)
+	/usr/local/go/src/net/http/server.go:586 +0x26f
+net/http.(*conn).serve(0xc2082ec960)
+	/usr/local/go/src/net/http/server.go:1162 +0x69e
+created by net/http.(*Server).Serve
+	/usr/local/go/src/net/http/server.go:1751 +0x35e
+
+goroutine 29 [chan receive]:
+github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws.(*awsResourceManager).waitForResourceReady(0xc20807c000, 0xc208293f50, 0x24, 0xf, 0xc20829f040, 0xa)
+	/mnt/hgfs/go/src/github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws/aws.go:379 +0x88
+created by github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws.(*awsResourceManager).AddResource
+	/mnt/hgfs/go/src/github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws/aws.go:359 +0x115e
