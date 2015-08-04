@@ -356,6 +356,9 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid 
 	// Setup a ticker that will hit every 30 seconds
 	ticker := time.NewTicker(30 * time.Second)
 
+	// And an int for us to track how many times we've tried to connect
+	connectAttempts := 0
+
 	// Loop forever, waiting for our ticker to hit every 30 seconds.  This loop
 	// will check to see that our instance is finally in a running state, at which
 	// point we'll add it to the queue.
@@ -391,33 +394,43 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid 
 				//Let's actually add and connect to the resource
 				resUUID, err := this.q.AddResource(*instance.PublicDNSName, name, this.tls)
 
-				//If there was an error, stop everything and return that we have an error
+				//If there was an error, let's try again in 30 seconds
 				if err != nil {
-					log.WithFields(log.Fields{
-						"error":   err.Error(),
-						"address": instance.PublicIPAddress,
-						"name":    name,
-					}).Error("Unable to connect to AWS resource")
+					// We'll attempt to connect 3 times, if by that point we can't connect, then we'll give up
+					connectAttempts++
+					if connectAttempts >= 3 {
+						log.WithFields(log.Fields{
+							"error":   err.Error(),
+							"address": instance.PublicIPAddress,
+							"name":    name,
+						}).Error("Three attempts reached, unable to connect to resource.")
 
+						ticker.Stop()
+						return
+					} else {
+						log.WithFields(log.Fields{
+							"error":   err.Error(),
+							"address": instance.PublicIPAddress,
+							"name":    name,
+						}).Warn("Unable to connect to AWS resource, trying again in 30 seconds.")
+					}
+				} else {
+					// If we successfully connected, then create storage for our local data in the resource manager
+					resourceData := resourceInfo{
+						Instance:       instance,
+						State:          state,
+						StartTime:      time.Now(),
+						LastUseTime:    time.Now(),
+						DisconnectTime: time.Duration(disconnect) * time.Minute,
+					}
+
+					// Add it to our local data
+					this.resources.Set(resUUID, resourceData)
+
+					// Finally, stop the ticker, because we're done.
 					ticker.Stop()
 					return
 				}
-
-				// If we successfully connected, then create storage for our local data in the resource manager
-				resourceData := resourceInfo{
-					Instance:       instance,
-					State:          state,
-					StartTime:      time.Now(),
-					LastUseTime:    time.Now(),
-					DisconnectTime: time.Duration(disconnect) * time.Minute,
-				}
-
-				// Add it to our local data
-				this.resources.Set(resUUID, resourceData)
-
-				// Finally, stop the ticker, because we're done.
-				ticker.Stop()
-				return
 			}
 		}
 	}

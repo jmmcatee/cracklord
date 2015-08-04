@@ -105,7 +105,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 		}).Error("Could not gather port definition from job parameters.")
 		return &nmapTasker{}, errors.New("Could not gather port definition from job parameters.")
 	}
-	if portkey == "Custom" {
+	if portkey == "* Custom Port Listing" {
 		customportdata, ok := t.job.Parameters["portscustom"]
 		if !ok {
 			log.WithFields(log.Fields{
