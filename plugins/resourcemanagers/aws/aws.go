@@ -353,9 +353,19 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 				"instanceid": *instance.InstanceID,
 				"error":      err.Error(),
 			}).Error("Unable to add resource for AWS instance.")
-			return err
+			continue
 		}
 
+		resourceData := resourceInfo{
+			Instance: *instance,
+			State:    INSTANCE_STATE_PENDING,
+		}
+
+		// Add it to our local data so we know we have the data.
+		this.resources.Set(resUUID, resourceData)
+
+		// Now startup a goroutine that waits on each resource to finish
+		log.WithField("resource", resUUID).Info("Added resource to queue pool in pending state, awaiting AWS to finalize instance.")
 		go this.waitForResourceReady(resUUID, disconTime, *instance.InstanceID)
 	}
 
@@ -502,7 +512,6 @@ func (this awsResourceManager) GetResource(resourceid string) (*queue.Resource, 
 	tmpData["lastusetime"] = localres.LastUseTime.String()
 	tmpData["instanceid"] = *localres.Instance.InstanceID
 	tmpData["privateipaddress"] = *localres.Instance.PrivateIPAddress
-	tmpData["publicipaddress"] = *localres.Instance.PublicIPAddress
 	tmpData["vpcid"] = *localres.Instance.VPCID
 	tmpData["instancetype"] = *localres.Instance.InstanceType
 
@@ -550,6 +559,8 @@ func (this awsResourceManager) GetManagedResources() []string {
 		//Now let's add the ID from the map to the slice of UUIDs
 		resourceids = append(resourceids, data.Key)
 	}
+
+	log.WithField("ids", resourceids).Debug("Gathered list of managed resources")
 
 	return resourceids
 }

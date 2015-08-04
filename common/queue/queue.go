@@ -1080,7 +1080,7 @@ func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) err
 	}
 
 	// Let the user know we connected
-	log.WithField("target", q.pool[resUUID].Address).Info("Successfully connected to resource")
+	log.WithField("target", localRes.Address).Info("Successfully connected to resource")
 	localRes.Status = common.STATUS_RUNNING
 
 	q.Lock()
@@ -1131,7 +1131,7 @@ func (q *Queue) LoadRemoteResourceHardware(resUUID string) {
 	q.pool[resUUID] = localRes
 	q.Unlock()
 
-	log.WithField("hardware", localRes.Hardware).Debug("Loaded hardware for resource")
+	log.WithField("resources", resUUID).Debug("Loaded hardware for resource")
 }
 
 func (q *Queue) LoadRemoteResourceTools(resUUID string) {
