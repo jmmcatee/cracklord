@@ -42,6 +42,12 @@ footer p.license {
 	width: 400px;
 }
 
+.navbar-text.projectname {
+	font-size: 1.4em;
+	margin-top: 11px;
+	margin-bottom: 11px;
+}
+
 /* UI-VIEW Sidebar on Jobs and Resource Pages */
 .sidebar {
 	height: 100% !important;
