@@ -328,6 +328,7 @@ func (v *nmapTasker) onCmdComplete() {
 
 	v.job.Status = common.STATUS_DONE
 	v.job.Progress = 100.00
+	v.job.CrackedHashes = v.job.TotalHashes
 	v.waitChan <- struct{}{}
 
 	// Get the output results
@@ -336,8 +337,6 @@ func (v *nmapTasker) onCmdComplete() {
 		log.WithField("error", err.Error()).Error("Unable to parse NMap output data.")
 	} else {
 		v.job.OutputData = nmapToCSV(data)
-		log.WithField("nmapdata", data).Debug("Parsed nmap XML")
-		log.WithField("outdata", v.job.OutputData).Debug("Generated NMap output")
 	}
 }
 

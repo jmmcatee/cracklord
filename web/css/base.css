@@ -301,8 +301,13 @@ hr {
 	margin: 0 20px;
 }
 
-.job-actions .btn-default {
+.job-actions .btn-default.disabled {
 	color: #000;
+	cursor: auto;
+}
+
+.job-actions .btn-default.disabled:hover {
+	background-color: #e0e0e0;
 }
 
 .job-output {

@@ -268,6 +268,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, dictPath)                          // Dictionary file
 	} else if bruteCharSet != "" && bruteLength != "" {
+		args = append(args, "-a", 3)
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, "-1", bruteCharSet)
 		args = append(args, bruteLength)
