@@ -440,7 +440,11 @@ func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect 
 						State:          state,
 						StartTime:      time.Now(),
 						LastUseTime:    time.Now(),
-						DisconnectTime: time.Duration(disconnect) * time.Minute,
+						DisconnectTime: time.Duration(-1),
+					}
+
+					if disconnect > 0 {
+						resourceData.DisconnectTime = time.Duration(disconnect) * time.Minute
 					}
 
 					// Add it to our local data
@@ -604,7 +608,7 @@ func (this awsResourceManager) Keep() {
 
 		// 3. Let's check and see if this resource has timed out, if so let's disconnect it
 		unusedTime := time.Since(resource.LastUseTime)
-		if unusedTime > resource.DisconnectTime {
+		if resource.DisconnectTime > 0 && unusedTime > resource.DisconnectTime {
 			err = this.DeleteResource(resourceID)
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -614,6 +618,9 @@ func (this awsResourceManager) Keep() {
 				}).Error("Unable to remove timed out instance from the queue.")
 				continue
 			}
+			log.WithFields(log.Fields{
+				"instance": resource.Instance.InstanceID,
+			}).Info("AWS Instance has not been used and has been removed as configured.")
 		}
 	}
 }
