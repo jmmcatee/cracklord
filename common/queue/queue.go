@@ -9,6 +9,7 @@ import (
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common"
 	"io"
+	"net"
 	"net/rpc"
 	"os"
 	"strings"
@@ -1016,30 +1017,64 @@ func (q *Queue) KeepAllResourceManagers() {
 }
 
 //This function will connect to a resource
-func (q *Queue) ConnectResource(res *Resource, tlsconfig *tls.Config) error {
+func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) error {
+	q.RLock()
+	localRes := q.pool[resUUID]
+	q.RUnlock()
+
+	// First, setup the address we're going to connect to
+	localRes.Address = addr
+	// Then store a local version in the event we need to add the default port
+	target := localRes.Address
+
 	//Check to see if we have a port, otherwise use the default 9443
-	if !strings.Contains(res.Address, ":") {
-		res.Address += ":9443"
+	if !strings.Contains(target, ":") {
+		target += ":9443"
 	}
+	log.WithField("addr", target).Info("Connecting to resource")
 
-	log.WithField("addr", res.Address).Info("Connecting to resource")
-
-	conn, err := tls.Dial("tcp", res.Address, tlsconfig)
+	// Dial the target and see if we get a connection in 15 seconds
+	conn, err := net.DialTimeout("tcp", target, time.Second*15)
 	if err != nil {
-		log.WithField("addr", res.Address).Debug("An error occured while dialing the resource")
+		log.WithField("addr", target).Debug("Unable to dial the resource.")
 		return err
 	}
 
-	log.WithField("addr", res.Address).Debug("Dialed client, now building new connection")
+	// Now we need to set the ServerName in the tls config.  We'll make a copy
+	// to make sure we don't mess with anything
+	localConfig := *tlsconfig
+	localConfig.ServerName = localRes.Address
+
+	// Now let's build a TLS connection object and force a handshake to make
+	// sure it's working
+	tlsConn := tls.Client(conn, &localConfig)
+	err = tlsConn.Handshake()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"addr":       target,
+			"servername": q.pool[resUUID].Address,
+		}).Debug("An error occured while building the TLS connection")
+		return err
+	}
 
 	// Build the RPC client for the resource
-	res.Client = rpc.NewClient(conn)
+	localRes.Client = rpc.NewClient(conn)
 	if err != nil {
-		log.WithField("addr", res.Address).Debug("An error occured while creating new client")
+		log.WithField("addr", target).Debug("An error occured while creating new client")
 		return err
 	}
 
-	log.WithField("addr", res.Address).Debug("Done connecting to resource")
+	// Let the user know we connected
+	log.WithField("target", q.pool[resUUID].Address).Info("Successfully connected to resource")
+	localRes.Status = common.STATUS_RUNNING
+
+	q.Lock()
+	q.pool[resUUID] = localRes
+	q.Unlock()
+
+	// Now let's make sure the tools and hardware are loaded
+	q.LoadRemoteResourceHardware(resUUID)
+	q.LoadRemoteResourceTools(resUUID)
 
 	return nil
 }
@@ -1057,23 +1092,47 @@ func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {
 }
 
 //This loads all of the hardware for a remote resource
-func (q *Queue) LoadRemoteResourceHardware(res *Resource) {
+func (q *Queue) LoadRemoteResourceHardware(resUUID string) {
+	q.RLock()
+	localRes := q.pool[resUUID]
+	q.RUnlock()
+
 	// Get Hardware
-	res.Client.Call("Queue.ResourceHardware", common.RPCCall{}, &res.Hardware)
+	err := localRes.Client.Call("Queue.ResourceHardware", common.RPCCall{}, &localRes.Hardware)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err.Error(),
+			"resource": resUUID,
+		}).Error("Unable to gather resource hardware.")
+		return
+	}
 
 	// Set all hardware as available
-	for key, _ := range res.Hardware {
-		res.Hardware[key] = true
+	for key, _ := range localRes.Hardware {
+		localRes.Hardware[key] = true
 	}
+
+	q.Lock()
+	q.pool[resUUID] = localRes
+	q.Unlock()
+
+	log.WithField("hardware", localRes.Hardware).Debug("Loaded hardware for resource")
 }
 
-func (q *Queue) LoadRemoteResourceTools(res *Resource) {
+func (q *Queue) LoadRemoteResourceTools(resUUID string) {
 	// Get Tools
 	var tools []common.Tool
-	res.Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
+	err := q.pool[resUUID].Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err.Error(),
+			"resource": resUUID,
+		}).Error("Unable to gather resource tools.")
+		return
+	}
 
 	for _, v := range tools {
-		res.Tools[v.UUID] = v
+		q.pool[resUUID].Tools[v.UUID] = v
 	}
 
 	q.RLock()
@@ -1082,28 +1141,29 @@ func (q *Queue) LoadRemoteResourceTools(res *Resource) {
 	// Loop through new tools and look for those we already have
 	// If we find a tool we already have we need to make the UUID the same
 	// If we don't already have this we can just leave the UUID assigned by the resource
-	for _, aValue := range res.Tools {
+	for _, aValue := range q.pool[resUUID].Tools {
 		// Loop through the pool
 	ToolBreak:
 		for i, _ := range q.pool {
 			for _, cValue := range q.pool[i].Tools {
 				if common.CompareTools(aValue, cValue) {
-					res.Tools[cValue.UUID] = aValue
-					delete(res.Tools, aValue.UUID)
+					q.pool[resUUID].Tools[cValue.UUID] = aValue
+					delete(q.pool[resUUID].Tools, aValue.UUID)
 					break ToolBreak
 				}
 			}
 		}
 	}
+	log.WithField("tools", q.pool[resUUID].Tools).Debug("Loaded tools for resource")
 }
 
 //This function will add a resource to the queue.  Returns the UUID.
-func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, error) {
+func (q *Queue) AddResource(name string) (string, error) {
 	// Check that the address is already in use
 	for _, v := range q.pool {
-		if v.Address == addr && v.Status != common.STATUS_QUIT {
+		if v.Name == name && v.Status != common.STATUS_QUIT {
 			// We have found a resource with the same address so error
-			log.WithField("address", addr).Debug("Resource already exists.")
+			log.WithField("name", name).Debug("Resource already exists.")
 			return "", errors.New("Resource already exists!")
 		}
 	}
@@ -1112,16 +1172,7 @@ func (q *Queue) AddResource(addr, name string, tlsconfig *tls.Config) (string, e
 	res := NewResource()
 
 	res.Name = name
-	res.Address = addr
-	res.Status = common.STATUS_RUNNING
-
-	err := q.ConnectResource(&res, tlsconfig)
-	if err != nil {
-		return "", err
-	}
-
-	q.LoadRemoteResourceHardware(&res)
-	q.LoadRemoteResourceTools(&res)
+	res.Status = common.STATUS_PENDING
 
 	//Generate a UUID for the resource
 	resourceuuid := uuid.New()

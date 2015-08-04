@@ -92,9 +92,13 @@ func (this *directResourceManager) AddResource(params map[string]string) error {
 	}
 
 	//First, we attempt to add the resource into the queue itself
-	uuid, err := this.q.AddResource(address, name, this.tls)
+	uuid, err := this.q.AddResource(name)
+	if err != nil {
+		return err
+	}
 
-	//If unable to connect, log it and return the error to the API
+	//Now we connect to the resource, and then let the user know the status
+	err = this.q.ConnectResource(uuid, address, this.tls)
 	if err != nil {
 		return err
 	}

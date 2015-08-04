@@ -8,6 +8,7 @@ import (
 const (
 	STATUS_CREATED = "created"
 	STATUS_RUNNING = "running"
+	STATUS_PENDING = "pending"
 	STATUS_PAUSED  = "paused"
 	STATUS_DONE    = "done"
 	STATUS_FAILED  = "failed"

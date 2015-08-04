@@ -344,7 +344,19 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 	//Now we start a goroutine that waits for the instance to be in a ready state, and then we'll do the rest.
 	//For now, let's return to the user that we're trying.
 	for _, instance := range res.Instances {
-		go this.waitForResourceReady(disconTime, *instance.InstanceID, this.ec2client)
+		// Build a name for our instance that is relevant
+		name := fmt.Sprintf("aws-%s", *instance.InstanceID)
+		resUUID, err := this.q.AddResource(name)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"name":       name,
+				"instanceid": *instance.InstanceID,
+				"error":      err.Error(),
+			}).Error("Unable to add resource for AWS instance.")
+			return err
+		}
+
+		go this.waitForResourceReady(resUUID, disconTime, *instance.InstanceID)
 	}
 
 	return nil
@@ -352,9 +364,9 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 
 // This function will be run in a goroutine and will check every 30 seconds to see
 // if the instance we just started is ready.
-func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid string, ec2client *ec2.EC2) {
+func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect int, instanceid string) {
 	// Setup a ticker that will hit every 30 seconds
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 
 	// And an int for us to track how many times we've tried to connect
 	connectAttempts := 0
@@ -366,7 +378,7 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid 
 		select {
 		case <-ticker.C:
 			//Lookup the state of the instance to determine if we're running yet
-			state, err := getInstanceState(instanceid, ec2client)
+			state, err := getInstanceState(instanceid, this.ec2client)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error":      err.Error(),
@@ -388,31 +400,28 @@ func (this *awsResourceManager) waitForResourceReady(disconnect int, instanceid 
 					}).Error("Unable to gather instance information")
 				}
 
-				// Build a name for our instance that is relevant
-				name := fmt.Sprintf("aws-instance-%s", *instance.PublicIPAddress)
-
-				//Let's actually add and connect to the resource
-				resUUID, err := this.q.AddResource(*instance.PublicDNSName, name, this.tls)
+				//Let's actually connect to the resource
+				err = this.q.ConnectResource(resUUID, *instance.PublicDNSName, this.tls)
 
 				//If there was an error, let's try again in 30 seconds
 				if err != nil {
 					// We'll attempt to connect 3 times, if by that point we can't connect, then we'll give up
 					connectAttempts++
-					if connectAttempts >= 3 {
+					if connectAttempts >= 5 {
 						log.WithFields(log.Fields{
-							"error":   err.Error(),
-							"address": instance.PublicIPAddress,
-							"name":    name,
-						}).Error("Three attempts reached, unable to connect to resource.")
+							"error":    err.Error(),
+							"address":  instance.PublicIPAddress,
+							"resource": resUUID,
+						}).Error("Five attempts reached, unable to connect to resource.")
 
 						ticker.Stop()
 						return
 					} else {
 						log.WithFields(log.Fields{
-							"error":   err.Error(),
-							"address": instance.PublicIPAddress,
-							"name":    name,
-						}).Warn("Unable to connect to AWS resource, trying again in 30 seconds.")
+							"error":    err.Error(),
+							"address":  instance.PublicIPAddress,
+							"resource": resUUID,
+						}).Warn("Unable to connect to AWS resource, trying again in 60 seconds.")
 					}
 				} else {
 					// If we successfully connected, then create storage for our local data in the resource manager
