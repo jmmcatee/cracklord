@@ -450,7 +450,7 @@ func getSecurityGroupByName(name string, ec2client *ec2.EC2) (ec2.SecurityGroup,
 }
 
 // Sets up a security group based on it's ID.  Returns an error if it isn't able.
-func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.SecurityGroup, error) {
+func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (string, error) {
 	//Create the input struct with the appropriate settings, making sure to use the aws string pointer type
 	sgReq := ec2.CreateSecurityGroupInput{
 		GroupName:   aws.String(name),
@@ -461,7 +461,7 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.Securit
 	//Attempt to create the security group
 	sgResp, err := ec2client.CreateSecurityGroup(&sgReq)
 	if err != nil {
-		return ec2.SecurityGroup{}, err
+		return "", err
 	}
 
 	authReq := ec2.AuthorizeSecurityGroupIngressInput{
@@ -473,16 +473,10 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (ec2.Securit
 	}
 	_, err = ec2client.AuthorizeSecurityGroupIngress(&authReq)
 	if err != nil {
-		return ec2.SecurityGroup{}, err
+		return "", err
 	}
 
-	//Get the name to double check on our new group
-	newgroup, ok := getSecurityGroupByID(*sgResp.GroupID, ec2client)
-	if !ok {
-		return ec2.SecurityGroup{}, errors.New("Unable to find newly created security group '" + *sgResp.GroupID + "'")
-	}
-
-	return newgroup, nil
+	return *sgResp.GroupID, nil
 }
 
 // Reviews and errors received and returns true if there was an error.  Will
