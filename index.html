@@ -156,12 +156,13 @@
                       </ul>
                     </li>
                     <li>This will install the queue, the web GUI, and create a set of self-signed certificates you can use to authenticate resources you may want to connect in the future.  If you have a resource on the same system, we've also tried to make it easy and have created that cert for you.</li>
-                    <li>You should now look at /etc/cracklord/queued.conf and change any settings that you'd like for your environment</li>
+                    <li>You should now look at <code>/etc/cracklord/queued.conf</code> and the config files in <code>/etc/cracklord/resourcemanagers/</code>.  You will have to change any settings that you'd like for your environment.</li>
                     <li>Now you can start up the queue server by issuing the following command
                       <ul class="list-unstyled">
                       <li><code>service cracklord-queued start</code></li>
                       </ul>
                     </li>
+                    <li>At this point, you'll want to get some resource servers configured and connected.  If you have your own hardware, you'll need to connect to it within the GUI.  Your other option is to use AWS instances that you can deploy automatically from the GUI.  Be careful about watching your charges for EC2 instances in AWS!</li>
                   </ol>
                 </div>
                 <div class="col-md-6">
@@ -178,7 +179,7 @@
                       <li><code>apt-get install cracklord-resourced</code></li>
                       </ul>
                     </li>
-                    <li>You will now need to edit the default configuration file at /etc/cracklord/resourced.conf</li>
+                    <li>You will now need to edit the default configuration file at <code>/etc/cracklord/resourced.conf</code>, including enabling any relevant tool plugins.  You will also need to configure the tools in <code>/etc/cracklord/plugins/</code> for their specific settings.</li>
                     <li>You can now run the resource server.  Please note that there may be individual configuration needs for various tools, such as getting X11 running for oclHashcat, or installing nmap, etc.  See the Tool list below for links to additional information.  To run the server, just: </li>
                       <ul class="list-unstyled">
                       <li><code>service cracklord-resourced start</code></li>
