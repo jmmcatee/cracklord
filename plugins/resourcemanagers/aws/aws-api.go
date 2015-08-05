@@ -72,7 +72,6 @@ write_files:
 				},
 			},
 		},
-		KeyName:  aws.String("cracklord-build-temp"),
 		UserData: aws.String(userdata),
 	}
 
