@@ -42,6 +42,8 @@ func launchInstance(amiid, secgrpid, subnet, instancetype, ca, crt, key string, 
 #
 package_update: true
 package_upgrade: true
+packages: 
+ - cracklord-resourced
 write_files:
 -   content: |
 ` + addSpacesToUserDataFile(ca) + `
