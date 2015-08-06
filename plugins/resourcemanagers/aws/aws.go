@@ -582,23 +582,11 @@ func (this awsResourceManager) Keep() {
 		resourceID := data.Key
 		resource := data.Val.(resourceInfo)
 
-		//First, let's get the status of the resource
+		// 1. Let's get the status of the resource
 		status, err := getInstanceState(*resource.Instance.VPCID, this.ec2client)
 
 		// Set the state in our local data
 		resource.State = status
-
-		if status != INSTANCE_STATE_RUNNING && status != INSTANCE_STATE_PENDING {
-			err = this.DeleteResource(resourceID)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"resourceid":      resourceID,
-					"resourcemanager": "aws",
-					"error":           err.Error(),
-				}).Error("Unable to remove stopped instance from the queue.")
-				continue
-			}
-		}
 
 		// 2. Let's check this resource and see if it's being used, if so, set the last use time
 		jobs := this.q.AllJobsByResource(resourceID)
