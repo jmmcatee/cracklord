@@ -6,7 +6,7 @@
 
 ## What Is It? ##
 
-CrackLord is a system designed to provide a scalable, pluggable, and distributed system for both password cracking as well as any other jobs needing lots of computing resources. Better said, CrackLord is a way to load balance the resources, such as CPU, GPU, Network, etc. from multiple hardware systems into a single queueing service across two primary services: the Resource and Queue.
+CrackLord is a system designed to provide a scalable, pluggable, and distributed system for both password cracking as well as any other jobs needing lots of computing resources. Better said, CrackLord is a way to load balance the resources, such as CPU, GPU, Network, etc. from multiple hardware systems into a single queueing service across two primary services: the Resource and Queue.  It won't make these tasks faster, but it will make it easier to manage them. 
 
 ## System Components ##
 <img src="http://jmmcatee.github.io/cracklord/img/about.png" width=300/>
