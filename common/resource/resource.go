@@ -89,6 +89,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 		if q.tools[i].UUID() == rpc.Job.ToolUUID {
 			tasker, err = q.tools[i].NewTask(rpc.Job)
 			if err != nil {
+				q.RUnlock()
 				return err
 			}
 		}
@@ -115,6 +116,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	// Everything should be paused by the control queue so start this job
 	err = q.stack[rpc.Job.UUID].Run()
 	if err != nil {
+		q.Unlock()
 		log.Debug("Error starting task on resource")
 		return errors.New("Error starting task on the resource: " + err.Error())
 	}
