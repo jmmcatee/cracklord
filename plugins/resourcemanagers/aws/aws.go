@@ -36,6 +36,7 @@ type config struct {
 	InstanceTypesOrder []string
 	CACert             *x509.Certificate
 	CAKey              *rsa.PrivateKey
+	ConnectionAttempts int
 }
 
 var conf = config{}
@@ -99,6 +100,17 @@ func Setup(confpath string, qpointer *queue.Queue, tlspointer *tls.Config, caCer
 	conf.VPCID, ok = confGen["VPCID"]
 	if !ok {
 		conf.VPCID = ""
+	}
+
+	// Let's see if we have a connection attempts, if so, do it.  Otherwise set to 10.
+	tmpAttempts, ok := confGen["ConnectAttempts"]
+	if !ok {
+		conf.ConnectionAttempts = 10
+	} else {
+		conf.ConnectionAttempts, err = strconv.Atoi(tmpAttempts)
+		if err != nil {
+			return &awsResourceManager{}, errors.New("Unable to parse ConnectionAttempts field in AWS resource manager configuration file.")
+		}
 	}
 
 	// Get the InstanceTypes section
@@ -417,12 +429,17 @@ func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect 
 				if err != nil {
 					// We'll attempt to connect 3 times, if by that point we can't connect, then we'll give up
 					connectAttempts++
-					if connectAttempts >= 5 {
+					if connectAttempts >= conf.ConnectionAttempts {
 						log.WithFields(log.Fields{
 							"error":    err.Error(),
 							"address":  instance.PublicIPAddress,
 							"resource": resUUID,
-						}).Error("Five attempts reached, unable to connect to resource.")
+						}).Error("Maximum attempts reached, giving up on connecting to new resource.")
+
+						err := termInstance([]string{instanceid}, this.ec2client)
+						if err != nil {
+							log.WithField("instanceid", instanceid).Error("Unable to terminate the instance: " + err.Error())
+						}
 
 						ticker.Stop()
 						return
