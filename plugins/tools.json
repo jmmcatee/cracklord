@@ -18,7 +18,7 @@
 	},
 	{
 		"name": "John the Ripper",
-		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/john",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/johndict",
 		"desc": "Runs <a href=\"http://www.openwall.com/john/\">John the Ripper</a> to crack hashes using numerous different algorithms on resource server CPU.",
 		"authors": [
 			{
