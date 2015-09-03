@@ -59,16 +59,16 @@ write_files:
 
 	// Build our request, converting the go base types into the pointers required by the SDK
 	instanceReq := ec2.RunInstancesInput{
-		ImageID:      aws.String(amiid),
+		ImageId:      aws.String(amiid),
 		MaxCount:     aws.Int64(int64(number)),
 		MinCount:     aws.Int64(int64(number)),
 		InstanceType: aws.String(instancetype),
 		// Because we're making this VPC aware, we also have to include a network interface specification
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
 			{
-				AssociatePublicIPAddress: aws.Bool(true),
+				AssociatePublicIpAddress: aws.Bool(true),
 				DeviceIndex:              aws.Int64(0),
-				SubnetID:                 aws.String(subnet),
+				SubnetId:                 aws.String(subnet),
 				Groups: []*string{
 					aws.String(secgrpid),
 				},
@@ -101,7 +101,7 @@ func addSpacesToUserDataFile(src string) string {
 // Returns a single insance when given it's ID
 func getInstanceByID(instanceid string, ec2client *ec2.EC2) (ec2.Instance, error) {
 	instanceReq := ec2.DescribeInstancesInput{
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceid),
 		},
 	}
@@ -130,7 +130,7 @@ func getInstanceByID(instanceid string, ec2client *ec2.EC2) (ec2.Instance, error
 func getInstanceState(instanceid string, ec2client *ec2.EC2) (int64, error) {
 	//Build the struct to hold our instance ID we're requesting
 	instanceReq := ec2.DescribeInstanceStatusInput{
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceid),
 		},
 	}
@@ -157,12 +157,12 @@ func getInstanceState(instanceid string, ec2client *ec2.EC2) (int64, error) {
 func termInstance(instanceids []string, ec2client *ec2.EC2) error {
 	// Create our struct to hold everything
 	instanceReq := ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{},
+		InstanceIds: []*string{},
 	}
 
 	// Loop through our input array and add them to our struct, converting them to the string pointer required by the SDK
 	for _, id := range instanceids {
-		instanceReq.InstanceIDs = append(instanceReq.InstanceIDs, aws.String(id))
+		instanceReq.InstanceIds = append(instanceReq.InstanceIds, aws.String(id))
 	}
 
 	//Make the request to kill all the instances, returning an error if we got one.
@@ -183,7 +183,7 @@ func termInstance(instanceids []string, ec2client *ec2.EC2) error {
 	// Loop through all the instances and check the state
 	for _, instance := range instanceResp.TerminatingInstances {
 		if *instance.CurrentState.Code != INSTANCE_STATE_TERMINATED && *instance.CurrentState.Code != INSTANCE_STATE_SHUTTING_DOWN {
-			allterminated = allterminated + " " + *instance.InstanceID
+			allterminated = allterminated + " " + *instance.InstanceId
 		}
 	}
 
@@ -238,42 +238,42 @@ func getAllRegions(creds *credentials.Credentials) ([]*ec2.Region, error) {
 }
 
 // Get all of the VPCs configured in the environment
-func getAllVPCs(ec2client *ec2.EC2) ([]*ec2.VPC, error) {
+func getAllVPCs(ec2client *ec2.EC2) ([]*ec2.Vpc, error) {
 	//Get all of the VPCs
-	vpcs, err := ec2client.DescribeVPCs(&ec2.DescribeVPCsInput{})
+	vpcs, err := ec2client.DescribeVpcs(&ec2.DescribeVpcsInput{})
 
 	//If we had an error, return it
 	if err != nil {
-		return []*ec2.VPC{}, err
+		return []*ec2.Vpc{}, err
 	}
 
 	//Otherwise, return all of our VPCs
-	return vpcs.VPCs, nil
+	return vpcs.Vpcs, nil
 }
 
 // Get a single VPC by it's id.
-func getVPCByID(id string, ec2client *ec2.EC2) (ec2.VPC, error) {
+func getVPCByID(id string, ec2client *ec2.EC2) (ec2.Vpc, error) {
 	vpcs, err := getAllVPCs(ec2client)
 
 	if err != nil {
-		return ec2.VPC{}, err
+		return ec2.Vpc{}, err
 	}
 
 	for _, vpc := range vpcs {
-		if *vpc.VPCID == id {
+		if *vpc.VpcId == id {
 			return *vpc, nil
 		}
 	}
 
-	return ec2.VPC{}, errors.New("Unable to find VPC with id " + id)
+	return ec2.Vpc{}, errors.New("Unable to find VPC with id " + id)
 }
 
 // Gets the default VPC for the currently connected region
-func getDefaultVPC(ec2client *ec2.EC2) (ec2.VPC, error) {
+func getDefaultVPC(ec2client *ec2.EC2) (ec2.Vpc, error) {
 	vpcs, err := getAllVPCs(ec2client)
 
 	if err != nil {
-		return ec2.VPC{}, err
+		return ec2.Vpc{}, err
 	}
 
 	for _, vpc := range vpcs {
@@ -282,7 +282,7 @@ func getDefaultVPC(ec2client *ec2.EC2) (ec2.VPC, error) {
 		}
 	}
 
-	return ec2.VPC{}, errors.New("Unable to find a default VPC")
+	return ec2.Vpc{}, errors.New("Unable to find a default VPC")
 }
 
 // Gets a map of subnet ID and CIDR address block from the specified VPC
@@ -295,7 +295,7 @@ func getSubnetNamesInVPC(vpcid string, ec2client *ec2.EC2) (map[string]string, e
 	tmpMap := make(map[string]string)
 
 	for _, subnet := range subnets {
-		tmpMap[*subnet.SubnetID] = *subnet.CIDRBlock
+		tmpMap[*subnet.SubnetId] = *subnet.CidrBlock
 	}
 
 	return tmpMap, nil
@@ -422,7 +422,7 @@ func getSecurityGroupByID(id string, ec2client *ec2.EC2) (ec2.SecurityGroup, boo
 
 	//Loop through all of the found security groups and check if the name matches.
 	for _, sg := range groups {
-		if *sg.GroupID == id {
+		if *sg.GroupId == id {
 			//If it matches, return the group object.
 			return *sg, true
 		}
@@ -457,7 +457,7 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (string, err
 	sgReq := ec2.CreateSecurityGroupInput{
 		GroupName:   aws.String(name),
 		Description: aws.String(desc),
-		VPCID:       aws.String(vpc),
+		VpcId:       aws.String(vpc),
 	}
 
 	//Attempt to create the security group
@@ -467,18 +467,18 @@ func setupSecurityGroup(name, desc, vpc string, ec2client *ec2.EC2) (string, err
 	}
 
 	authReq := ec2.AuthorizeSecurityGroupIngressInput{
-		CIDRIP:     aws.String("0.0.0.0/0"),
+		CidrIp:     aws.String("0.0.0.0/0"),
 		FromPort:   aws.Int64(9443),
 		ToPort:     aws.Int64(9443),
-		IPProtocol: aws.String("tcp"),
-		GroupID:    sgResp.GroupID,
+		IpProtocol: aws.String("tcp"),
+		GroupId:    sgResp.GroupId,
 	}
 	_, err = ec2client.AuthorizeSecurityGroupIngress(&authReq)
 	if err != nil {
 		return "", err
 	}
 
-	return *sgResp.GroupID, nil
+	return *sgResp.GroupId, nil
 }
 
 // Reviews and errors received and returns true if there was an error.  Will

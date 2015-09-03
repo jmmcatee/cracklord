@@ -46,7 +46,7 @@ type awsResourceManager struct {
 	q             *queue.Queue
 	tls           *tls.Config
 	lastAPIUpdate time.Time
-	vpc           ec2.VPC
+	vpc           ec2.Vpc
 	subnets       []*ec2.Subnet
 	secgrpid      string
 	ec2client     *ec2.EC2
@@ -168,7 +168,7 @@ func (this awsResourceManager) ParametersForm() string {
 		if i > 0 {
 			form += ","
 		}
-		form += "\"" + *v.SubnetID + "\": \"" + *v.SubnetID + " (" + *v.CIDRBlock + ")\""
+		form += "\"" + *v.SubnetId + "\": \"" + *v.SubnetId + " (" + *v.CidrBlock + ")\""
 	}
 
 	form += `}
@@ -233,11 +233,11 @@ func (this awsResourceManager) ParametersSchema() string {
 		if i > 0 {
 			schema += ","
 		}
-		schema += "\"" + *v.SubnetID + "\""
+		schema += "\"" + *v.SubnetId + "\""
 	}
 	schema += `
 			],
-			"default": "` + *this.subnets[0].SubnetID + `"
+			"default": "` + *this.subnets[0].SubnetId + `"
 	   },
 		"disconnect": {
 			"title": "Terminate Host When Unused?",
@@ -357,12 +357,12 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 	//For now, let's return to the user that we're trying.
 	for _, instance := range res.Instances {
 		// Build a name for our instance that is relevant
-		name := fmt.Sprintf("aws-%s", *instance.InstanceID)
+		name := fmt.Sprintf("aws-%s", *instance.InstanceId)
 		resUUID, err := this.q.AddResource(name)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"name":       name,
-				"instanceid": *instance.InstanceID,
+				"instanceid": *instance.InstanceId,
 				"error":      err.Error(),
 			}).Error("Unable to add resource for AWS instance.")
 			continue
@@ -378,7 +378,7 @@ func (this *awsResourceManager) AddResource(params map[string]string) error {
 
 		// Now startup a goroutine that waits on each resource to finish
 		log.WithField("resource", resUUID).Info("Added resource to queue pool in pending state, awaiting AWS to finalize instance.")
-		go this.waitForResourceReady(resUUID, disconTime, *instance.InstanceID)
+		go this.waitForResourceReady(resUUID, disconTime, *instance.InstanceId)
 	}
 
 	return nil
@@ -423,7 +423,7 @@ func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect 
 				}
 
 				//Let's actually connect to the resource
-				err = this.q.ConnectResource(resUUID, *instance.PublicDNSName, this.tls)
+				err = this.q.ConnectResource(resUUID, *instance.PublicDnsName, this.tls)
 
 				//If there was an error, let's try again in 30 seconds
 				if err != nil {
@@ -432,7 +432,7 @@ func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect 
 					if connectAttempts >= conf.ConnectionAttempts {
 						log.WithFields(log.Fields{
 							"error":    err.Error(),
-							"address":  instance.PublicIPAddress,
+							"address":  instance.PublicIpAddress,
 							"resource": resUUID,
 						}).Error("Maximum attempts reached, giving up on connecting to new resource.")
 
@@ -446,7 +446,7 @@ func (this *awsResourceManager) waitForResourceReady(resUUID string, disconnect 
 					} else {
 						log.WithFields(log.Fields{
 							"error":    err.Error(),
-							"address":  instance.PublicIPAddress,
+							"address":  instance.PublicIpAddress,
 							"resource": resUUID,
 						}).Warn("Unable to connect to AWS resource, trying again in 60 seconds.")
 					}
@@ -496,7 +496,7 @@ func (this *awsResourceManager) DeleteResource(resourceid string) error {
 	}
 	localresource := local.(resourceInfo)
 	ids := []string{
-		*localresource.Instance.InstanceID,
+		*localresource.Instance.InstanceId,
 	}
 
 	// Now that it's been removed from the queue, we need to terminate it from AWS
@@ -529,11 +529,11 @@ func (this awsResourceManager) GetResource(resourceid string) (*queue.Resource, 
 	tmpData := make(map[string]string)
 	tmpData["instancetype"] = *localres.Instance.InstanceType
 	tmpData["disconnect"] = localres.DisconnectTime.String()
-	tmpData["subnet"] = *localres.Instance.SubnetID
+	tmpData["subnet"] = *localres.Instance.SubnetId
 	tmpData["lastusetime"] = localres.LastUseTime.String()
-	tmpData["instanceid"] = *localres.Instance.InstanceID
-	tmpData["privateipaddress"] = *localres.Instance.PrivateIPAddress
-	tmpData["vpcid"] = *localres.Instance.VPCID
+	tmpData["instanceid"] = *localres.Instance.InstanceId
+	tmpData["privateipaddress"] = *localres.Instance.PrivateIpAddress
+	tmpData["vpcid"] = *localres.Instance.VpcId
 	tmpData["instancetype"] = *localres.Instance.InstanceType
 
 	return resource, tmpData, nil
@@ -600,7 +600,7 @@ func (this awsResourceManager) Keep() {
 		resource := data.Val.(resourceInfo)
 
 		// 1. Let's get the status of the resource
-		status, err := getInstanceState(*resource.Instance.VPCID, this.ec2client)
+		status, err := getInstanceState(*resource.Instance.VpcId, this.ec2client)
 
 		// Set the state in our local data
 		resource.State = status
@@ -624,7 +624,7 @@ func (this awsResourceManager) Keep() {
 				continue
 			}
 			log.WithFields(log.Fields{
-				"instance": resource.Instance.InstanceID,
+				"instance": resource.Instance.InstanceId,
 			}).Info("AWS Instance has not been used and has been removed as configured.")
 		}
 	}
@@ -654,7 +654,7 @@ func (this *awsResourceManager) gatherAPIData() {
 		}
 	}
 
-	this.subnets, err = getSubnetsInVPC(*this.vpc.VPCID, this.ec2client)
+	this.subnets, err = getSubnetsInVPC(*this.vpc.VpcId, this.ec2client)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("ResMgr (AWS): Unable to enumerate subnets in the configured VPC")
 		return
@@ -664,12 +664,12 @@ func (this *awsResourceManager) gatherAPIData() {
 	tmpSecGrp, ok := getSecurityGroupByName(conf.SecurityGroup, this.ec2client)
 	if !ok {
 		log.WithField("securitygroup", conf.SecurityGroup).Info("ResMgr (AWS): Unable to find security group, attempting to create it.")
-		this.secgrpid, err = setupSecurityGroup(conf.SecurityGroup, "Automatically generated by CrackLord AWS ResourceManager", *this.vpc.VPCID, this.ec2client)
+		this.secgrpid, err = setupSecurityGroup(conf.SecurityGroup, "Automatically generated by CrackLord AWS ResourceManager", *this.vpc.VpcId, this.ec2client)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("ResMgr (AWS): Unable to create security group in AWS")
 		}
 	} else {
-		this.secgrpid = *tmpSecGrp.GroupID
+		this.secgrpid = *tmpSecGrp.GroupId
 	}
 }
 
