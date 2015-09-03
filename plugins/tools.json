@@ -18,7 +18,7 @@
 	},
 	{
 		"name": "John the Ripper",
-		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/hashcat",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/john",
 		"desc": "Runs <a href=\"http://www.openwall.com/john/\">John the Ripper</a> to crack hashes using numerous different algorithms on resource server CPU.",
 		"authors": [
 			{
@@ -30,7 +30,7 @@
 	},
 	{
 		"name": "Nmap: Network Mapper",
-		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/hashcatbrute",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/nmap",
 		"desc": "Runs <a href=\"http://nmap.org\">Nmap</a> scans of the network, parsing the results for the user.  Includes numerous Nmap options for the user, and can use both preset and custom port lists.",
 		"authors": [
 			{
@@ -42,7 +42,7 @@
 	},
 	{
 		"name": "Test Timers",
-		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/",
+		"link": "https://github.com/jmmcatee/cracklord/tree/master/plugins/tools/testtimercpu",
 		"desc": "A pair of simple tools that simulate using either GPU or CPU resources to allow for consistent testing of CrackLord code.",
 		"authors": [
 			{
