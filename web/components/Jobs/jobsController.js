@@ -29,18 +29,21 @@ cracklord.controller('JobsController', ['$scope', 'JobsService', 'QueueService',
 					}
 					
 					if(data[i].status == "quit" || data[i].status == "failed" || data[i].status == "done") {
+						// First let's check and see if the job is running in our array of running jobs.  if so, we need to delete it.
 						cur_idx = $scope.currentjobs.map(function(e) { return e.id; }).indexOf(data[i].id);
 						if(cur_idx >= 0) {
 							$scope.currentjobs.splice(cur_idx, 1)
 						}
 
+						// Now let's see if it's in our array of completed jobs.  If it is, then let's just update the data so we don't get odd refreshes for the user
 						cmplt_idx = $scope.completedjobs.map(function(e) { return e.id; }).indexOf(data[i].id);
 						if(cmplt_idx >= 0) {
 							data[i].expanded = $scope.completedjobs[cmplt_idx].expanded
 							$scope.completedjobs[cmplt_idx] = data[i]
+						// Otherwise, let's add it to the beginning of our array.
 						} else {
 							data[i].expanded = false
-							$scope.completedjobs.push(data[i]);
+							$scope.completedjobs.unshift(data[i]);
 						}
 					} else {
 						idx = $scope.currentjobs.map(function(e) { return e.id; }).indexOf(data[i].id);
