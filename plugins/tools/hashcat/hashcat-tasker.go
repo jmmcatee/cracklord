@@ -253,6 +253,15 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 			}
 		}
 	}
+	
+	var increment string
+	incrementKey, ok := h.job.Parameters["increment"]
+	if !ok {
+		log.Debug("No increment flag set.")
+	}else {
+		increment := incrementKey
+	}
+	
 
 	// Process the arguments for the command and add them together
 	args = append(args, "-m", htype)                                    // Algorithm
@@ -271,7 +280,9 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		args = append(args, "-a", "3")
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, "-1", bruteCharSet)
-		args = append(args, bruteLength)
+		if increment != ""{
+			args = append(args, "--increment", bruteLength)
+		} else args = append(args, bruteLength)
 	} else {
 		log.WithFields(log.Fields{
 			"ruleFile":     ruleFile,
