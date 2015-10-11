@@ -253,7 +253,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 			}
 		}
 	}
-
+	
 	increment := ""
 	incrementKey, ok := h.job.Parameters["increment"]
 	if !ok {
