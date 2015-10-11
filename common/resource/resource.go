@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"

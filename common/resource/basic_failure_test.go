@@ -2,6 +2,7 @@ package resource
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
 	"testing"
