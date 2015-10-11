@@ -2,7 +2,6 @@ package queue
 
 import (
 	"github.com/pborman/uuid"
-	"code.google.com/p/go-uuid/uuid"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
