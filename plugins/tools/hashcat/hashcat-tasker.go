@@ -253,13 +253,13 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 			}
 		}
 	}
-	
-	var increment string
+
+	increment := ""
 	incrementKey, ok := h.job.Parameters["increment"]
 	if !ok {
 		log.Debug("No increment flag set.")
 	}else {
-		increment := incrementKey
+		increment = incrementKey
 	}
 	
 
@@ -282,7 +282,7 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		args = append(args, "-1", bruteCharSet)
 		if increment != ""{
 			args = append(args, "--increment", bruteLength)
-		} else args = append(args, bruteLength)
+		} else { args = append(args, bruteLength)}
 	} else {
 		log.WithFields(log.Fields{
 			"ruleFile":     ruleFile,
