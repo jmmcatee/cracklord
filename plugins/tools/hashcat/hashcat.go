@@ -466,7 +466,8 @@ func (h *hashcatTooler) Parameters() string {
 		                        "title": "Brute Force",
 		                        "items": [
 		                            "brute_charset",
-		                            "brute_length"
+		                            "brute_length",
+					    "increment"
 		                        ]
 		                    }
 		                ]
@@ -564,6 +565,11 @@ func (h *hashcatTooler) Parameters() string {
             "type": "string",
             "default": "8"
         },
+		"increment":{
+			"title": "Check for incremental mode",
+			"type": "string",
+			"enum":["", "increment"]
+		},
 	    "hashes": {
 	      "title": "Hashes",
 	      "type": "string"
