@@ -467,7 +467,24 @@ func (h *hashcatTooler) Parameters() string {
 		                        "items": [
 		                            "brute_charset",
 		                            "brute_length",
-					    "increment"
+					    			{
+						            "key": "increment",
+						            "type": "radiobuttons",
+						            "style": {
+						                "selected": "btn-success",
+						                "unselected": "btn-default"
+						            },
+						            "titleMap": [
+						              {
+						                "value": "true",
+						                "name": "Yes"
+						              },
+						              {
+						                "value": "false",
+						                "name": "No"
+						              }
+						            ]
+						          }
 		                        ]
 		                    }
 		                ]
@@ -566,9 +583,10 @@ func (h *hashcatTooler) Parameters() string {
             "default": "8"
         },
 		"increment":{
-			"title": "Check for incremental mode",
+			"title": "Enable increment mode?",
 			"type": "string",
-			"enum":["", "increment"]
+			"description": "Adds --increment flag",
+			"default": "true"
 		},
 	    "hashes": {
 	      "title": "Hashes",
