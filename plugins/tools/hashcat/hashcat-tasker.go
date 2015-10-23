@@ -253,12 +253,11 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 			}
 		}
 	}
-	
+
 	increment, ok := h.job.Parameters["increment"]
-		if !ok {
-			log.Debug("Increment flag not set.")
-		}
-	
+	if !ok {
+		log.Debug("Increment flag not set.")
+	}
 
 	// Process the arguments for the command and add them together
 	args = append(args, "-m", htype)                                    // Algorithm
@@ -278,10 +277,10 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, "-1", bruteCharSet)
 		if increment == "true" {
-				args = append(args, "--increment", bruteLength)
-			}else{
-				args = append(args, bruteLength)
-			}
+			args = append(args, "--increment", bruteLength)
+		} else {
+			args = append(args, bruteLength)
+		}
 	} else {
 		log.WithFields(log.Fields{
 			"ruleFile":     ruleFile,
@@ -524,12 +523,12 @@ func (v *hascatTasker) Run() error {
 	v.stdout = bytes.NewBuffer([]byte(""))
 
 	go func() {
-		for {
+		for v.job.Progress != 100.00 {
 			io.Copy(v.stderr, v.stderrPipe)
 		}
 	}()
 	go func() {
-		for {
+		for v.job.Progress != 100.00 {
 			io.Copy(v.stdout, v.stdoutPipe)
 		}
 	}()
