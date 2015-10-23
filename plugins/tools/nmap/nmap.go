@@ -2,10 +2,11 @@ package nmap
 
 import (
 	"errors"
+	"sort"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/vaughan0/go-ini"
-	"sort"
 )
 
 type nmapConfig struct {
@@ -151,11 +152,11 @@ func (this *nmapTooler) Parameters() string {
             },
             "titleMap": [
               {
-                "value": "false",
+                "value": "true",
                 "name": "Yes"
               },
               {
-                "value": "true",
+                "value": "false",
                 "name": "No"
               }
             ]
@@ -221,7 +222,7 @@ func (this *nmapTooler) Parameters() string {
       "title": "Enable service versioning?",
       "type": "string",
       "description": "Attempt to determine service (-sV)",
-      "default": "false"
+      "default": "true"
     },
     "skiphostdiscovery": {
       "title": "Skip discovering hosts?",
