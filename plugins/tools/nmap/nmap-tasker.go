@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"net"
 	"os"
@@ -18,6 +16,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 var regHostsCompleted *regexp.Regexp
@@ -166,7 +167,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 	log.WithField("arguments", args).Debug("Arguments complete")
 
 	t.job.PerformanceTitle = "Packets / sec"
-	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "Service"}
+	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "Service", "CPE"}
 	t.job.TotalHashes, err = calcTotalTargets(t.job.Parameters["targets"])
 	if err != nil {
 		return &nmapTasker{}, err
@@ -289,12 +290,12 @@ func (v *nmapTasker) Run() error {
 	v.stdout = bytes.NewBuffer([]byte(""))
 
 	go func() {
-		for {
+		for v.job.Progress != 100.00 {
 			io.Copy(v.stderr, v.stderrPipe)
 		}
 	}()
 	go func() {
-		for {
+		for v.job.Progress != 100.00 {
 			io.Copy(v.stdout, v.stdoutPipe)
 		}
 	}()
@@ -340,7 +341,7 @@ func (v *nmapTasker) onCmdComplete() {
 	}
 }
 
-// Pause the hashcat run
+// Pause the nmap run
 func (v *nmapTasker) Pause() error {
 	log.WithField("task", v.job.UUID).Debug("Attempting to pause nmap task")
 
