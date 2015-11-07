@@ -602,6 +602,7 @@ func (q *Queue) StackReorder(uuids []string) error {
 	// Check all the UUIDs before we do anything
 	l := len(uuids)
 	if l != len(q.stack) {
+		q.Unlock()
 		return errors.New("The wrong number of UUIDs were provided.")
 	}
 
@@ -616,6 +617,7 @@ func (q *Queue) StackReorder(uuids []string) error {
 		j := q.stack[i]
 		log.WithField("uuid", j.UUID).Debug("Checking UUID on reorder stack.")
 		if _, ok := uuidCheck[j.UUID]; !ok {
+			q.Unlock()
 			return errors.New("All Job UUIDs must be provided!")
 		}
 	}
@@ -643,8 +645,6 @@ func (q *Queue) StackReorder(uuids []string) error {
 	// Resume the Queue
 	q.Unlock()
 	q.ResumeQueue()
-	q.Lock()
-	defer q.Unlock()
 
 	// Return the errors from the QueuePause if there were any
 	if err != nil {

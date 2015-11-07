@@ -46,10 +46,10 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 // Task RPC functions
 func (q *Queue) Ping(ping int, pong *int) error {
 	q.Lock()
+	defer q.Unlock()
 
 	pong = &ping
 
-	q.Unlock()
 	return nil
 }
 
@@ -84,17 +84,16 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	var tasker common.Tasker
 	var err error
 	// loop through common.Toolers for matching tool
-	q.RLock()
+	q.Lock()
+	defer q.Unlock()
 	for i, _ := range q.tools {
 		if q.tools[i].UUID() == rpc.Job.ToolUUID {
 			tasker, err = q.tools[i].NewTask(rpc.Job)
 			if err != nil {
-				q.RUnlock()
 				return err
 			}
 		}
 	}
-	q.RUnlock()
 
 	// Check if no tool was found and return error
 	if tasker == nil {
@@ -106,7 +105,6 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	}).Debug("Tasker created")
 
 	// Looks good so lets add to the stack
-	q.Lock()
 	if q.stack == nil {
 		q.stack = make(map[string]common.Tasker)
 	}
@@ -116,14 +114,12 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	// Everything should be paused by the control queue so start this job
 	err = q.stack[rpc.Job.UUID].Run()
 	if err != nil {
-		q.Unlock()
 		log.Debug("Error starting task on resource")
 		return errors.New("Error starting task on the resource: " + err.Error())
 	}
 
 	// Grab the status and return that job to the control queue
 	*rj = q.stack[rpc.Job.UUID].Status()
-	q.Unlock()
 
 	return nil
 }
@@ -140,17 +136,16 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 
 	// Grab the task specified by the UUID and return its status
 	q.Lock()
+	defer q.Unlock()
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
 	if ok != false {
 		log.WithField("task", j.UUID).Error("Task with UUID provided does not exist.")
-		errors.New("Task with UUID provided does not exist.")
+		return errors.New("Task with UUID provided does not exist.")
 	}
 
 	*j = q.stack[rpc.Job.UUID].Status()
-
-	q.Unlock()
 
 	return nil
 }
@@ -167,12 +162,13 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 
 	// Grab the task specified by the UUID
 	q.Lock()
+	defer q.Unlock()
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
 	if ok {
 		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
-		errors.New("Task with UUID provided does not exist.")
+		return errors.New("Task with UUID provided does not exist.")
 	}
 
 	// Pause the task
@@ -185,7 +181,6 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 	}
 
 	*j = q.stack[rpc.Job.UUID].Status()
-	q.Unlock()
 
 	log.WithField("task", j.UUID).Debug("Task paused successfully")
 
@@ -238,14 +233,17 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 		}
 	}()
 
-	// Grab the task specified by the UUID
+	// Grab a lock and set the unlock on return
 	q.Lock()
+	defer q.Unlock()
+
+	// Grab the task specified by the UUID
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
 	if ok != false {
 		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
-		errors.New("Task with UUID provided does not exist.")
+		return errors.New("Task with UUID provided does not exist.")
 	}
 
 	// Quit the task and return the final result
@@ -253,7 +251,6 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 
 	// Remove quit job from stack
 	delete(q.stack, rpc.Job.UUID)
-	q.Unlock()
 
 	log.WithField("task", j.UUID).Debug("Task ran successfully")
 
