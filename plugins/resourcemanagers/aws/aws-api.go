@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"strings"
 )
@@ -25,10 +26,12 @@ const (
 func getEC2Client(key, private, region string) *ec2.EC2 {
 	creds := credentials.NewStaticCredentials(key, private, "")
 
-	return ec2.New(&aws.Config{
+	ec2session := session.New(&aws.Config{
 		Region:      aws.String(region),
 		Credentials: creds,
 	})
+
+	return ec2.New(ec2session)
 }
 
 // This function will take several pieces of information and launch a new AWS instance
@@ -220,10 +223,12 @@ func getAllRegionsName(creds *credentials.Credentials) []string {
 func getAllRegions(creds *credentials.Credentials) ([]*ec2.Region, error) {
 	//Make a connection using our credentials. We will make a separate connection
 	//beacuse it's just a temp one to gather regions.
-	ec2client := ec2.New(&aws.Config{
+	ec2session := session.New(&aws.Config{
 		Region:      aws.String("us-west-1"),
 		Credentials: creds,
 	})
+
+	ec2client := ec2.New(ec2session)
 
 	//Gather the regions
 	regions, err := ec2client.DescribeRegions(&ec2.DescribeRegionsInput{})
