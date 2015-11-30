@@ -151,7 +151,7 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 }
 
 func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("task", j.UUID).Debug("Attempting to pause task")
+	log.WithField("task", rpc.Job.UUID).Debug("Attempting to pause task")
 
 	// Add a defered catch for panic from within the tools
 	defer func() {
@@ -166,8 +166,8 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
-	if ok {
-		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
+	if !ok {
+		log.WithField("task", rpc.Job.UUID).Debug("Task with UUID provided does not exist.")
 		return errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -204,7 +204,7 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
-	if ok == false {
+	if !ok {
 		log.WithField("task", rpc.Job.UUID).Debug("Task with UUID provided does not exist.")
 		return errors.New("Task with UUID provided does not exist.")
 	}
@@ -224,7 +224,7 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 }
 
 func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("task", j.UUID).Debug("Attempting to quit task")
+	log.WithField("task", rpc.Job.UUID).Debug("Attempting to quit task")
 
 	// Add a defered catch for panic from within the tools
 	defer func() {
@@ -241,8 +241,8 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
-	if ok != false {
-		log.WithField("task", j.UUID).Debug("Task with UUID provided does not exist.")
+	if !ok {
+		log.WithField("task", rpc.Job.UUID).Debug("Task with UUID provided does not exist.")
 		return errors.New("Task with UUID provided does not exist.")
 	}
 
@@ -252,7 +252,7 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	// Remove quit job from stack
 	delete(q.stack, rpc.Job.UUID)
 
-	log.WithField("task", j.UUID).Debug("Task ran successfully")
+	log.WithField("task", rpc.Job.UUID).Debug("Task quit and removed successfully")
 
 	return nil
 }
