@@ -125,7 +125,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 }
 
 func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
-	log.WithField("task", j.UUID).Debug("Attempting to gather task status")
+	log.WithField("task", rpc.Job.UUID).Debug("Attempting to gather task status")
 
 	// Add a defered catch for panic from within the tools
 	defer func() {
@@ -140,8 +140,8 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 	_, ok := q.stack[rpc.Job.UUID]
 
 	// Check for a bad UUID
-	if ok != false {
-		log.WithField("task", j.UUID).Error("Task with UUID provided does not exist.")
+	if !ok {
+		log.WithField("task", rpc.Job.UUID).Error("Task with UUID provided does not exist.")
 		return errors.New("Task with UUID provided does not exist.")
 	}
 
