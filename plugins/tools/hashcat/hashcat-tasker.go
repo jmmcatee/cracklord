@@ -572,20 +572,20 @@ func (v *hascatTasker) Pause() error {
 	// Call status to update the job internals before pausing
 	v.Status()
 
-	v.mux.Lock()
+	if v.job.Status == common.STATUS_RUNNING {
+		v.mux.Lock()
+		
+		if runtime.GOOS == "windows" {
+			v.cmd.Process.Kill()
+		} else {
+			v.cmd.Process.Signal(syscall.SIGINT)
+		}
+		
+		v.mux.Unlock()
 
-	// Because this is queue managed, we should just need to kill the process.
-	// It will be resumed automatically
-	if runtime.GOOS == "windows" {
-		v.cmd.Process.Kill()
-	} else {
-		v.cmd.Process.Signal(syscall.SIGINT)
+		// Wait for the program to actually exit
+		<-v.waitChan
 	}
-
-	v.mux.Unlock()
-
-	// Wait for the program to actually exit
-	<-v.waitChan
 
 	// Change status to pause
 	v.mux.Lock()
@@ -603,18 +603,22 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
-	v.mux.Lock()
+	
+	
+	if v.job.Status == common.STATUS_RUNNING {
+		v.mux.Lock()
+		
+		if runtime.GOOS == "windows" {
+			v.cmd.Process.Kill()
+		} else {
+			v.cmd.Process.Signal(syscall.SIGINT)
+		}
+		
+		v.mux.Unlock()
 
-	if runtime.GOOS == "windows" {
-		v.cmd.Process.Kill()
-	} else {
-		v.cmd.Process.Signal(syscall.SIGINT)
+		// Wait for the program to actually exit
+		<-v.waitChan
 	}
-
-	v.mux.Unlock()
-
-	// Wait for the program to actually exit
-	<-v.waitChan
 
 	v.mux.Lock()
 	v.job.Status = common.STATUS_QUIT
