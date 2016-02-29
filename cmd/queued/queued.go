@@ -85,6 +85,15 @@ func main() {
 	}
 	CertPath = common.StripQuotes(CertPath)
 
+	// Check for an API SSL/TLS key/cert pair to use
+	var useSepAPITLS bool
+	APICertPath, APICertOK := genConf["APICertFile"]
+	APIKeyPath, APIKeyOK := genConf["APIKeyFile"]
+	if APIKeyOK && APICertOK {
+		// We found a key and certificate for the API to use so change our boolean marker
+		useSepAPITLS = true
+	}
+
 	runIP, ok := genConf["BindIP"]
 	if !ok {
 		runIP = "0.0.0.0"
@@ -277,14 +286,17 @@ func main() {
 	caPool.AppendCertsFromPEM(caBytes)
 
 	tlscert, err := tls.LoadX509KeyPair(CertPath, KeyPath)
+	if err != nil {
+		log.Fatalf("Failed to load cert pair for Q and R connecton. %s\n", err.Error())
+	}
 
-	// Setup TLS connection
-	tlsconfig := &tls.Config{}
-	tlsconfig.Certificates = make([]tls.Certificate, 1)
-	tlsconfig.Certificates[0] = tlscert
-	tlsconfig.RootCAs = caPool
-	tlsconfig.ClientCAs = caPool
-	tlsconfig.CipherSuites = []uint16{tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	// Setup TLS connection for the Queue and Resource communication
+	qandrTLSConfig := &tls.Config{}
+	qandrTLSConfig.Certificates = make([]tls.Certificate, 1)
+	qandrTLSConfig.Certificates[0] = tlscert
+	qandrTLSConfig.RootCAs = caPool
+	qandrTLSConfig.ClientCAs = caPool
+	qandrTLSConfig.CipherSuites = []uint16{tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
@@ -292,11 +304,34 @@ func main() {
 		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256}
-	tlsconfig.MinVersion = tls.VersionTLS12
-	tlsconfig.SessionTicketsDisabled = true
+	qandrTLSConfig.MinVersion = tls.VersionTLS12
+	qandrTLSConfig.SessionTicketsDisabled = true
 
-	// Set the TLS policy for the Queue to communicate with the resources
-	server.TLS = tlsconfig
+	// Check if we are using a different TLS configuration for the API portion of the Queue
+	if useSepAPITLS {
+		apiCert, err := tls.LoadX509KeyPair(APICertPath, APIKeyPath)
+		if err != nil {
+			log.Fatalf("API Cert and Key set, but could not be loaded. %s\n", err.Error())
+		}
+		apiTLSConfig := &tls.Config{
+			Certificates: []tls.Certificate{apiCert},
+			CipherSuites: []uint16{tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256},
+			MinVersion:             tls.VersionTLS12,
+			SessionTicketsDisabled: true,
+		}
+
+		server.TLS = apiTLSConfig
+	} else {
+		// No separate API key was set so use the same we did for the internal communication
+		server.TLS = qandrTLSConfig
+	}
 
 	// Add some nice security stuff
 	secureMiddleware := secure.New(secure.Options{
@@ -318,13 +353,13 @@ func main() {
 
 	// First, let's setup the direct connect manager if we have anything there
 	if _, ok := confResMgr["directconnect"]; ok {
-		resmgr_dc := directconnectresourcemanager.Setup(&server.Q, server.TLS)
+		resmgr_dc := directconnectresourcemanager.Setup(&server.Q, qandrTLSConfig)
 		server.Q.AddResourceManager(resmgr_dc)
 	}
 
 	// Now let's setup the AWS manager if we have a config file
 	if resDC, ok := confResMgr["aws"]; ok {
-		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, server.TLS, caCertPath, caKeyPath)
+		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, qandrTLSConfig, caCertPath, caKeyPath)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
 		} else {
@@ -341,7 +376,7 @@ func main() {
 	n.UseHandler(server.Router())
 	log.Debug("Negroni handler started.")
 
-	listen, err := tls.Listen("tcp", runIP+":"+runPort, tlsconfig)
+	listen, err := tls.Listen("tcp", runIP+":"+runPort, server.TLS)
 	if err != nil {
 		println("ERROR: Unable to bind to '" + runIP + ":" + runPort + "':" + err.Error())
 		return
