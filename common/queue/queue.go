@@ -1,13 +1,13 @@
 package queue
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common"
+	"github.com/pborman/uuid"
 	"io"
 	"net"
 	"net/rpc"

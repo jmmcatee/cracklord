@@ -1,7 +1,7 @@
 package common
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 	"time"
 )
 

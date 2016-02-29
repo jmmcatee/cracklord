@@ -1,10 +1,10 @@
 package resource
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
+	"github.com/pborman/uuid"
 	"sync"
 )
 
