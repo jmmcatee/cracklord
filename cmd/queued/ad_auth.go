@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"crypto/rand"
 	log "github.com/Sirupsen/logrus"
-	"github.com/jmckaskill/gokerb"
+	"github.com/jmmcatee/gokerb"
 	"github.com/jmmcatee/goldap/ad"
 	"strings"
 	"time"
