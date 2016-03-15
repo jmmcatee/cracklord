@@ -101,7 +101,9 @@ type hascatTasker struct {
 	start      []string
 	resume     []string
 	stderr     *bytes.Buffer
+	stderrCp   bool
 	stdout     *bytes.Buffer
+	stdoutCp   bool
 	stderrPipe io.ReadCloser
 	stdoutPipe io.ReadCloser
 	stdinPipe  io.WriteCloser
@@ -315,6 +317,40 @@ func (v *hascatTasker) Status() common.Job {
 	v.mux.Lock()
 	defer v.mux.Unlock()
 
+	if !v.stderrCp {
+		go func() {
+			v.stderrCp = true
+			for v.job.Status == common.STATUS_RUNNING {
+				cpNE, err := io.Copy(v.stderr, v.stderrPipe)
+				if err != nil {
+					log.WithField("error", err.Error()).Warn("Error copying from CMD Stderr Pipe.")
+				}
+
+				log.WithFields(log.Fields{
+					"stderrCount": cpNE,
+				}).Debug("Number of bytes copied from Stderr of CMD.")
+			}
+			v.stderrCp = false
+		}()
+	}
+
+	if !v.stderrCp {
+		go func() {
+			v.stdoutCp = true
+			for v.job.Status == common.STATUS_RUNNING {
+				cpNO, err := io.Copy(v.stdout, v.stdoutPipe)
+				if err != nil {
+					log.WithField("error", err.Error()).Warn("Error copying from CMD Stdout Pipe.")
+				}
+
+				log.WithFields(log.Fields{
+					"stdoutCount": cpNO,
+				}).Debug("Number of bytes copied from Stdout of CMD.")
+			}
+			v.stdoutCp = false
+		}()
+	}
+
 	index := regLastStatusIndex.FindAllStringIndex(v.stdout.String(), -1)
 	if len(index) >= 1 {
 		// We found a status so start processing the last status in Stdout
@@ -525,16 +561,16 @@ func (v *hascatTasker) Run() error {
 	v.stderr = bytes.NewBuffer([]byte(""))
 	v.stdout = bytes.NewBuffer([]byte(""))
 
-	go func() {
-		for {
-			io.Copy(v.stderr, v.stderrPipe)
-		}
-	}()
-	go func() {
-		for {
-			io.Copy(v.stdout, v.stdoutPipe)
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		io.Copy(v.stderr, v.stderrPipe)
+	// 	}
+	// }()
+	// go func() {
+	// 	for {
+	// 		io.Copy(v.stdout, v.stdoutPipe)
+	// 	}
+	// }()
 
 	// Start the command
 	log.WithField("argument", v.cmd.Args).Debug("Running command.")
@@ -574,13 +610,13 @@ func (v *hascatTasker) Pause() error {
 
 	if v.job.Status == common.STATUS_RUNNING {
 		v.mux.Lock()
-		
+
 		if runtime.GOOS == "windows" {
 			v.cmd.Process.Kill()
 		} else {
 			v.cmd.Process.Signal(syscall.SIGINT)
 		}
-		
+
 		v.mux.Unlock()
 
 		// Wait for the program to actually exit
@@ -603,17 +639,15 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
-	
-	
 	if v.job.Status == common.STATUS_RUNNING {
 		v.mux.Lock()
-		
+
 		if runtime.GOOS == "windows" {
 			v.cmd.Process.Kill()
 		} else {
 			v.cmd.Process.Signal(syscall.SIGINT)
 		}
-		
+
 		v.mux.Unlock()
 
 		// Wait for the program to actually exit
