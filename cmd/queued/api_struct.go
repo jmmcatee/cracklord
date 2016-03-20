@@ -212,6 +212,15 @@ type ResUpdateResp struct {
 }
 
 // Delete a resource struct
+type ResDeleteReq struct {
+	ID      string            `json:"id"`
+	Manager string            `json:"manager"`
+	Params  map[string]string `json:"params"`
+	Status  string            `json:"status"`
+	Tools   []APITool         `json:"tools"`
+}
+
+// Delete a resource struct
 type ResDeleteResp struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`

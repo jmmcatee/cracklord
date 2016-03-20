@@ -44,8 +44,8 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResource)
 	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
 	r.Path("/api/resources/{manager}/{id}").Methods("GET").HandlerFunc(a.ReadResource)
-	r.Path("/api/resources/{manager}/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
-	r.Path("/api/resources/{manager}/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
+	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
+	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
 
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
@@ -1113,7 +1113,7 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-	managerName := mux.Vars(r)["manager"]
+	managerName := req.Manager
 
 	// Get the manager for the resource
 	manager, manok := a.Q.GetResourceManager(managerName)
@@ -1134,21 +1134,55 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = manager.UpdateResource(resID, req.Status, req.Params)
-	if err != nil {
-		resp.Status = RESP_CODE_ERROR
-		resp.Message = "An error occured while trying to update that resource: " + err.Error()
-
-		rw.WriteHeader(RESP_CODE_ERROR)
-		respJSON.Encode(resp)
-
+	switch req.Status {
+	case common.STATUS_QUIT:
 		log.WithFields(log.Fields{
 			"manager":  manager.SystemName(),
-			"error":    err.Error(),
 			"resource": resID,
-		}).Error("An error occured while trying to update a resource.")
+			"status":   req.Status,
+		}).Info("Quiting resource status.")
 
-		return
+		// Quit the resource
+		err = manager.DeleteResource(resID)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = "An error occured while trying to quit that resource: " + err.Error()
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+
+			log.WithFields(log.Fields{
+				"manager":  manager.SystemName(),
+				"error":    err.Error(),
+				"resource": resID,
+			}).Error("An error occured while trying to quit a resource.")
+
+			return
+		}
+	case common.STATUS_PAUSED, common.STATUS_RUNNING:
+		log.WithFields(log.Fields{
+			"manager":  manager.SystemName(),
+			"resource": resID,
+			"status":   req.Status,
+		}).Info("Updating resource status.")
+
+		// Pause or resume the resource
+		err = manager.UpdateResource(resID, req.Status, req.Params)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = "An error occured while trying to update that resource: " + err.Error()
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+
+			log.WithFields(log.Fields{
+				"manager":  manager.SystemName(),
+				"error":    err.Error(),
+				"resource": resID,
+			}).Error("An error occured while trying to update a resource.")
+
+			return
+		}
 	}
 
 	// Build good response because we were able to get here
@@ -1167,9 +1201,11 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var resp ResDeleteResp
+	var req ResDeleteReq
 
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
+	reqJSON := json.NewDecoder(r.Body)
 
 	// Get the authorization header
 	token := r.Header.Get("AuthorizationToken")
@@ -1200,9 +1236,23 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+
+		log.WithField("error", err.Error()).Error("An error occured while trying to decode resource delete data.")
+
+		return
+	}
+
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-	managerName := mux.Vars(r)["manager"]
+	managerName := req.Manager
 
 	// Get the manager for the resource
 	manager, manok := a.Q.GetResourceManager(managerName)

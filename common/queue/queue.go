@@ -165,9 +165,18 @@ func (q *Queue) AddJob(j common.Job) error {
 	q.stats.IncJob()
 
 	// Check if the Queue was empty
-	if q.status == STATUS_EMPTY || q.status == STATUS_EXHAUSTED {
+	if q.status == STATUS_EMPTY {
 		logger.Debug("Queue is empty, job needs starting.")
 		// The Queue is empty so we need to start this job and the keeper
+
+		// Start the keeper
+		logger.Debug("Keeper started")
+		q.qk = make(chan bool)
+		go q.keeper()
+
+		// We have started the keeper so change the status
+		q.status = STATUS_RUNNING
+
 		// Find the first open resource
 		for i, _ := range q.pool {
 			logger.WithField("resource", q.pool[i].Name).Debug("Looking for resource.")
@@ -212,16 +221,6 @@ func (q *Queue) AddJob(j common.Job) error {
 
 				// Note the resources as being used
 				q.pool[i].Hardware[tool.Requirements] = false
-
-				// start the keeper as long as the status wasn't exhausted
-				if q.status == STATUS_EMPTY {
-					logger.Debug("Keeper started")
-					q.qk = make(chan bool)
-					go q.keeper()
-				}
-
-				// We started a job so change the Queue status
-				q.status = STATUS_RUNNING
 
 				// We should be done so return no errors
 				return nil
@@ -457,7 +456,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 			// We found a task that is running so lets pause it
 			pauseJob := common.RPCCall{Job: q.stack[i]}
 
-			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, q.stack[i])
+			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
 			if err != nil {
 				return err
 			}
@@ -741,7 +740,7 @@ func (q *Queue) keeper() {
 				}
 
 				// Look for open resources
-				//ResourceLoop:
+				// ResourceLoop:
 				for resKey, _ := range q.pool {
 					// Check that the resource is running
 					if q.pool[resKey].Status == common.STATUS_RUNNING {
