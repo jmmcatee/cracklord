@@ -734,6 +734,48 @@ func (q *Queue) keeper() {
 				// Update all running jobs
 				q.updateQueue()
 
+				// Quit jobs without a tool in the current resource list
+				for j := range q.stack {
+					var foundTool bool
+					// Log checking for tool
+					log.WithField("job", q.stack[j].UUID).Debug("Checking if tool still exist for job.")
+
+					if q.stack[j].Status != common.STATUS_CREATED {
+						// Running and Paused tasks will be quit by the act of removing the resources.
+						// Done or Quit jobs do not need to be checked as they are not pending.
+						// Only created jobs need to be quit if no tool exists
+						continue
+					}
+
+					for r := range q.pool {
+						// Log looking at resource for tools
+						log.WithField("resource", q.pool[r].Name).Debug("Checking resource for job tool UUID.")
+
+						// Check for tool on resource from Job
+						_, ok := q.pool[r].Tools[q.stack[j].ToolUUID]
+						if ok {
+							// We found a tool for this job so change our bool to note it
+							foundTool = true
+
+							log.WithFields(log.Fields{
+								"job":      q.stack[j].UUID,
+								"resource": q.pool[r].Name,
+							}).Debug("Job tool found on resources.")
+						}
+					}
+
+					// We have now been through all resources to if we did not find a tool
+					// we should then quit the job
+					if !foundTool {
+						log.WithFields(log.Fields{
+							"job":      q.stack[j].UUID,
+							"toolUUID": q.stack[j].ToolUUID,
+						}).Debug("Job tool not found. Job quit")
+						q.stack[j].Status = common.STATUS_QUIT
+						q.stack[j].Error = "No tool available in current resource pool."
+					}
+				}
+
 				//Write our state file
 				if StateFileLocation != "" {
 					q.writeState()
