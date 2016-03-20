@@ -1260,6 +1260,9 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	res, _ := q.pool[resUUID]
 	res.Address = "closed"
 	res.Status = common.STATUS_QUIT
+	for key := range res.Tools {
+		delete(res.Tools, key)
+	}
 	q.pool[resUUID] = res
 	for i, _ := range q.pool[resUUID].Hardware {
 		q.pool[resUUID].Hardware[i] = false
