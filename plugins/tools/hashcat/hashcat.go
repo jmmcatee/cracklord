@@ -110,7 +110,7 @@ type hashcatTooler struct {
 }
 
 func (h *hashcatTooler) Name() string {
-	return "oclHashcat"
+	return "oclHashcat/cudaHashcat"
 }
 
 func (h *hashcatTooler) Type() string {
@@ -179,17 +179,17 @@ func (h *hashcatTooler) Parameters() string {
 	// Buld the bruteforce attack tab
 	bruteForceTab := goschemaform.NewTab()
 	bruteForceTab.SetTitle("Brute Force")
+	// Add whether to increment from 0 - length
+	bfIncrementCheckBox := goschemaform.NewCheckBoxInput("brute_increment")
+	bfIncrementCheckBox.SetTitle("Check for incremental mode")
+	// Add the checkbox to the tab
+	bruteForceTab.AddElement(bfIncrementCheckBox)
 	// Setup the input for getting the length of the bruteforce
 	bfLength := goschemaform.NewNumberInput("brute_length")
 	bfLength.SetTitle("Select the length of the charset")
 	bfLength.SetMin(0)
 	// Add Length input to the tab
 	bruteForceTab.AddElement(bfLength)
-	// Add whether to increment from 0 - length
-	bfIncrementCheckBox := goschemaform.NewCheckBoxInput("brute_increment")
-	bfIncrementCheckBox.SetTitle("Check for incremental mode")
-	// Add the checkbox to the tab
-	bruteForceTab.AddElement(bfIncrementCheckBox)
 	// Setup the dropdown for choosing a character set
 	bfCharSetDropDown := goschemaform.NewDropDownInput("brute_charset")
 	bfCharSetDropDown.SetTitle("Select character set")

@@ -12,6 +12,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"net/http"
+	"strconv"
 )
 
 // All handler functions are created as part of the base AppController. This is done to
@@ -505,6 +506,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
+		log.WithError(err).Error("Error parsing the request.")
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = RESP_CODE_BADREQ_T
 
@@ -513,8 +515,26 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Some types might not be strings so let's build a map for the params input
+	params := map[string]string{}
+	for key, value := range req.Params {
+		switch v := value.(type) {
+		case string:
+			params[key] = v
+		case bool:
+			params[key] = strconv.FormatBool(v)
+		case int:
+			params[key] = strconv.Itoa(v)
+		case float64:
+			params[key] = strconv.FormatFloat(v, 'g', -1, 64)
+		case float32:
+			params[key] = strconv.FormatFloat(float64(v), 'g', -1, 32)
+
+		}
+	}
+
 	// Build a job structure
-	job := common.NewJob(req.ToolID, req.Name, user.Username, req.Params)
+	job := common.NewJob(req.ToolID, req.Name, user.Username, params)
 
 	err = a.Q.AddJob(job)
 	if err != nil {

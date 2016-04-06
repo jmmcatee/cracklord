@@ -124,9 +124,9 @@ type GetJobsResp struct {
 
 // Create Jobs request
 type JobCreateReq struct {
-	ToolID string            `json:"toolid"`
-	Name   string            `json:"name"`
-	Params map[string]string `json:"params"`
+	ToolID string                 `json:"toolid"`
+	Name   string                 `json:"name"`
+	Params map[string]interface{} `json:"params"`
 }
 
 // Create Job response

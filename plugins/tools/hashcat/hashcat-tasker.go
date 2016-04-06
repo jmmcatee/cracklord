@@ -140,6 +140,8 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Build the arguements for hashcat
 	args := []string{}
 
+	log.WithField("params", h.job.Parameters).Debug("Create Hashcat Job Parameters.")
+
 	// Get the hash type and add an argument
 	htype, ok := h.job.Parameters["algorithm"]
 	if !ok {
