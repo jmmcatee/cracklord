@@ -19,6 +19,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
+	"sort"
 )
 
 var regLastStatusIndex *regexp.Regexp
@@ -139,8 +140,10 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	// Build the arguements for hashcat
 	args := []string{}
 
+	log.WithField("params", h.job.Parameters).Debug("Create Hashcat Job Parameters.")
+
 	// Get the hash type and add an argument
-	htype, ok := config.HashTypes[h.job.Parameters["algorithm"]]
+	htype, ok := h.job.Parameters["algorithm"]
 	if !ok {
 		log.WithFields(log.Fields{
 			"algoritm": htype,
@@ -179,8 +182,10 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	if !ok {
 		log.Debug("No dictionary was provided.")
 	} else {
-		dictPath, ok = config.Dictionaries[dictKey]
-		if !ok {
+		i := sort.Search(len(config.Dictionaries), func(i int) bool { return config.Dictionaries[i].Name >= dictKey })
+		if i < len(config.Dictionaries) && config.Dictionaries[i].Name == dictKey {
+			dictPath = config.Dictionaries[i].Path
+		} else {
 			log.Debug("Dictionary key provided was not present")
 		}
 	}
@@ -191,12 +196,11 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	if !ok {
 		log.Debug("No rule file was not provided.")
 	} else {
-		// We have a rule file, check for blank
-		if ruleKey != "" {
-			rulePath, ok := config.Rules[ruleKey]
-			if ok {
-				ruleFile = rulePath
-			}
+		i := sort.Search(len(config.Rules), func(i int) bool { return config.Rules[i].Name >= ruleKey })
+		if i < len(config.Rules) && config.Rules[i].Name == ruleKey {
+			ruleFile = config.Rules[i].Path
+		} else {
+			log.Debug("Rule key provided was not present")
 		}
 	}
 
@@ -235,8 +239,10 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 	if !ok {
 		log.Debug("No brute force charset was provided")
 	} else {
-		bruteCharSet, ok = config.CharSet[charsetKey]
-		if !ok {
+		i := sort.Search(len(config.CharacterSets), func(i int) bool { return config.CharacterSets[i].Name >= charsetKey })
+		if i < len(config.CharacterSets) && config.CharacterSets[i].Name == charsetKey {
+			bruteCharSet = config.CharacterSets[i].Mask
+		} else {
 			log.Debug("Brute force charset provided does not exist")
 		}
 	}
@@ -256,32 +262,37 @@ func newHashcatTask(j common.Job) (common.Tasker, error) {
 		}
 	}
 
-	var increment string
-	incrementKey, ok := h.job.Parameters["increment"]
+	var bruteIncrement bool
+	bruteIncrementString, ok := h.job.Parameters["brute_increment"]
 	if !ok {
 		log.Debug("No increment flag set.")
 	} else {
-		increment = incrementKey
+		bruteIncrement, err = strconv.ParseBool(bruteIncrementString)
+		if err != nil {
+			log.Debug("Unable to parse brute_increment flag as bool: " + err.Error())
+		}
 	}
 
 	// Process the arguments for the command and add them together
 	args = append(args, "-m", htype)                                    // Algorithm
-	args = append(args, "--status", "--status-timer=10", "--force")     // Status type and forcing of output
+	args = append(args, "--status", "--status-timer=20")                // Status type and forcing of output
 	args = append(args, "-o", filepath.Join(h.wd, "hashes-output.txt")) // Output file
 
 	if config.Arguments != "" {
 		args = append(args, config.Arguments) // Config file arguments
 	}
 
-	if ruleFile != "" && dictPath != "" {
-		args = append(args, "-r", ruleFile)                    // Rules file
+	if dictPath != "" {
+		if ruleFile != "" {
+			args = append(args, "-r", ruleFile) // Rules file
+		}
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, dictPath)                          // Dictionary file
 	} else if bruteCharSet != "" && bruteLength != "" {
 		args = append(args, "-a", "3")
 		args = append(args, filepath.Join(h.wd, "hashes.txt")) // Input file
 		args = append(args, "-1", bruteCharSet)
-		if increment != "" {
+		if bruteIncrement {
 			args = append(args, "--increment", bruteLength)
 		} else {
 			args = append(args, bruteLength)
