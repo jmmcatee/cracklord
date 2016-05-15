@@ -269,7 +269,9 @@ func (v *johndictTasker) Status() common.Job {
 	if err != nil {
 		v.job.Error = err.Error()
 		log.WithField("Error", err.Error()).Debug("Error running john status command.")
-		return v.job
+		// Do not return the job now. Keep running the check so the hashes will be parsed 
+		// even if the job has quit before a status was pulled.
+		// return v.job 
 	}
 
 	log.WithField("StatusStdout", string(status)).Debug("Stdout status return of john call")
