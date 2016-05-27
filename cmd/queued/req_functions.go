@@ -241,6 +241,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_NOTFOUND)
 		respJSON.Encode(resp)
+		return
 	}
 
 	// We need to split the response from the tool into Form and Schema
