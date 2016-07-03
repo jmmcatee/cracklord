@@ -15,6 +15,13 @@ cracklord.factory('ResourceService', ['$resource', function ($resource) {
             var results = angular.fromJson(data);
             return results.resource;
          }
+      },
+      quit: {
+         method: 'DELETE', 
+         transformResponse: function(data) {
+            var results = angular.fromJson(data);
+            return results.resource;
+         }
       }
    });
 }]);

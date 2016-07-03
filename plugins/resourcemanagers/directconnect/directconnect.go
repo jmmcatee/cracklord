@@ -162,14 +162,14 @@ func (this *directResourceManager) UpdateResource(resourceid string, newstatus s
 	//Check to see if the old status matches the new one, if not, we need to make a change
 	if oldresource.Status != newstatus {
 		switch newstatus {
-		case "resume": //If our new status is resume, then resume the resource
+		case "running": //If our new status is resume, then resume the resource
 			err = this.q.ResumeResource(resourceid)
 			if err != nil {
 				return err
 			}
 			break
 
-		case "pause": //If the new status is pause, pause the resource in the queue
+		case "paused": //If the new status is pause, pause the resource in the queue
 			err = this.q.PauseResource(resourceid)
 			if err != nil {
 				return err

@@ -12,6 +12,7 @@ import (
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"net/http"
+	"strconv"
 )
 
 // All handler functions are created as part of the base AppController. This is done to
@@ -44,8 +45,8 @@ func (a *AppController) Router() *mux.Router {
 	r.Path("/api/resources").Methods("GET").HandlerFunc(a.ListResource)
 	r.Path("/api/resources").Methods("POST").HandlerFunc(a.CreateResource)
 	r.Path("/api/resources/{manager}/{id}").Methods("GET").HandlerFunc(a.ReadResource)
-	r.Path("/api/resources/{manager}/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
-	r.Path("/api/resources/{manager}/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
+	r.Path("/api/resources/{id}").Methods("PUT").HandlerFunc(a.UpdateResource)
+	r.Path("/api/resources/{id}").Methods("DELETE").HandlerFunc(a.DeleteResources)
 
 	// Jobs endpoints
 	r.Path("/api/jobs").Methods("GET").HandlerFunc(a.GetJobs)
@@ -179,8 +180,8 @@ func (a *AppController) ListTools(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the tools list from the Queue
-	for _, t := range a.Q.ActiveTools() {
-		resp.Tools = append(resp.Tools, APITool{t.UUID, t.Name, t.Version})
+	for uuid, t := range a.Q.ActiveTools() {
+		resp.Tools = append(resp.Tools, APITool{uuid, t.Name, t.Version})
 		log.WithFields(log.Fields{
 			"uuid": t.UUID,
 			"name": t.Name,
@@ -232,7 +233,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 	// Get the tool ID
 	uuid := mux.Vars(r)["id"]
-	tool, ok := a.Q.AllTools()[uuid]
+	tool, ok := a.Q.ActiveTools()[uuid]
 	if !ok {
 		// No tool found, return error
 		resp.Status = RESP_CODE_NOTFOUND
@@ -240,6 +241,7 @@ func (a *AppController) GetTool(rw http.ResponseWriter, r *http.Request) {
 
 		rw.WriteHeader(RESP_CODE_NOTFOUND)
 		respJSON.Encode(resp)
+		return
 	}
 
 	// We need to split the response from the tool into Form and Schema
@@ -505,6 +507,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
+		log.WithError(err).Error("Error parsing the request.")
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = RESP_CODE_BADREQ_T
 
@@ -513,8 +516,26 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Some types might not be strings so let's build a map for the params input
+	params := map[string]string{}
+	for key, value := range req.Params {
+		switch v := value.(type) {
+		case string:
+			params[key] = v
+		case bool:
+			params[key] = strconv.FormatBool(v)
+		case int:
+			params[key] = strconv.Itoa(v)
+		case float64:
+			params[key] = strconv.FormatFloat(v, 'g', -1, 64)
+		case float32:
+			params[key] = strconv.FormatFloat(float64(v), 'g', -1, 32)
+
+		}
+	}
+
 	// Build a job structure
-	job := common.NewJob(req.ToolID, req.Name, user.Username, req.Params)
+	job := common.NewJob(req.ToolID, req.Name, user.Username, params)
 
 	err = a.Q.AddJob(job)
 	if err != nil {
@@ -1113,7 +1134,7 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-	managerName := mux.Vars(r)["manager"]
+	managerName := req.Manager
 
 	// Get the manager for the resource
 	manager, manok := a.Q.GetResourceManager(managerName)
@@ -1134,21 +1155,55 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = manager.UpdateResource(resID, req.Status, req.Params)
-	if err != nil {
-		resp.Status = RESP_CODE_ERROR
-		resp.Message = "An error occured while trying to update that resource: " + err.Error()
-
-		rw.WriteHeader(RESP_CODE_ERROR)
-		respJSON.Encode(resp)
-
+	switch req.Status {
+	case common.STATUS_QUIT:
 		log.WithFields(log.Fields{
 			"manager":  manager.SystemName(),
-			"error":    err.Error(),
 			"resource": resID,
-		}).Error("An error occured while trying to update a resource.")
+			"status":   req.Status,
+		}).Info("Quiting resource status.")
 
-		return
+		// Quit the resource
+		err = manager.DeleteResource(resID)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = "An error occured while trying to quit that resource: " + err.Error()
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+
+			log.WithFields(log.Fields{
+				"manager":  manager.SystemName(),
+				"error":    err.Error(),
+				"resource": resID,
+			}).Error("An error occured while trying to quit a resource.")
+
+			return
+		}
+	case common.STATUS_PAUSED, common.STATUS_RUNNING:
+		log.WithFields(log.Fields{
+			"manager":  manager.SystemName(),
+			"resource": resID,
+			"status":   req.Status,
+		}).Info("Updating resource status.")
+
+		// Pause or resume the resource
+		err = manager.UpdateResource(resID, req.Status, req.Params)
+		if err != nil {
+			resp.Status = RESP_CODE_ERROR
+			resp.Message = "An error occured while trying to update that resource: " + err.Error()
+
+			rw.WriteHeader(RESP_CODE_ERROR)
+			respJSON.Encode(resp)
+
+			log.WithFields(log.Fields{
+				"manager":  manager.SystemName(),
+				"error":    err.Error(),
+				"resource": resID,
+			}).Error("An error occured while trying to update a resource.")
+
+			return
+		}
 	}
 
 	// Build good response because we were able to get here
@@ -1167,9 +1222,11 @@ func (a *AppController) UpdateResource(rw http.ResponseWriter, r *http.Request) 
 func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request) {
 	// Response and Request structures
 	var resp ResDeleteResp
+	var req ResDeleteReq
 
 	// JSON Encoder and Decoder
 	respJSON := json.NewEncoder(rw)
+	reqJSON := json.NewDecoder(r.Body)
 
 	// Get the authorization header
 	token := r.Header.Get("AuthorizationToken")
@@ -1200,9 +1257,23 @@ func (a *AppController) DeleteResources(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Decode the request
+	err := reqJSON.Decode(&req)
+	if err != nil {
+		resp.Status = RESP_CODE_BADREQ
+		resp.Message = RESP_CODE_BADREQ_T
+
+		rw.WriteHeader(RESP_CODE_BADREQ)
+		respJSON.Encode(resp)
+
+		log.WithField("error", err.Error()).Error("An error occured while trying to decode resource delete data.")
+
+		return
+	}
+
 	// Get the resource ID
 	resID := mux.Vars(r)["id"]
-	managerName := mux.Vars(r)["manager"]
+	managerName := req.Manager
 
 	// Get the manager for the resource
 	manager, manok := a.Q.GetResourceManager(managerName)

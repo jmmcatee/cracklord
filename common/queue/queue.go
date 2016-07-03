@@ -165,9 +165,18 @@ func (q *Queue) AddJob(j common.Job) error {
 	q.stats.IncJob()
 
 	// Check if the Queue was empty
-	if q.status == STATUS_EMPTY || q.status == STATUS_EXHAUSTED {
+	if q.status == STATUS_EMPTY {
 		logger.Debug("Queue is empty, job needs starting.")
 		// The Queue is empty so we need to start this job and the keeper
+
+		// Start the keeper
+		logger.Debug("Keeper started")
+		q.qk = make(chan bool)
+		go q.keeper()
+
+		// We have started the keeper so change the status
+		q.status = STATUS_RUNNING
+
 		// Find the first open resource
 		for i, _ := range q.pool {
 			logger.WithField("resource", q.pool[i].Name).Debug("Looking for resource.")
@@ -212,16 +221,6 @@ func (q *Queue) AddJob(j common.Job) error {
 
 				// Note the resources as being used
 				q.pool[i].Hardware[tool.Requirements] = false
-
-				// start the keeper as long as the status wasn't exhausted
-				if q.status == STATUS_EMPTY {
-					logger.Debug("Keeper started")
-					q.qk = make(chan bool)
-					go q.keeper()
-				}
-
-				// We started a job so change the Queue status
-				q.status = STATUS_RUNNING
 
 				// We should be done so return no errors
 				return nil
@@ -457,7 +456,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 			// We found a task that is running so lets pause it
 			pauseJob := common.RPCCall{Job: q.stack[i]}
 
-			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, q.stack[i])
+			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
 			if err != nil {
 				return err
 			}
@@ -735,13 +734,55 @@ func (q *Queue) keeper() {
 				// Update all running jobs
 				q.updateQueue()
 
+				// Quit jobs without a tool in the current resource list
+				for j := range q.stack {
+					var foundTool bool
+					// Log checking for tool
+					log.WithField("job", q.stack[j].UUID).Debug("Checking if tool still exist for job.")
+
+					if q.stack[j].Status != common.STATUS_CREATED {
+						// Running and Paused tasks will be quit by the act of removing the resources.
+						// Done or Quit jobs do not need to be checked as they are not pending.
+						// Only created jobs need to be quit if no tool exists
+						continue
+					}
+
+					for r := range q.pool {
+						// Log looking at resource for tools
+						log.WithField("resource", q.pool[r].Name).Debug("Checking resource for job tool UUID.")
+
+						// Check for tool on resource from Job
+						_, ok := q.pool[r].Tools[q.stack[j].ToolUUID]
+						if ok {
+							// We found a tool for this job so change our bool to note it
+							foundTool = true
+
+							log.WithFields(log.Fields{
+								"job":      q.stack[j].UUID,
+								"resource": q.pool[r].Name,
+							}).Debug("Job tool found on resources.")
+						}
+					}
+
+					// We have now been through all resources to if we did not find a tool
+					// we should then quit the job
+					if !foundTool {
+						log.WithFields(log.Fields{
+							"job":      q.stack[j].UUID,
+							"toolUUID": q.stack[j].ToolUUID,
+						}).Debug("Job tool not found. Job quit")
+						q.stack[j].Status = common.STATUS_QUIT
+						q.stack[j].Error = "No tool available in current resource pool."
+					}
+				}
+
 				//Write our state file
 				if StateFileLocation != "" {
 					q.writeState()
 				}
 
 				// Look for open resources
-				//ResourceLoop:
+				// ResourceLoop:
 				for resKey, _ := range q.pool {
 					// Check that the resource is running
 					if q.pool[resKey].Status == common.STATUS_RUNNING {
@@ -1261,6 +1302,9 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	res, _ := q.pool[resUUID]
 	res.Address = "closed"
 	res.Status = common.STATUS_QUIT
+	for key := range res.Tools {
+		delete(res.Tools, key)
+	}
 	q.pool[resUUID] = res
 	for i, _ := range q.pool[resUUID].Hardware {
 		q.pool[resUUID].Hardware[i] = false
