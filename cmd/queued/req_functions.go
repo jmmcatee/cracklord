@@ -507,7 +507,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
-		log.WithError(err).Error("Error parsing the request.")
+		log.WithField("error", err).Error("Error parsing the request.")
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = RESP_CODE_BADREQ_T
 
