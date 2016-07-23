@@ -209,7 +209,7 @@ func (h *hashcat3Tooler) Parameters() string {
 
 	// Setup the dropdown for choosing a character set
 	bfCharSetDropDown := goschemaform.NewDropDownInput("brute_predefined_charset")
-	bfCharSetDropDown.SetTitle("Select character set")
+	bfCharSetDropDown.SetTitle("Select character set (?1=?l?d, ?2=?u?l?d, ?3=?d?s, ?4=?l?d?s)")
 	bfCharSetDropDown.SetCondition("brute_use_custom_chars", true)
 
 	for i := range config.Charsets {
@@ -584,6 +584,12 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 			return nil, errors.New("Character Set provided does not exist.")
 		}
 
+		// Add the custom character sets used by the configured pre definied character masks
+		opts = append(opts, "--custom-charset1="+CharSetPreDefCustom1)
+		opts = append(opts, "--custom-charset2="+CharSetPreDefCustom2)
+		opts = append(opts, "--custom-charset3="+CharSetPreDefCustom3)
+		opts = append(opts, "--custom-charset4="+CharSetPreDefCustom4)
+
 		// The mask provided is good so append to arguments
 		argDmD = config.Charsets[charSetIndex].Mask
 	}
@@ -774,6 +780,13 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		}
 	}
 
+	// Setup the output file argument
+	opts = append(opts, "--outfile", filepath.Join(t.wd, "output.txt"))
+
+	// Append args from the configuration file
+	t.start = append(t.start, config.Args...)
+	t.resume = append(t.resume, config.Args...)
+
 	// Setup the start and resume options
 	t.start = append(t.start, "--session="+t.job.UUID)
 	t.resume = append(t.resume, "--session="+t.job.UUID, "--restore")
@@ -782,10 +795,17 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	args = append(args, opts...)
 	args = append(args, argHash, argDmD)
 
+	// Apply the args parsed from the parameters
 	t.start = append(t.start, args...)
 	t.resume = append(t.resume, args...)
 
+	// Setup the OutputTitles column headers
 	t.job.OutputTitles = []string{"Plaintext", "Hashes"}
 
-	return nil, nil
+	// Let's now get rid of the large parameter values we now have locally
+	delete(t.job.Parameters, "dict_custom_prepend")
+	delete(t.job.Parameters, "dict_rules_custom_file")
+	delete(t.job.Parameters, "hashes_file_upload")
+
+	return &t, nil
 }
