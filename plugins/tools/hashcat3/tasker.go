@@ -19,6 +19,7 @@ import (
 
 // Tasker is the structure that implements the Tasker inteface
 type Tasker struct {
+	mux        sync.Mutex // Used for locking componets of the Tasker
 	job        common.Job
 	wd         string
 	exec       exec.Cmd
@@ -32,9 +33,6 @@ type Tasker struct {
 	stdoutPipe io.ReadCloser
 	stdinPipe  io.WriteCloser
 
-	waitChan chan struct{}
-
-	mux    sync.Mutex     // Used for locking componets of the Tasker
 	doneWG sync.WaitGroup // Used for checking if the job is done
 }
 
@@ -46,7 +44,6 @@ func (t *Tasker) Status() common.Job {
 	defer t.mux.Unlock()
 
 	if t.job.Status == common.STATUS_RUNNING {
-
 		if !t.stderrCp {
 			go func() {
 				t.stderrCp = true
@@ -64,7 +61,7 @@ func (t *Tasker) Status() common.Job {
 			}()
 		}
 
-		if !t.stderrCp {
+		if !t.stdoutCp {
 			go func() {
 				t.stdoutCp = true
 				for t.job.Status == common.STATUS_RUNNING {
@@ -81,31 +78,34 @@ func (t *Tasker) Status() common.Job {
 			}()
 		}
 
-		status := ParseMachineOutput(t.stdout.String())
+		if t.stdout.Len() != 0 {
+			status := ParseMachineOutput(t.stdout.String())
 
-		if t.job.PerformanceTitle == "" {
-			t.job.PerformanceTitle = "MH/s"
+			if t.job.PerformanceTitle == "" {
+				t.job.PerformanceTitle = "MH/s"
+			}
+			t.job.Progress = status.Progress
+			t.job.ETC = status.EstimateTime
+
+			var totalSpeed float64
+			for i := range status.Speed {
+				totalSpeed += status.Speed[i]
+			}
+			t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/1000000)
+
+			t.job.CrackedHashes = status.RecoveredHashes
+			t.job.TotalHashes = status.TotalHashes
 		}
-		t.job.Progress = status.Progress
-		t.job.ETC = status.EstimateTime
 
-		var totalSpeed float64
-		for i := range status.Speed {
-			totalSpeed += status.Speed[i]
+		if t.stderr.Len() != 0 {
+			t.job.Error = t.stderr.String()
 		}
-		t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed)
-
-		t.job.CrackedHashes = status.RecoveredHashes
-		t.job.TotalHashes = status.TotalHashes
-
 	}
 
-	t.job.Error = t.stderr.String()
-
 	// Get the hash file
-	hashFile, err := os.Open(filepath.Join(t.wd, "hashes.txt"))
+	hashFile, err := os.Open(filepath.Join(t.wd, "output.txt"))
 	if err != nil {
-		log.WithField("io_error", err).Error("Failed to open hashes.txt")
+		log.WithField("io_error", err).Error("Failed to open output.txt")
 		return t.job
 	}
 	defer hashFile.Close()
@@ -128,6 +128,9 @@ func (t *Tasker) Status() common.Job {
 	if len(tempOutputData) != 0 {
 		t.job.OutputData = tempOutputData
 	}
+
+	t.stderr.Reset()
+	t.stdout.Reset()
 
 	return t.job
 }

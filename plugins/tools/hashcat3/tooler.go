@@ -331,7 +331,6 @@ func (h *hashcat3Tooler) Parameters() string {
 
 func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	t := Tasker{}
-	t.waitChan = make(chan struct{})
 
 	t.job = job
 

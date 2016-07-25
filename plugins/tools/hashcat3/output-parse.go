@@ -40,6 +40,13 @@ var StatusTable = map[string]string{
 
 // ParseMachineOutput returns a Status for a given status line
 func ParseMachineOutput(out string) Status {
+	log.WithField("status2Parse", out).Debug("Parsing machine output")
+
+	if len(out) < 6 {
+		// Empty stdout so return empty status
+		return Status{}
+	}
+
 	lineReader := strings.NewReader(out)
 	lineScanner := bufio.NewScanner(lineReader)
 	lineScanner.Split(bufio.ScanLines)
@@ -65,7 +72,7 @@ func ParseMachineOutput(out string) Status {
 	var speedLoop bool
 	var tempLoop bool
 	for wordScanner.Scan() {
-		log.WithField("line", wordScanner.Text()).Error("Line")
+		log.WithField("line", wordScanner.Text()).Info("Line")
 		// Status
 		if strings.Compare(wordScanner.Text(), "STATUS") == 0 {
 			wordScanner.Scan() // Get to value
@@ -127,7 +134,7 @@ func ParseMachineOutput(out string) Status {
 				continue
 			}
 
-			status.Progress = completed / total
+			status.Progress = (completed / total) * 100
 			status.Attempted, _ = big.NewFloat(completed).Int64()
 			status.Keyspace, _ = big.NewFloat(total).Int64()
 		}
@@ -176,6 +183,7 @@ func ParseMachineOutput(out string) Status {
 	// Set the time estimate
 	attemptsLeft := status.Keyspace - status.Attempted
 	var totalSpeed float64
+	log.WithField("speed", status.Speed).Info("Speed Divide by 0")
 	for i := range status.Speed {
 		totalSpeed += status.Speed[i]
 	}

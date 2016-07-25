@@ -209,6 +209,11 @@ STATUS  2       SPEED   177376628       12.396055       161669552       11.21767
 
 `
 
+var TestStatus5 = ``
+
+var TestStatus6 = `STATUS	2	SPEED	200116	2.474344	EXEC_RUNTIME	2.010319	CURKU	376323	PROGRESS	1550333385	58592364160	RECHASH	4	5	RECSALT	0	1	TEMP	55	
+`
+
 func TestParseStatus1(t *testing.T) {
 	fmt.Printf("%+v\n", ParseMachineOutput(TestStatus1))
 }
@@ -223,4 +228,12 @@ func TestParseStatus3(t *testing.T) {
 
 func TestParseStatus4(t *testing.T) {
 	fmt.Printf("%+v\n", ParseMachineOutput(TestStatus4))
+}
+
+func TestParseStatus5(t *testing.T) {
+	fmt.Printf("%+v\n", ParseMachineOutput(TestStatus5))
+}
+
+func TestParseStatus6(t *testing.T) {
+	fmt.Printf("%+v\n", ParseMachineOutput(TestStatus6))
 }
