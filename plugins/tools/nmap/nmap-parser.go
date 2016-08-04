@@ -50,6 +50,7 @@ type Port struct {
 
 type State struct {
 	State      string `xml:"state,attr"`
+	Method string `xml:"method,attr"`
 	Reason     string `xml:"reason,attr"`
 	Reason_TTL string `xml:"reason_ttl,attr"`
 }
@@ -105,12 +106,13 @@ func nmapToCSV(scandata NmapRun) [][]string {
 
 		//Finally loop through all of the ports and build a row slice of the data
 		for _, port := range host.Ports {
-			tmpRow := make([]string, 5)
+			tmpRow := make([]string, 6)
 			tmpRow[0] = ip
 			tmpRow[1] = ptr
 			tmpRow[2] = port.Protocol
 			tmpRow[3] = port.PortID
-			tmpRow[4] = port.ServiceInfo.Name
+			tmpRow[4] = port.StateInfo.State
+			tmpRow[5] = port.ServiceInfo.Name
 
 			//And then append the data to the master dataset
 			tmpData = append(tmpData, tmpRow)
