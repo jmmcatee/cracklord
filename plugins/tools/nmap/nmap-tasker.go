@@ -166,7 +166,7 @@ func newNmapTask(j common.Job) (common.Tasker, error) {
 	log.WithField("arguments", args).Debug("Arguments complete")
 
 	t.job.PerformanceTitle = "Packets / sec"
-	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "Service"}
+	t.job.OutputTitles = []string{"IP Address", "Hostname", "Protocol", "Port", "State", "Service"}
 	t.job.TotalHashes, err = calcTotalTargets(t.job.Parameters["targets"])
 	if err != nil {
 		return &nmapTasker{}, err
