@@ -50,7 +50,6 @@ type Port struct {
 
 type State struct {
 	State      string `xml:"state,attr"`
-	Method string `xml:"method,attr"`
 	Reason     string `xml:"reason,attr"`
 	Reason_TTL string `xml:"reason_ttl,attr"`
 }
