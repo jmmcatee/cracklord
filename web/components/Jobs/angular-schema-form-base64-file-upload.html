@@ -1,0 +1,21 @@
+<div class="angular-schema-form--base64-file" ng-class="{'has-error': form.disableErrorState !== true && hasError(), 'has-success': form.disableSuccessState !== true && hasSuccess(), 'has-feedback': form.feedback !== false}">
+  <label class="control-label" ng-hide="form.notitle">{{form.title}}</label>
+  <div base64-file-upload="form" sf-field-model schema-validate="form">
+    <input type="file" class="base64-file--input" style="visibility:hidden;position:absolute;top:0;left:0;" ng-disabled="hasFile"/>
+    <button type="button" class="base64-file--drop-area" ng-class="{'file-hovering': dropAreaHover, 'has-file': hasFile}">
+
+      <div class="base64-file--file" ng-show="hasFile">
+        <div class="base64-file--file-preview"
+             ng-style="{'background-image': isImage(file) ? 'url(' + file.src + ')': ''}">
+          <span ng-show="!isImage(file)">{{file.ext}}</span>
+        </div>
+        <div class="base64-file--file-name">{{file.name}}</div>
+        <div class="base64-file--file-size">{{file.humanSize}}</div>
+        <div class="base64-file--file-remove" ng-click="removeFile($event)">&#10005</div>
+      </div>
+      <span ng-hide="hasFile" class="base64-file--drop-area-description">{{form.placeholder || dropText}}</span>
+    </button>
+  </div>
+
+  <span class="help-block" sf-message="form.description"></span>
+</div>

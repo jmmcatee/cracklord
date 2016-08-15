@@ -365,6 +365,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	// Check for Dictionary Crack mode
 	if dictDictionary, dictionaryOk := t.job.Parameters["dict_dictionaries"]; dictionaryOk {
 		log.Debug("Dictionary attack selected.")
+		opts = append(opts, "--attack-mode", "0")
 		modeSet = true
 
 		// Check the dictionary is one we have
@@ -491,7 +492,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 				// Decode the file
 				customRuleFilePath := filepath.Join(t.wd, "custom-uploaded-rules.txt")
-				customRuleFileBytes, err := base64.StdEncoding.DecodeString(fileParts[2][6:])
+				customRuleFileBytes, err := base64.StdEncoding.DecodeString(fileParts[2][7:])
 				if err != nil {
 					log.WithField("error", err).Error("Error parsing hex value of uploaded rule file.")
 					return nil, err
@@ -528,6 +529,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	bruPreDefMask, preDefMaskOk := t.job.Parameters["brute_predefined_charset"]
 	if bruUseCustomMaskBool && custMaskOk {
 		log.Debug("Use custome character sets.")
+		opts = append(opts, "--attack-mode", "3")
 		modeSet = true
 
 		// We are provided a custom mask and maybe custom character sets.
@@ -573,6 +575,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		argDmD = bruCustomMask
 	} else if preDefMaskOk {
 		log.Debug("Do not use custom character sets")
+		opts = append(opts, "--attack-mode", "3")
 		modeSet = true
 
 		// We selected a preconfigured mask so make sure it exists
@@ -679,7 +682,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 			// Decode the file
 			hashFilePath := filepath.Join(t.wd, "hashes.txt")
-			hashFilePathBytes, err := base64.StdEncoding.DecodeString(hashFileParts[2][6:])
+			hashFilePathBytes, err := base64.StdEncoding.DecodeString(hashFileParts[2][7:])
 			if err != nil {
 				log.WithField("error", err).Error("Error parsing hex value of uploaded hash file.")
 				return nil, err
@@ -785,10 +788,15 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
 	t.resume = append(t.resume, config.Args...)
+	t.showPot = append(t.showPotLeft, "--separator", config.Separator, "--potfile-path", config.PotFilePath)
 
 	// Setup the start and resume options
 	t.start = append(t.start, "--session="+t.job.UUID)
 	t.resume = append(t.resume, "--session="+t.job.UUID, "--restore")
+
+	// Setup the show command for the showPot execution
+	t.showPotLeft = append(t.showPot, "--left", argHash)
+	t.showPot = append(t.showPot, "--show", argHash)
 
 	// Append the various inputs to the argument
 	args = append(args, opts...)
@@ -805,6 +813,8 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	delete(t.job.Parameters, "dict_custom_prepend")
 	delete(t.job.Parameters, "dict_rules_custom_file")
 	delete(t.job.Parameters, "hashes_file_upload")
+	delete(t.job.Parameters, "hashes_multiline")
+	delete(t.job.Parameters, "dict_custom_prepend")
 
 	return &t, nil
 }

@@ -237,3 +237,28 @@ func TestParseStatus5(t *testing.T) {
 func TestParseStatus6(t *testing.T) {
 	fmt.Printf("%+v\n", ParseMachineOutput(TestStatus6))
 }
+
+var PotShowOutput1 = `hashcat (v3.00-1-g67a8d97) starting...
+
+7C77EE05A297638DFF9D75B7C28561E3|PQLSDJK
+F96946077DBF98C3F45D1D4576EAFE23|PQLSDJK1234
+858B5E5FE5DF0ABD69F2EE9A8B55385B|PQLSDJK567
+153B57A9B699C4807F721249AFA492FC|PQLSDJK000
+DFEF8C46EFBA5C30685B2B6FDA97A8B3|PQLSDJK!@#$
+`
+
+func TestShowPotOutput1(t *testing.T) {
+	fmt.Printf("%+v\n", ParseShowPotOutput(PotShowOutput1))
+}
+
+var PotShowOutput2 = "hashcat (v3.00-1-g67a8d97) starting...\r\n\r\nCounting lines in E:\\cracklord-testing\\workingdirs\\ba050f65-e195-44b0-b35f-dc63cdbc68ec\\hashes.txt\r                                                                                                  \rParsed Hashes: 0/7 (0.00%)\r                          \rAB7E8B4127563D95CA5B2105DFE9CCBF|September16\r\nB00415A2A89E7A32F11C03A6ED239837|August16\r\n46CABED03BF44D9807172B944C2655E3|February16\r\nFCCEE74D25FE883A5215B75BF5875070|May2016\r\n97D7C7074BA20006D378A2F4DC0C96F1|April2016\r\n59FB69AE6C76CB240B92DFCB9DCF150C|October16\r\nParsed Hashes: 7/7 (100.00%)\r                            \r"
+
+func TestShowPotOutput2(t *testing.T) {
+	fmt.Printf("%+v\n", ParseShowPotOutput(PotShowOutput2))
+}
+
+var PotShowLeftOutput1 = "hashcat (v3.00-1-g67a8d97) starting...\r\n\r\nCounting lines in E:\\cracklord-testing\\workingdirs\\f8b4343c-f219-45fc-bf83-237a9264a7f5\\hashes.txt\r                                                                                                  \rParsed Hashes: 0/7 (0.00%)\r                          \r126531E8124E9AE45F0156D0B11D0C87\r\nParsed Hashes: 7/7 (100.00%)\r                            \r"
+
+func TestLeftPotOutput1(t *testing.T) {
+	fmt.Printf("%+v\n", ParseShowPotLeftOutput(PotShowLeftOutput1))
+}

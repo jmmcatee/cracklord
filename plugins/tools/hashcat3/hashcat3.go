@@ -15,6 +15,8 @@ type Config struct {
 	BinPath      string
 	WorkingDir   string
 	Args         []string
+	Separator    string
+	PotFilePath  string
 	HashModes    HashModes
 	Dictionaries Dictionaries
 	RuleFiles    RuleFiles
@@ -121,6 +123,14 @@ func Setup(confPath string) error {
 			"flag":  flag,
 			"value": value,
 		}).Debug("Added option to hashcat")
+
+		// Catch some important flags that we need later
+		switch flag {
+		case "--separator":
+			config.Separator = value
+		case "--potfile-path":
+			config.PotFilePath = value
+		}
 
 		if value == "" {
 			// We have a boolean flag so only add the flag

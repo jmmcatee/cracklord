@@ -19,19 +19,22 @@ import (
 
 // Tasker is the structure that implements the Tasker inteface
 type Tasker struct {
-	mux        sync.Mutex // Used for locking componets of the Tasker
-	job        common.Job
-	wd         string
-	exec       exec.Cmd
-	start      []string
-	resume     []string
-	stderr     *bytes.Buffer
-	stderrCp   bool
-	stdout     *bytes.Buffer
-	stdoutCp   bool
-	stderrPipe io.ReadCloser
-	stdoutPipe io.ReadCloser
-	stdinPipe  io.WriteCloser
+	mux           sync.Mutex // Used for locking componets of the Tasker
+	job           common.Job
+	wd            string
+	exec          exec.Cmd
+	start         []string
+	resume        []string
+	showPot       []string
+	showPotLeft   []string
+	showPotOutput [][]string
+	stderr        *bytes.Buffer
+	stderrCp      bool
+	stdout        *bytes.Buffer
+	stdoutCp      bool
+	stderrPipe    io.ReadCloser
+	stdoutPipe    io.ReadCloser
+	stdinPipe     io.WriteCloser
 
 	doneWG sync.WaitGroup // Used for checking if the job is done
 }
@@ -103,26 +106,32 @@ func (t *Tasker) Status() common.Job {
 	}
 
 	// Get the hash file
+	var tempOutputData [][]string
 	hashFile, err := os.Open(filepath.Join(t.wd, "output.txt"))
+	if err == nil {
+		defer hashFile.Close()
+
+		// Pull the lines from the file for each individual hash
+		hashScanner := bufio.NewScanner(hashFile)
+		for hashScanner.Scan() {
+			// Parse the line with the default separator |
+			parts := strings.Split(hashScanner.Text(), config.Separator)
+
+			// Add the parts to the output array
+			if len(parts) == 2 {
+				tempOutputData = append(tempOutputData, []string{parts[1], parts[0]})
+			} else {
+				log.Error("Split hash line on | and did not get 2 values.")
+			}
+		}
+	}
 	if err != nil {
 		log.WithField("io_error", err).Error("Failed to open output.txt")
-		return t.job
 	}
-	defer hashFile.Close()
 
-	// Pull the lines from the file for each individual hash
-	var tempOutputData [][]string
-	hashScanner := bufio.NewScanner(hashFile)
-	for hashScanner.Scan() {
-		// Parse the line with the default separator |
-		parts := strings.Split(hashScanner.Text(), "|")
-
-		// Add the parts to the output array
-		if len(parts) == 2 {
-			tempOutputData = append(tempOutputData, []string{parts[1], parts[0]})
-		} else {
-			log.Error("Split hash line on | and did not get 2 values.")
-		}
+	// Add in the pot file items
+	for i := range t.showPotOutput {
+		tempOutputData = append(tempOutputData, t.showPotOutput[i])
 	}
 
 	if len(tempOutputData) != 0 {
@@ -154,6 +163,30 @@ func (t *Tasker) Run() error {
 		return nil
 	}
 
+	// Execute the Hashcat --show command to get any potfile entries
+	showExec := exec.Command(config.BinPath, t.showPot...)
+	showExec.Dir = t.wd
+	log.WithField("Show Command", showExec.Args).Debug("Executing Show Command")
+	showPotStdout, err := showExec.Output()
+	if err != nil {
+		log.WithField("execError", err).Error("Error running hashcat --show command.")
+	}
+	log.WithField("showStdout", string(showPotStdout)).Debug("Show command stdout.")
+	t.showPotOutput = ParseShowPotOutput(string(showPotStdout))
+
+	showLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
+	showLeftExec.Dir = t.wd
+	log.WithField("Left Command", showLeftExec.Args).Debug("Executing Left Command")
+	showPotLeftStdout, err := showLeftExec.Output()
+	if err != nil {
+		log.WithField("execError", err).Error("Error running hashcat --left command.")
+	}
+	log.WithField("showLeftStdout", string(showPotLeftStdout)).Debug("Show Left command stdout.")
+	leftOut := ParseShowPotLeftOutput(string(showPotLeftStdout))
+
+	t.job.TotalHashes = int64(len(leftOut) + len(t.showPotOutput))
+	t.job.CrackedHashes = int64(len(t.showPotOutput))
+
 	// Set commands for restore or start
 	if t.job.Status == common.STATUS_CREATED {
 		t.exec = *exec.Command(config.BinPath, t.start...)
@@ -168,7 +201,6 @@ func (t *Tasker) Run() error {
 	}).Debug("Setup working directory")
 
 	// Assign the stderr, stdout, stdin pipes
-	var err error
 	t.stderrPipe, err = t.exec.StderrPipe()
 	if err != nil {
 		return err

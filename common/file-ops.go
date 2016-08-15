@@ -30,7 +30,7 @@ func Copy(dst, src string) error {
 // CopyPrepend a file with prepended value
 func CopyPrepend(dst, src, prepend string) error {
 	// Make the prepend string a buffer
-	pr := strings.NewReader(prepend)
+	pr := strings.NewReader(prepend + "\n")
 
 	s, err := os.Open(src)
 	if err != nil {

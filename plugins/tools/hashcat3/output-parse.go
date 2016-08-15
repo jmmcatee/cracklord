@@ -226,3 +226,47 @@ func ParseMachineOutput(out string) Status {
 
 	return status
 }
+
+// ParseShowPotOutput takes the output of the hashcat --show command and returns a 2D array of hashes and cleartext values
+func ParseShowPotOutput(stdout string) [][]string {
+	stdout = strings.Replace(stdout, "\r ", "\n", -1)
+	stdout = strings.Replace(stdout, " \r", "\n", -1)
+	// We want to loop on each line, so build a reader
+	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
+
+	var output [][]string
+	for lineScanner.Scan() {
+		// Check for the separator character
+		if strings.Contains(lineScanner.Text(), "|") {
+			// This is a hash line so we need to parse it
+			rows := strings.Split(lineScanner.Text(), "|")
+			if len(rows) == 2 {
+				output = append(output, []string{rows[1], rows[0]})
+			}
+		}
+	}
+
+	return output
+}
+
+// ParseShowPotLeftOutput will return the hashes not found in the pot file
+func ParseShowPotLeftOutput(stdout string) []string {
+	stdout = strings.Replace(stdout, "\r ", "\n", -1)
+	stdout = strings.Replace(stdout, " \r", "\n", -1)
+	// We want to loop on each line, so build a reader
+	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
+
+	var output []string
+	for lineScanner.Scan() {
+		// Check if the line is a known output or is likely a hash
+		if !strings.Contains(lineScanner.Text(), "hashcat") &&
+			!strings.Contains(lineScanner.Text(), "Counting") &&
+			!strings.Contains(lineScanner.Text(), "Parsed") &&
+			len(strings.TrimSpace(lineScanner.Text())) != 0 {
+			output = append(output, lineScanner.Text())
+		}
+
+	}
+
+	return output
+}
