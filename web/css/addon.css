@@ -1,0 +1,117 @@
+.angular-schema-form--base64-file label {
+  display: block;
+}
+
+[base64-file-upload] {
+  cursor: pointer;
+}
+
+.base64-file--drop-area {
+  width:100%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 0 40px;
+  min-height: 110px;
+  max-height: 110px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+          flex-wrap: wrap;
+  align-items: center;
+  border: 2px dashed rgba(0, 0, 0, 0.3);
+  outline: none;
+}
+
+.base64-file--drop-area:focus {
+  outline: none;
+}
+
+.base64-file--drop-area-description {
+  display: block;
+  width: 100%;
+  text-align:center;
+}
+
+.base64-file--drop-area-description {
+  font-size:20px;
+}
+
+.ng-invalid-base64-file-upload-size .base64-file--drop-area {
+  border-color: #e93a29;
+}
+
+.base64-file--drop-area.file-hovering {
+  border-color: #29e981;
+  border-style: solid;
+}
+
+.base64-file--file {
+  position: relative;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.base64-file--file::after,
+.base64-file--file::before {
+  content: ' ';
+  clear: both;
+  display: table;
+}
+
+.base64-file--file-remove {
+  float:right;
+  cursor: pointer;
+  padding:10px;
+  position: absolute;
+  top: 0;
+  right: -10px;
+  font-size:16px;
+}
+
+.base64-file--file-size,
+.base64-file--file-name {
+  float:left;
+  padding-right: 20px;
+  margin-left: 10px;
+  display:inline-block;
+  width: calc(100% - 100px);
+  white-space: normal;
+  text-align: left;
+  font-weight: lighter;
+}
+
+.base64-file--file-name {
+  font-size: 16px;
+}
+
+.base64-file--file-size {
+  font-size: 11px;
+}
+
+.base64-file--file-preview {
+  float:left;
+  width: 75px;
+  height: 75px;
+  background: rgba(211, 212, 200, 0.4);
+  border-radius: 5px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  display: inline-block;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.base64-file--file-preview > span {
+  line-height: 75px;
+  font-size: 26px;
+  padding:4px;
+  opacity: 0.2;
+  text-transform: uppercase;
+}

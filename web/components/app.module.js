@@ -8,13 +8,19 @@ var cracklord = angular.module('cracklord', [
    'ngAnimate',
    'ngCsv',
    'relativeDate',
-   'chart.js'
+   'chart.js',
+   'angularSchemaFormBase64FileUpload'
 ]);
 
 cracklord.config(['growlProvider', function ($growlProvider) {
   $growlProvider.globalTimeToLive(5000);
 //  growlProvider.globalDisableCountDown(true);
 }]);
+
+cracklord.config(function(base64FileUploadConfigProvider) {
+	console.log(base64FileUploadConfigProvider);
+	base64FileUploadConfigProvider.setDropText('New');
+});
 
 function sortEnumInJSON(input) {
    for(var key in input) {
