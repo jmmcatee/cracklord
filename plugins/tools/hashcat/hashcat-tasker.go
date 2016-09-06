@@ -650,7 +650,7 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
-	if v.job.Status == common.STATUS_RUNNING {
+	if v.job.Status == common.STATUS_RUNNING && v.job.Status == common.STATUS_PAUSED {
 		v.mux.Lock()
 
 		if runtime.GOOS == "windows" {
