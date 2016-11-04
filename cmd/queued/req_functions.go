@@ -7,12 +7,13 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
-	"net/http"
-	"strconv"
 )
 
 // All handler functions are created as part of the base AppController. This is done to
@@ -507,7 +508,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	// Decode the request
 	err := reqJSON.Decode(&req)
 	if err != nil {
-		log.WithField(err).Error("Error parsing the request.")
+		log.WithField("err", err).Error("Error parsing the request.")
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = RESP_CODE_BADREQ_T
 
