@@ -2,12 +2,15 @@ package hashcat3
 
 import (
 	"bufio"
-	log "github.com/Sirupsen/logrus"
 	"math"
 	"math/big"
 	"strconv"
 	"strings"
 	"time"
+
+	"errors"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Status standard return status
@@ -39,12 +42,12 @@ var StatusTable = map[string]string{
 }
 
 // ParseMachineOutput returns a Status for a given status line
-func ParseMachineOutput(out string) Status {
+func ParseMachineOutput(out string) (Status, error) {
 	log.WithField("status2Parse", out).Debug("Parsing machine output")
 
 	if len(out) < 6 {
 		// Empty stdout so return empty status
-		return Status{}
+		return Status{}, errors.New("Length of line entry is 0")
 	}
 
 	lineReader := strings.NewReader(out)
@@ -68,6 +71,7 @@ func ParseMachineOutput(out string) Status {
 	wordScanner.Split(bufio.ScanWords)
 
 	var status Status
+	var statusLineFound bool
 	// Scan each word and begin populating our status
 	var speedLoop bool
 	var tempLoop bool
@@ -75,6 +79,9 @@ func ParseMachineOutput(out string) Status {
 		log.WithField("line", wordScanner.Text()).Info("Line")
 		// Status
 		if strings.Compare(wordScanner.Text(), "STATUS") == 0 {
+			// We found a status line
+			statusLineFound = true
+
 			wordScanner.Scan() // Get to value
 			status.Status = StatusTable[wordScanner.Text()]
 		}
@@ -180,6 +187,11 @@ func ParseMachineOutput(out string) Status {
 		}
 	}
 
+	// If we did not find a status line return a failure and nil status
+	if !statusLineFound {
+		return Status{}, errors.New("No status line found.")
+	}
+
 	// Set the time estimate
 	attemptsLeft := status.Keyspace - status.Attempted
 	var totalSpeed float64
@@ -224,11 +236,11 @@ func ParseMachineOutput(out string) Status {
 		status.EstimateTime = estSecondsString + "s"
 	}
 
-	return status
+	return status, nil
 }
 
 // ParseShowPotOutput takes the output of the hashcat --show command and returns a 2D array of hashes and cleartext values
-func ParseShowPotOutput(stdout string) [][]string {
+func ParseShowPotOutput(stdout string, inputSplit int) [][]string {
 	stdout = strings.Replace(stdout, "\r ", "\n", -1)
 	stdout = strings.Replace(stdout, " \r", "\n", -1)
 	// We want to loop on each line, so build a reader
@@ -236,13 +248,40 @@ func ParseShowPotOutput(stdout string) [][]string {
 
 	var output [][]string
 	for lineScanner.Scan() {
+
 		// Check for the separator character
-		if strings.Contains(lineScanner.Text(), "|") {
+		if !strings.Contains(lineScanner.Text(), "hashcat") &&
+			!strings.Contains(lineScanner.Text(), "Counting") &&
+			!strings.Contains(lineScanner.Text(), "Parsed") &&
+			len(strings.TrimSpace(lineScanner.Text())) != 0 &&
+			strings.Contains(lineScanner.Text(), ":") {
 			// This is a hash line so we need to parse it
-			rows := strings.Split(lineScanner.Text(), "|")
-			if len(rows) == 2 {
-				output = append(output, []string{rows[1], rows[0]})
+			rows := strings.Split(lineScanner.Text(), ":")
+			splitCount := strings.Count(lineScanner.Text(), ":")
+
+			// 1 => 1:o             l=2, split=0, split+2=2
+			// 1:2 => 1:2:o         l=3, split=1, split+2=3
+			// 1:2:3 => 1:2:3:o     l=4, split=2, split+2=4
+			var lineHash string
+			for i := 0; i < inputSplit+1; i++ {
+				if i < len(rows)-1 {
+					lineHash += rows[i]
+				}
+
+				if i < inputSplit {
+					lineHash += ":"
+				}
 			}
+
+			var password = rows[inputSplit+1]
+			if inputSplit+1 < splitCount {
+				for i := 0; i < splitCount-(inputSplit+1); i++ {
+					password += ":"
+				}
+			}
+
+			output = append(output, []string{password, lineHash})
+
 		}
 	}
 

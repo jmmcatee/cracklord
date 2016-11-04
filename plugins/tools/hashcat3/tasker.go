@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"os"
 	"os/exec"
@@ -15,6 +13,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 // Tasker is the structure that implements the Tasker inteface
@@ -28,6 +29,8 @@ type Tasker struct {
 	showPot       []string
 	showPotLeft   []string
 	showPotOutput [][]string
+	hashes        [][]byte
+	inputSplits   int
 	stderr        *bytes.Buffer
 	stderrCp      bool
 	stdout        *bytes.Buffer
@@ -82,22 +85,26 @@ func (t *Tasker) Status() common.Job {
 		}
 
 		if t.stdout.Len() != 0 {
-			status := ParseMachineOutput(t.stdout.String())
+			status, err := ParseMachineOutput(t.stdout.String())
 
-			if t.job.PerformanceTitle == "" {
-				t.job.PerformanceTitle = "MH/s"
+			if err == nil {
+				if t.job.PerformanceTitle == "" {
+					t.job.PerformanceTitle = "MH/s"
+				}
+				t.job.Progress = status.Progress
+				t.job.ETC = status.EstimateTime
+
+				var totalSpeed float64
+				for i := range status.Speed {
+					totalSpeed += status.Speed[i]
+				}
+				t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/1000000)
+
+				t.job.CrackedHashes = status.RecoveredHashes
+				t.job.TotalHashes = status.TotalHashes
+			} else {
+				log.Debug(err.Error)
 			}
-			t.job.Progress = status.Progress
-			t.job.ETC = status.EstimateTime
-
-			var totalSpeed float64
-			for i := range status.Speed {
-				totalSpeed += status.Speed[i]
-			}
-			t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/1000000)
-
-			t.job.CrackedHashes = status.RecoveredHashes
-			t.job.TotalHashes = status.TotalHashes
 		}
 
 		if t.stderr.Len() != 0 {
@@ -115,14 +122,34 @@ func (t *Tasker) Status() common.Job {
 		hashScanner := bufio.NewScanner(hashFile)
 		for hashScanner.Scan() {
 			// Parse the line with the default separator |
-			parts := strings.Split(hashScanner.Text(), config.Separator)
+			parts := strings.Split(hashScanner.Text(), ":")
+			splitCount := strings.Count(hashScanner.Text(), ":")
 
 			// Add the parts to the output array
-			if len(parts) == 2 {
-				tempOutputData = append(tempOutputData, []string{parts[1], parts[0]})
-			} else {
-				log.Error("Split hash line on | and did not get 2 values.")
+			// 1 => 1:o             l=2, split=0, split+2=2
+			// 1:2 => 1:2:o         l=3, split=1, split+2=3
+			// 1:2:3 => 1:2:3:o     l=4, split=2, split+2=4
+
+			// 1:2 => 1:2:o:: parts=4, split=1, split+2=3
+			var lineHash string
+			for i := 0; i < t.inputSplits+1; i++ {
+				if i < len(parts)-1 {
+					lineHash += parts[i]
+				}
+
+				if i < t.inputSplits {
+					lineHash += ":"
+				}
 			}
+			// We now need to add back any accidentally removed :
+			var password = parts[t.inputSplits+1]
+			if t.inputSplits+1 < splitCount {
+				for i := 0; i < splitCount-(t.inputSplits+1); i++ {
+					password += ":"
+				}
+			}
+
+			tempOutputData = append(tempOutputData, []string{password, lineHash})
 		}
 	}
 	if err != nil {
@@ -172,7 +199,7 @@ func (t *Tasker) Run() error {
 		log.WithField("execError", err).Error("Error running hashcat --show command.")
 	}
 	log.WithField("showStdout", string(showPotStdout)).Debug("Show command stdout.")
-	t.showPotOutput = ParseShowPotOutput(string(showPotStdout))
+	t.showPotOutput = ParseShowPotOutput(string(showPotStdout), t.inputSplits)
 
 	showLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
 	showLeftExec.Dir = t.wd
@@ -236,14 +263,19 @@ func (t *Tasker) Run() error {
 	go func() {
 		// Wait for the job to finish
 		t.exec.Wait()
+		log.WithField("task", t.job.UUID).Debug("Job exec returned Wait().")
 
 		t.mux.Lock()
+		log.WithField("task", t.job.UUID).Debug("Took lock on job to change status to done.")
 		t.job.Status = common.STATUS_DONE
 		t.mux.Unlock()
+		log.WithField("task", t.job.UUID).Debug("Unlocked job after setting done.")
 
 		// Get the status now because we need the last output of hashes
+		log.WithField("task", t.job.UUID).Debug("Calling final status call for the job.")
 		t.Status()
 
+		log.WithField("task", t.job.UUID).Debug("Releasing wait group.")
 		t.doneWG.Done()
 	}()
 
@@ -264,6 +296,10 @@ func (t *Tasker) Pause() error {
 			t.exec.Process.Kill()
 		} else {
 			io.WriteString(t.stdinPipe, "c")
+
+			time.Sleep(1 * time.Second)
+
+			io.WriteString(t.stdinPipe, "q")
 		}
 
 		t.mux.Unlock()
@@ -291,17 +327,28 @@ func (t *Tasker) Quit() common.Job {
 
 	if t.job.Status == common.STATUS_RUNNING || t.job.Status == common.STATUS_PAUSED {
 		t.mux.Lock()
+		log.WithField("task", t.job.UUID).Debug("Grab lock to push quit signal to hashcat.")
 
 		if runtime.GOOS == "windows" {
+			log.WithField("task", t.job.UUID).Debug("Attempting to send Windows Process.Kill() Signal.")
 			t.exec.Process.Kill()
 		} else {
+			log.WithField("task", t.job.UUID).Debug("Attempting UNIX kill with 'c' and 'q'.")
 			io.WriteString(t.stdinPipe, "c")
+
+			log.WithField("task", t.job.UUID).Debug("Sent 'c' command and waiting 1 second.")
+			time.Sleep(1 * time.Second)
+
+			log.WithField("task", t.job.UUID).Debug("Sending 'q' command to kill the process.")
+			io.WriteString(t.stdinPipe, "q")
 		}
 
 		t.mux.Unlock()
+		log.WithField("task", t.job.UUID).Debug("Unlocking job and waiting for quit WaitGroup.")
 
 		// Wait for the program to actually exit
 		t.doneWG.Wait()
+		log.WithField("task", t.job.UUID).Debug("Wait group returned. Task quit successfully.")
 	}
 
 	t.mux.Lock()

@@ -4,10 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	log "github.com/Sirupsen/logrus"
-	"github.com/emperorcow/protectedmap"
-	"github.com/jmmcatee/cracklord/common"
-	"github.com/pborman/uuid"
 	"io"
 	"net"
 	"net/rpc"
@@ -15,6 +11,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/emperorcow/protectedmap"
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/pborman/uuid"
 )
 
 const (
@@ -340,7 +341,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 	defer q.Unlock()
 
 	// Loop through the stack looking for the job to quit
-	for i, _ := range q.stack {
+	for i := range q.stack {
 		if q.stack[i].UUID == jobuuid {
 			log.WithFields(log.Fields{
 				"job":    jobuuid,
@@ -349,7 +350,8 @@ func (q *Queue) QuitJob(jobuuid string) error {
 
 			// We have found the job so lets check that it isn't already done
 			s := q.stack[i].Status
-			if s != common.STATUS_DONE && s != common.STATUS_FAILED && s != common.STATUS_QUIT {
+
+			if s != common.STATUS_DONE && s != common.STATUS_FAILED && s != common.STATUS_QUIT && s != common.STATUS_CREATED {
 				// Lets build the call to stop the job
 				quitJob := common.RPCCall{Job: q.stack[i]}
 
@@ -375,6 +377,12 @@ func (q *Queue) QuitJob(jobuuid string) error {
 				hw = q.pool[q.stack[i].ResAssigned].Tools[tUUID].Requirements
 				q.pool[q.stack[i].ResAssigned].Hardware[hw] = true
 
+				return nil
+			}
+
+			if s == common.STATUS_CREATED {
+				// We need to set the new status for the job to quit
+				q.stack[i].Status = common.STATUS_QUIT
 				return nil
 			}
 
