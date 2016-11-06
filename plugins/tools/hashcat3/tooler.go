@@ -3,15 +3,16 @@ package hashcat3
 import (
 	"encoding/base64"
 	"errors"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
-	"github.com/jmmcatee/goschemaform"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/jmmcatee/goschemaform"
 )
 
 type hashcat3Tooler struct {
@@ -667,64 +668,48 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		}
 	}
 
+	var hashBytes []byte
+	hashFilePath := filepath.Join(t.wd, "hashes.txt")
 	if hashUseUploadBool {
 		// Use an uploaded hashfile
 		if _, hashUploadOk := t.job.Parameters["hashes_file_upload"]; hashUploadOk {
 			// Get the hash file provided, parse it and write it to disk
-			hashFileParts := strings.Split((t.job.Parameters["hashes_file_upload"]), ";")
-			if len(hashFileParts) != 3 {
-				log.Error("Error parsing the uploaded file.")
-				return nil, errors.New("Error parsing the uploaded file.")
-			}
-			// [0] - file:[filename of uploaded file]
-			// [1] - data:[data type (text/plain)]
-			// [2] - base64,[data]
-
-			// Decode the file
-			hashFilePath := filepath.Join(t.wd, "hashes.txt")
-			hashFilePathBytes, err := base64.StdEncoding.DecodeString(hashFileParts[2][7:])
+			hashBytes, err = decodeBase64Upload(t.job.Parameters["hashes_file_upload"])
 			if err != nil {
-				log.WithField("error", err).Error("Error parsing hex value of uploaded hash file.")
+				// We should have already written the error to the log so just return
 				return nil, err
 			}
-
-			// write the file to disk
-			err = ioutil.WriteFile(hashFilePath, hashFilePathBytes, 0666)
-			if err != nil {
-				log.WithField("error", err).Error("Error writing hash bytes to disk.")
-				return nil, err
-			}
-
-			// Append the file to the args
-			argHash = hashFilePath
-			log.WithField("hashFile", hashFilePath).Debug("Hash file uploaded")
 		} else {
 			log.Error("No hash file was uploaded, even though we checked the box.")
 			return nil, errors.New("No hash file was uploaded, even though we checked the box.")
 		}
 	} else {
 		// Use the provided text input for the hashfile
-		if hashMultiline, hashMultilineOk := t.job.Parameters["hashes_multiline"]; hashMultilineOk {
-			if len(hashMultiline) <= 0 {
+		if _, hashMultilineOk := t.job.Parameters["hashes_multiline"]; hashMultilineOk {
+			if len(t.job.Parameters["hashes_multiline"]) <= 0 {
 				log.Error("The hash multiline was provided with a length of 0.")
 				return nil, errors.New("The hash multiline was provided with a length of 0.")
 			}
 
-			// Write these hashes to a file
-			hashFilePath := filepath.Join(t.wd, "hashes.txt")
-			err = ioutil.WriteFile(hashFilePath, []byte(hashMultiline), 0666)
-			if err != nil {
-				log.WithField("error", err).Error("Error writing hashes.txt")
-				return nil, err
-			}
-
-			// Add the hash to the arguments variable
-			argHash = hashFilePath
+			hashBytes = []byte(t.job.Parameters["hashes_multiline"])
 		} else {
 			log.Error("Hashes were not provided in the multiline input and no file was uploaded.")
 			return nil, errors.New("Hashes were not provided in the multiline input and no file was uploaded.")
 		}
 	}
+
+	// Save hashes and separator count
+	t.hashes, t.inputSplits = getHashesFromBytesInput(hashBytes, ":")
+
+	// Write the hashes to the hash file
+	err = writeHashes2File(t.hashes, hashFilePath)
+	if err != nil {
+		// We should have logged already
+		return nil, err
+	}
+
+	// Add the hash to the arguments variable
+	argHash = hashFilePath
 
 	// Parse any advanced options provided
 	var advancedOptionsBool bool
@@ -788,7 +773,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
 	t.resume = append(t.resume, config.Args...)
-	t.showPot = append(t.showPotLeft, "--separator", config.Separator, "--potfile-path", config.PotFilePath)
+	t.showPot = append(t.showPotLeft, "--hash-type="+htype, "--separator", ":", "--potfile-path", config.PotFilePath)
 
 	// Setup the start and resume options
 	t.start = append(t.start, "--session="+t.job.UUID)

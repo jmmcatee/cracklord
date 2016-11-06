@@ -2,12 +2,13 @@ package hashcat3
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
-	"github.com/vaughan0/go-ini"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/vaughan0/go-ini"
 )
 
 // Config is structure to hold configuration
@@ -126,8 +127,6 @@ func Setup(confPath string) error {
 
 		// Catch some important flags that we need later
 		switch flag {
-		case "--separator":
-			config.Separator = value
 		case "--potfile-path":
 			config.PotFilePath = value
 		}
