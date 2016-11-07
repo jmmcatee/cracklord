@@ -253,6 +253,7 @@ func ParseShowPotOutput(stdout string, inputSplit int) [][]string {
 		if !strings.Contains(lineScanner.Text(), "hashcat") &&
 			!strings.Contains(lineScanner.Text(), "Counting") &&
 			!strings.Contains(lineScanner.Text(), "Parsed") &&
+			!strings.Contains(lineScanner.Text(), "WARNING:") &&
 			len(strings.TrimSpace(lineScanner.Text())) != 0 &&
 			strings.Contains(lineScanner.Text(), ":") {
 			// This is a hash line so we need to parse it
@@ -273,6 +274,11 @@ func ParseShowPotOutput(stdout string, inputSplit int) [][]string {
 				}
 			}
 
+			if len(rows) < inputSplit+1 {
+				// We have an issue with this hash having the wrong input value or being an inconsistent hash
+				// from one line to another. Dump this one.
+				break
+			}
 			var password = rows[inputSplit+1]
 			if inputSplit+1 < splitCount {
 				for i := 0; i < splitCount-(inputSplit+1); i++ {
@@ -301,6 +307,7 @@ func ParseShowPotLeftOutput(stdout string) []string {
 		if !strings.Contains(lineScanner.Text(), "hashcat") &&
 			!strings.Contains(lineScanner.Text(), "Counting") &&
 			!strings.Contains(lineScanner.Text(), "Parsed") &&
+			!strings.Contains(lineScanner.Text(), "WARNING:") &&
 			len(strings.TrimSpace(lineScanner.Text())) != 0 {
 			output = append(output, lineScanner.Text())
 		}
