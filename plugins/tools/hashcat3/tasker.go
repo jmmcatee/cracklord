@@ -132,23 +132,36 @@ func (t *Tasker) Status() common.Job {
 
 			// 1:2 => 1:2:o:: parts=4, split=1, split+2=3
 			var lineHash string
-			for i := 0; i < t.inputSplits+1; i++ {
-				if i < len(parts)-1 {
-					lineHash += parts[i]
+			var password string
+			if splitCount > t.inputSplits {
+				for i := 0; i < t.inputSplits+1; i++ {
+					if i < len(parts)-1 {
+						lineHash += parts[i]
+					}
+
+					if i < t.inputSplits {
+						lineHash += ":"
+					}
 				}
 
-				if i < t.inputSplits {
-					lineHash += ":"
+				password = parts[t.inputSplits+1]
+				if t.inputSplits+1 < splitCount {
+					for i := 0; i < splitCount-(t.inputSplits+1); i++ {
+						password += ":"
+					}
 				}
+			} else {
+				// We need to rebuild the hash from the stored verion we recieved (PWDUMP exception)
+				for x := range t.hashes {
+					if bytes.Contains(bytes.ToLower(t.hashes[x]), []byte(parts[0])) {
+						lineHash = string(t.hashes[x])
+					}
+				}
+
+				password = hashScanner.Text()[len(parts[0])+1:]
 			}
+
 			// We now need to add back any accidentally removed :
-			var password = parts[t.inputSplits+1]
-			if t.inputSplits+1 < splitCount {
-				for i := 0; i < splitCount-(t.inputSplits+1); i++ {
-					password += ":"
-				}
-			}
-
 			tempOutputData = append(tempOutputData, []string{password, lineHash})
 		}
 	}
