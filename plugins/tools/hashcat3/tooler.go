@@ -785,10 +785,10 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 	// Setup the show command for the showPot execution
 	leftFilePath := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
-	t.showPotLeft = append(t.showPot, "--outfile", leftFilePath, "--left", argHash)
+	t.showPotLeft = append(t.showPot, "--outfile", leftFilePath, "--left", USER_HASHES_FILENAME)
 
 	showPotFilePath := filepath.Join(t.wd, HASHCAT_POT_SHOW_FILENAME)
-	t.showPot = append(t.showPot, "--outfile", showPotFilePath, "--show", argHash)
+	t.showPot = append(t.showPot, "--outfile", showPotFilePath, "--show", USER_HASHES_FILENAME)
 
 	// Append the various inputs to the argument
 	args = append(args, opts...)
