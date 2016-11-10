@@ -196,7 +196,7 @@ func (t *Tasker) Run() error {
 		return errors.New("Error opening LEFT Hash file")
 	}
 	var potCount int64
-	potCount, t.showPotOutput = ParseShowPotFile(hashcatPotShowFile, t.inputSplits)
+	potCount, t.showPotOutput = ParseShowPotFile(hashcatPotShowFile, t.inputSplits, t.hashMode)
 
 	// Set some totals
 	t.job.TotalHashes = leftCount + potCount
