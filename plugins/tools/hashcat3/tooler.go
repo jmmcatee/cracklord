@@ -15,6 +15,13 @@ import (
 	"github.com/jmmcatee/goschemaform"
 )
 
+const (
+	USER_HASHES_FILENAME      = "user-input-hashes.txt"
+	HASHCAT_POT_SHOW_FILENAME = "hashcat-pot-show.txt"
+	HASHCAT_LEFT_FILENAME     = "hashcat-left.txt"
+	HASH_OUTPUT_FILENAME      = "output-hashes.txt"
+)
+
 type hashcat3Tooler struct {
 	toolUUID string
 	version  string
@@ -360,6 +367,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		return nil, errors.New("Could not find the hashmode provided.")
 	}
 	opts = append(opts, "--hash-type="+htype)
+	t.hashMode = htype
 
 	var modeSet bool
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -669,7 +677,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	}
 
 	var hashBytes []byte
-	hashFilePath := filepath.Join(t.wd, "hashes.txt")
+	hashFilePath := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
 	if hashUseUploadBool {
 		// Use an uploaded hashfile
 		if _, hashUploadOk := t.job.Parameters["hashes_file_upload"]; hashUploadOk {
@@ -698,13 +706,9 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		}
 	}
 
-	// Save hashes and separator count
-	t.hashes, t.inputSplits = getHashesFromBytesInput(hashBytes, ":")
-
-	// Write the hashes to the hash file
-	err = writeHashes2File(t.hashes, hashFilePath)
+	// Save hashes to a file for us to process later
+	err = ioutil.WriteFile(filepath.Join(t.wd, USER_HASHES_FILENAME), hashBytes, 0660)
 	if err != nil {
-		// We should have logged already
 		return nil, err
 	}
 
@@ -768,7 +772,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	}
 
 	// Setup the output file argument
-	opts = append(opts, "--outfile", filepath.Join(t.wd, "output.txt"))
+	opts = append(opts, "--outfile", filepath.Join(t.wd, HASH_OUTPUT_FILENAME))
 
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
@@ -780,8 +784,11 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	t.resume = append(t.resume, "--session="+t.job.UUID, "--restore")
 
 	// Setup the show command for the showPot execution
-	t.showPotLeft = append(t.showPot, "--left", argHash)
-	t.showPot = append(t.showPot, "--show", argHash)
+	leftFilePath := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
+	t.showPotLeft = append(t.showPot, "--outfile", leftFilePath, "--left", argHash)
+
+	showPotFilePath := filepath.Join(t.wd, HASHCAT_POT_SHOW_FILENAME)
+	t.showPot = append(t.showPot, "--outfile", showPotFilePath, "--show", argHash)
 
 	// Append the various inputs to the argument
 	args = append(args, opts...)

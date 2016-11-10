@@ -2,6 +2,7 @@ package hashcat3
 
 import (
 	"bufio"
+	"io"
 	"math"
 	"math/big"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 
 	"errors"
 
+	"bytes"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -239,80 +241,172 @@ func ParseMachineOutput(out string) (Status, error) {
 	return status, nil
 }
 
-// ParseShowPotOutput takes the output of the hashcat --show command and returns a 2D array of hashes and cleartext values
-func ParseShowPotOutput(stdout string, inputSplit int) [][]string {
-	stdout = strings.Replace(stdout, "\r ", "\n", -1)
-	stdout = strings.Replace(stdout, " \r", "\n", -1)
-	// We want to loop on each line, so build a reader
-	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
+// ParseShowPotFile pull the line count and the hash output from the show pot outputfile
+func ParseShowPotFile(r io.Reader, leftSplit int) (count int64, hashes [][]string) {
+	fileLineScanner := bufio.NewScanner(r)
 
-	var output [][]string
-	for lineScanner.Scan() {
+	for fileLineScanner.Scan() {
+		count++
 
-		// Check for the separator character
-		if !strings.Contains(lineScanner.Text(), "hashcat") &&
-			!strings.Contains(lineScanner.Text(), "Counting") &&
-			!strings.Contains(lineScanner.Text(), "Parsed") &&
-			!strings.Contains(lineScanner.Text(), "WARNING:") &&
-			len(strings.TrimSpace(lineScanner.Text())) != 0 &&
-			strings.Contains(lineScanner.Text(), ":") {
-			// This is a hash line so we need to parse it
-			rows := strings.Split(lineScanner.Text(), ":")
-			splitCount := strings.Count(lineScanner.Text(), ":")
+		// Count the splits in the output
+		potSplit := bytes.Count(fileLineScanner.Bytes(), []byte(":"))
 
-			// 1 => 1:o             l=2, split=0, split+2=2
-			// 1:2 => 1:2:o         l=3, split=1, split+2=3
-			// 1:2:3 => 1:2:3:o     l=4, split=2, split+2=4
-			var lineHash string
-			for i := 0; i < inputSplit+1; i++ {
-				if i < len(rows)-1 {
-					lineHash += rows[i]
+		// user:444:lmhash:ntlmhash:::						lp = 6
+		//   0   1     2      3     4 5 6     7
+		// user:444:lmhash:ntlmhash: : : :PasswordOne		ps = 7
+		//   0   1     2      3     4 5 6     7    8  9
+		// user:444:lmhash:ntlmhash: : : :Password: :One	ps = 9
+
+		// The splits in the pot file output should be leftSplit + 1 or greater
+		// Let's check just in case something bad is happening
+		if leftSplit < potSplit {
+			// At worst there should be 1 extra : (hash:pass) so this is a min req
+			// Let's get the hash
+			var hash []byte
+			parts := bytes.Split(fileLineScanner.Bytes(), []byte(":"))
+			for i := 0; i < len(parts); i++ {
+				hash = append(hash, parts[i]...)
+
+				// are we done?
+				if i == leftSplit {
+					// We are done
+					break
 				}
 
-				if i < inputSplit {
-					lineHash += ":"
-				}
-			}
-
-			if len(rows) < inputSplit+1 {
-				// We have an issue with this hash having the wrong input value or being an inconsistent hash
-				// from one line to another. Dump this one.
-				break
-			}
-			var password = rows[inputSplit+1]
-			if inputSplit+1 < splitCount {
-				for i := 0; i < splitCount-(inputSplit+1); i++ {
-					password += ":"
+				// Append a separator
+				if i < leftSplit {
+					hash = append(hash, byte(':'))
 				}
 			}
 
-			output = append(output, []string{password, lineHash})
+			// Let's get the password
+			// add the separator between the hash and password
+			prefix := append(hash, byte(':'))
+			password := bytes.TrimPrefix(fileLineScanner.Bytes(), prefix)
 
+			// Add the password and hash to the output
+			//output = append(output, []string{password, lineHash})
+			hashes = append(hashes, []string{string(password), string(hash)})
+		} else {
+			// For some reason we do not have the right split so log it and move on
+			log.WithFields(
+				log.Fields{
+					"leftSplit":            leftSplit,
+					"potSplit":             potSplit,
+					"currentPotOutputLine": fileLineScanner.Text(),
+				}).Info("Bad pot file line.")
 		}
 	}
 
-	return output
+	return
+}
+
+// ParseShowPotOutput takes the output of the hashcat --show command and returns a 2D array of hashes and cleartext values
+// func ParseShowPotOutput(stdout string, inputSplit int) [][]string {
+// 	stdout = strings.Replace(stdout, "\r ", "\n", -1)
+// 	stdout = strings.Replace(stdout, " \r", "\n", -1)
+// 	// We want to loop on each line, so build a reader
+// 	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
+
+// 	var output [][]string
+// 	for lineScanner.Scan() {
+
+// 		// Check for the separator character
+// 		if !strings.Contains(lineScanner.Text(), "hashcat") &&
+// 			!strings.Contains(lineScanner.Text(), "Counting") &&
+// 			!strings.Contains(lineScanner.Text(), "Parsed") &&
+// 			!strings.Contains(lineScanner.Text(), "WARNING:") &&
+// 			len(strings.TrimSpace(lineScanner.Text())) != 0 &&
+// 			strings.Contains(lineScanner.Text(), ":") {
+
+// 			println(lineScanner.Text())
+// 			// This is a hash line so we need to parse it
+// 			rows := strings.Split(lineScanner.Text(), ":")
+// 			splitCount := strings.Count(lineScanner.Text(), ":")
+
+// 			// 1 => 1:o             l=2, split=0, split+2=2
+// 			// 1:2 => 1:2:o         l=3, split=1, split+2=3
+// 			// 1:2:3 => 1:2:3:o     l=4, split=2, split+2=4
+// 			var lineHash string
+// 			for i := 0; i < inputSplit+1; i++ {
+// 				if i < len(rows)-1 {
+// 					lineHash += rows[i]
+// 				}
+
+// 				if i < inputSplit {
+// 					lineHash += ":"
+// 				}
+// 			}
+
+// 			log.Info(len(rows))
+// 			if len(rows) <= inputSplit+1 {
+// 				// We have an issue with this hash having the wrong input value or being an inconsistent hash
+// 				// from one line to another. Dump this one.
+// 				break
+// 			}
+
+// 			var password = rows[inputSplit+1]
+// 			if inputSplit+1 < splitCount {
+// 				for i := 0; i < splitCount-(inputSplit+1); i++ {
+// 					password += ":"
+// 				}
+// 			}
+
+// 			output = append(output, []string{password, lineHash})
+
+// 		}
+// 	}
+
+// 	return output
+// }
+
+// ParseLeftHashFile takes an io.Reader and returns the number of lines (hashes)
+// and the number of separators (:)
+func ParseLeftHashFile(r io.Reader) (count int64, split int) {
+	fileLineScanner := bufio.NewScanner(r)
+
+	fileLineScanner.Scan()
+	count++
+	split = bytes.Count(fileLineScanner.Bytes(), []byte(":"))
+
+	for fileLineScanner.Scan() {
+		count++
+	}
+
+	return
 }
 
 // ParseShowPotLeftOutput will return the hashes not found in the pot file
-func ParseShowPotLeftOutput(stdout string) []string {
-	stdout = strings.Replace(stdout, "\r ", "\n", -1)
-	stdout = strings.Replace(stdout, " \r", "\n", -1)
-	// We want to loop on each line, so build a reader
-	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
+// func ParseShowPotLeftOutput(stdout string) []string {
+// 	stdout = strings.Replace(stdout, "\r ", "\n", -1)
+// 	stdout = strings.Replace(stdout, " \r", "\n", -1)
+// 	// We want to loop on each line, so build a reader
+// 	lineScanner := bufio.NewScanner(strings.NewReader(stdout))
 
-	var output []string
-	for lineScanner.Scan() {
-		// Check if the line is a known output or is likely a hash
-		if !strings.Contains(lineScanner.Text(), "hashcat") &&
-			!strings.Contains(lineScanner.Text(), "Counting") &&
-			!strings.Contains(lineScanner.Text(), "Parsed") &&
-			!strings.Contains(lineScanner.Text(), "WARNING:") &&
-			len(strings.TrimSpace(lineScanner.Text())) != 0 {
-			output = append(output, lineScanner.Text())
-		}
+// 	var output []string
+// 	for lineScanner.Scan() {
+// 		// Check if the line is a known output or is likely a hash
+// 		if !strings.Contains(lineScanner.Text(), "hashcat") &&
+// 			!strings.Contains(lineScanner.Text(), "Counting") &&
+// 			!strings.Contains(lineScanner.Text(), "Parsed") &&
+// 			!strings.Contains(lineScanner.Text(), "WARNING:") &&
+// 			len(strings.TrimSpace(lineScanner.Text())) != 0 {
+// 			output = append(output, lineScanner.Text())
+// 		}
 
+// 	}
+
+// 	return output
+// }
+
+// ParseHashcatOutputFile parses the Hashcat Output file
+func ParseHashcatOutputFile(r io.Reader, inputSplit int, hashMode string) (count int64, hashes [][]string) {
+	// We have some edge cases to deal with PWDUMP[NTLM]/PWDUMP[LM]/PASSWD/SHADOW
+	switch hashMode {
+	case "1000", "3000":
+		// PWDUMP so flip to 0 for NTLM only output
+		return ParseShowPotFile(r, 0)
+	default:
+		return ParseShowPotFile(r, inputSplit)
 	}
-
-	return output
 }

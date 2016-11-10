@@ -1,7 +1,6 @@
 package hashcat3
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,13 +29,15 @@ type Tasker struct {
 	showPotOutput [][]string
 	hashes        [][]byte
 	inputSplits   int
-	stderr        *bytes.Buffer
-	stderrCp      bool
-	stdout        *bytes.Buffer
-	stdoutCp      bool
-	stderrPipe    io.ReadCloser
-	stdoutPipe    io.ReadCloser
-	stdinPipe     io.WriteCloser
+	hashMode      string
+
+	stderr     *bytes.Buffer
+	stderrCp   bool
+	stdout     *bytes.Buffer
+	stdoutCp   bool
+	stderrPipe io.ReadCloser
+	stdoutPipe io.ReadCloser
+	stdinPipe  io.WriteCloser
 
 	doneWG sync.WaitGroup // Used for checking if the job is done
 }
@@ -113,69 +113,21 @@ func (t *Tasker) Status() common.Job {
 	}
 
 	// Get the hash file
-	var tempOutputData [][]string
-	hashFile, err := os.Open(filepath.Join(t.wd, "output.txt"))
+	var hashes [][]string
+	hashFile, err := os.Open(filepath.Join(t.wd, HASH_OUTPUT_FILENAME))
 	if err == nil {
-		defer hashFile.Close()
-
-		// Pull the lines from the file for each individual hash
-		hashScanner := bufio.NewScanner(hashFile)
-		for hashScanner.Scan() {
-			// Parse the line with the default separator |
-			parts := strings.Split(hashScanner.Text(), ":")
-			splitCount := strings.Count(hashScanner.Text(), ":")
-
-			// Add the parts to the output array
-			// 1 => 1:o             l=2, split=0, split+2=2
-			// 1:2 => 1:2:o         l=3, split=1, split+2=3
-			// 1:2:3 => 1:2:3:o     l=4, split=2, split+2=4
-
-			// 1:2 => 1:2:o:: parts=4, split=1, split+2=3
-			var lineHash string
-			var password string
-			if splitCount > t.inputSplits {
-				for i := 0; i < t.inputSplits+1; i++ {
-					if i < len(parts)-1 {
-						lineHash += parts[i]
-					}
-
-					if i < t.inputSplits {
-						lineHash += ":"
-					}
-				}
-
-				password = parts[t.inputSplits+1]
-				if t.inputSplits+1 < splitCount {
-					for i := 0; i < splitCount-(t.inputSplits+1); i++ {
-						password += ":"
-					}
-				}
-			} else {
-				// We need to rebuild the hash from the stored verion we recieved (PWDUMP exception)
-				for x := range t.hashes {
-					if bytes.Contains(bytes.ToLower(t.hashes[x]), []byte(parts[0])) {
-						lineHash = string(t.hashes[x])
-					}
-				}
-
-				password = hashScanner.Text()[len(parts[0])+1:]
-			}
-
-			// We now need to add back any accidentally removed :
-			tempOutputData = append(tempOutputData, []string{password, lineHash})
-		}
-	}
-	if err != nil {
-		log.WithField("io_error", err).Error("Failed to open output.txt")
+		_, hashes = ParseHashcatOutputFile(hashFile, t.inputSplits, t.hashMode)
+	} else {
+		log.WithField("io_error", err).Debug("Failed to open output.txt")
 	}
 
 	// Add in the pot file items
 	for i := range t.showPotOutput {
-		tempOutputData = append(tempOutputData, t.showPotOutput[i])
+		hashes = append(hashes, t.showPotOutput[i])
 	}
 
-	if len(tempOutputData) != 0 {
-		t.job.OutputData = tempOutputData
+	if len(hashes) != 0 {
+		t.job.OutputData = hashes
 	}
 
 	t.stderr.Reset()
@@ -203,29 +155,52 @@ func (t *Tasker) Run() error {
 		return nil
 	}
 
-	// Execute the Hashcat --show command to get any potfile entries
-	showExec := exec.Command(config.BinPath, t.showPot...)
-	showExec.Dir = t.wd
-	log.WithField("Show Command", showExec.Args).Debug("Executing Show Command")
-	showPotStdout, err := showExec.Output()
-	if err != nil {
-		log.WithField("execError", err).Error("Error running hashcat --show command.")
-	}
-	log.WithField("showStdout", string(showPotStdout)).Debug("Show command stdout.")
-	t.showPotOutput = ParseShowPotOutput(string(showPotStdout), t.inputSplits)
-
-	showLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
-	showLeftExec.Dir = t.wd
-	log.WithField("Left Command", showLeftExec.Args).Debug("Executing Left Command")
-	showPotLeftStdout, err := showLeftExec.Output()
+	// We need to first parse the stuff we were given by the user for the hash file.
+	// We will do this via hashcat's --left output, which also will create our hash file for cracking
+	hashcatLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
+	hashcatLeftExec.Dir = t.wd
+	log.WithField("Left Command", hashcatLeftExec.Args).Debug("Executing Left Command")
+	showPotLeftStdout, err := hashcatLeftExec.Output()
 	if err != nil {
 		log.WithField("execError", err).Error("Error running hashcat --left command.")
 	}
 	log.WithField("showLeftStdout", string(showPotLeftStdout)).Debug("Show Left command stdout.")
-	leftOut := ParseShowPotLeftOutput(string(showPotLeftStdout))
 
-	t.job.TotalHashes = int64(len(leftOut) + len(t.showPotOutput))
-	t.job.CrackedHashes = int64(len(t.showPotOutput))
+	// Get the first line of the Left output to count our separators (:)
+	hashcatLeftFilename := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
+	hashcatLeftFile, err := os.Open(hashcatLeftFilename)
+	if err != nil {
+		log.Error(err)
+		return errors.New("Error opening LEFT Hash file")
+	}
+
+	// Get the count of hashes and the split count
+	var leftCount int64
+	leftCount, t.inputSplits = ParseLeftHashFile(hashcatLeftFile)
+
+	// Create and pull the pot file search
+	hashcatShowPotExec := exec.Command(config.BinPath, t.showPot...)
+	hashcatShowPotExec.Dir = t.wd
+	log.WithField("Show Command", hashcatShowPotExec.Args).Debug("Executing Show Command")
+	showPotStdout, err := hashcatShowPotExec.Output()
+	if err != nil {
+		log.WithField("execError", err).Error("Error running hashcat --show command.")
+	}
+	log.WithField("showStdout", string(showPotStdout)).Debug("Show command stdout.")
+
+	// Get the output of the show pot file
+	hashcatPotShowFilename := filepath.Join(t.wd, HASHCAT_POT_SHOW_FILENAME)
+	hashcatPotShowFile, err := os.Open(hashcatPotShowFilename)
+	if err != nil {
+		log.Error(err)
+		return errors.New("Error opening LEFT Hash file")
+	}
+	var potCount int64
+	potCount, t.showPotOutput = ParseShowPotFile(hashcatPotShowFile, t.inputSplits)
+
+	// Set some totals
+	t.job.TotalHashes = leftCount + potCount
+	t.job.CrackedHashes = potCount
 
 	// Set commands for restore or start
 	if t.job.Status == common.STATUS_CREATED {

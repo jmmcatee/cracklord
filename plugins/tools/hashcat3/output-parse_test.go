@@ -2,6 +2,7 @@ package hashcat3
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -118,7 +119,7 @@ STATUS  6       SPEED   43051008        18.469703       44808192        19.14046
 
 Started: Tue Jul  5 00:27:34 2016
 Stopped: Tue Jul  5 00:28:48 2016
-root@sb-gpu-02:/home/local/CROWESEC/jmmcatee# ./hashcat-3.00/hashcat64.bin -m 1000 -g 1000000 hashes.txt /usr/local/hashcat/dicts/crackstation-human-only.txt --status --status-timer=30 --machine-readable
+root@sb-gpu-02:/jmmcatee# ./hashcat-3.00/hashcat64.bin -m 1000 -g 1000000 hashes.txt /usr/local/hashcat/dicts/crackstation-human-only.txt --status --status-timer=30 --machine-readable
 hashcat (v3.00-1-g67a8d97) starting...
 
 Hashes: 32 hashes; 32 unique digests, 1 unique salts
@@ -244,39 +245,102 @@ func TestParseStatus6(t *testing.T) {
 	fmt.Printf("%+v\n", status)
 }
 
-var PotShowOutput1 = `hashcat (v3.00-1-g67a8d97) starting...
-
-7C77EE05A297638DFF9D75B7C28561E3:PQLSDJK
+var PotFileContent_1 = `7C77EE05A297638DFF9D75B7C28561E3:PQLSDJK
 F96946077DBF98C3F45D1D4576EAFE23:PQLSDJK1234
 858B5E5FE5DF0ABD69F2EE9A8B55385B:PQLSDJK567
 153B57A9B699C4807F721249AFA492FC:PQLSDJK000
-DFEF8C46EFBA5C30685B2B6FDA97A8B3:PQLSDJK!@#$
-`
+DFEF8C46EFBA5C30685B2B6FDA97A8B3:PQLSDJK!@#$`
 
-func TestShowPotOutput1(t *testing.T) {
-	fmt.Printf("%+v\n", ParseShowPotOutput(PotShowOutput1, 0))
+func TestParseShowPotFile_1(t *testing.T) {
+	r := strings.NewReader(PotFileContent_1)
+
+	// leftSplit is 0 because the input would be just an NTLM hash in this instance
+	count, hashes := ParseShowPotFile(r, 0)
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
 }
 
-var PotShowOutput2 = "hashcat (v3.00-1-g67a8d97) starting...\r\n\r\nCounting lines in E:\\cracklord-testing\\workingdirs\\ba050f65-e195-44b0-b35f-dc63cdbc68ec\\hashes.txt\r                                                                                                  \rParsed Hashes: 0/7 (0.00%)\r                          \rAB7E8B4127563D95CA5B2105DFE9CCBF:September16\r\nB00415A2A89E7A32F11C03A6ED239837:August16\r\n46CABED03BF44D9807172B944C2655E3:February16\r\nFCCEE74D25FE883A5215B75BF5875070:May2016\r\n97D7C7074BA20006D378A2F4DC0C96F1:April2016\r\n59FB69AE6C76CB240B92DFCB9DCF150C:October16\r\nParsed Hashes: 7/7 (100.00%)\r                            \r"
-
-func TestShowPotOutput2(t *testing.T) {
-	fmt.Printf("%+v\n", ParseShowPotOutput(PotShowOutput2, 0))
-}
-
-var PotShowLeftOutput1 = "hashcat (v3.00-1-g67a8d97) starting...\r\n\r\nCounting lines in E:\\cracklord-testing\\workingdirs\\f8b4343c-f219-45fc-bf83-237a9264a7f5\\hashes.txt\r                                                                                                  \rParsed Hashes: 0/7 (0.00%)\r                          \r126531E8124E9AE45F0156D0B11D0C87\r\nParsed Hashes: 7/7 (100.00%)\r                            \r"
-
-func TestLeftPotOutput1(t *testing.T) {
-	fmt.Printf("%+v\n", ParseShowPotLeftOutput(PotShowLeftOutput1))
-}
-
-var PotShowOutput3 = `hashcat (v3.10) starting...
-
-342c0cf1ddcad9f3:user:PASSWORD
+var PotFileContent_2 = `342c0cf1ddcad9f3:user:PASSWORD
 2d7448670460a07c:user3:CHANGEME
-29545932AFD2F0C7:USER5:CHANGEME:::
+29545932AFD2F0C7:USER5:CHANGEME:::`
 
-`
+func TestParseShowPotFile_2(t *testing.T) {
+	r := strings.NewReader(PotFileContent_2)
 
-func TestShowPotOutput3(t *testing.T) {
-	fmt.Printf("%+v\n", ParseShowPotOutput(PotShowOutput3, 1))
+	// leftSplit is 1 because the input would be an Oracle hash of hash:salt
+	count, hashes := ParseShowPotFile(r, 1)
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
+}
+
+var PotFileContent_3 = `user1:500:E52CAC67419A9A224A3B108F3FA6CB6D:A4F49C406510BDCAB6824EE7C30FD852::::Password
+user2:5001:E52CAC67419A9A229FE041B7DC3D21A4:4882BEABE01BE6928C646251A961DC16::::PasswordTwo
+user3:2494:048ADC2C7965C60F02657A8D8EF025E2:DA3AD41053E2A0AD425920F2ADBB000B::::Pass Word
+domain\user4:1000:2246C8E4347FF4480B4F952384D3CD46:28D39B540448527F8936EB5044AB9126::::CHANGE?::ME
+domain\user4:1000:2246C8E4347FF4480B4F952384D3CD46:28D39B540448527F8936EB5044AB9126:::::CHANGE?::ME
+domain2\user5:3993:2246C8E4347FF4483B41676011483133:E2C0FC226D7D471C06506607CF35F1C9::::CHANGE?::
+user6:42043:136405D7E4EAA9CB7CF869C681AFAF70:2C515086DC8C8ADB677FF6343B6BB46A::::GREEnnn#$(@?
+user7:21300:4E874789408A6598AAD3B435B51404EE:A6B6BAFA62D7DFC05053783DDAD6FA49::::dfjajef`
+
+func TestParseShowPotFile_3(t *testing.T) {
+	r := strings.NewReader(PotFileContent_3)
+
+	// leftSplit is 6 because the input would be an PWDUMP format file
+	count, hashes := ParseShowPotFile(r, 6)
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
+}
+
+var PotFileContent_4 = `A4F49C406510BDCAB6824EE7C30FD852:Password
+4882BEABE01BE6928C646251A961DC16:PasswordTwo
+DA3AD41053E2A0AD425920F2ADBB000B:Pass Word
+28D39B540448527F8936EB5044AB9126:CHANGE?::ME
+E2C0FC226D7D471C06506607CF35F1C9:CHANGE?::
+E2C0FC226D7D471C06506607CF35F1C9::CHANGE?::
+2C515086DC8C8ADB677FF6343B6BB46A:GREEnnn#$(@?
+A6B6BAFA62D7DFC05053783DDAD6FA49:dfjajef`
+
+func TestParseShowPotFile_4a(t *testing.T) {
+	r := strings.NewReader(PotFileContent_4)
+
+	// leftSplit is 6 because the input would be an PWDUMP format file
+	count, hashes := ParseHashcatOutputFile(r, 6, "1000")
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
+}
+
+func TestParseShowPotFile_4b(t *testing.T) {
+	r := strings.NewReader(PotFileContent_4)
+
+	// leftSplit is 6 because the input would be an PWDUMP format file
+	count, hashes := ParseHashcatOutputFile(r, 6, "3000")
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
+}
+
+func TestParseShowPotFile_4c(t *testing.T) {
+	r := strings.NewReader(PotFileContent_4)
+
+	// leftSplit is 0 because the input would be NTLM only
+	count, hashes := ParseHashcatOutputFile(r, 0, "1000")
+	fmt.Printf("Count: %d\n", count)
+	fmt.Printf("Hashes:\n")
+	for i := range hashes {
+		fmt.Printf("\t%v\n", hashes[i])
+	}
 }
