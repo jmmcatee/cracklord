@@ -292,10 +292,10 @@ func ParseShowPotFile(r io.Reader, leftSplit int, hashMode string) (count int64,
 				switch hashMode {
 				case "1000":
 					// PWDUMP NTLM
-					hashes = append(hashes, []string{string(password), strings.Split(string(hash), ":")[2]})
+					hashes = append(hashes, []string{string(password), strings.Split(string(hash), ":")[3]})
 				case "3000":
 					// PWDUMP LM
-					hashes = append(hashes, []string{string(password), strings.Split(string(hash), ":")[3]})
+					hashes = append(hashes, []string{string(password), strings.Split(string(hash), ":")[2]})
 				default:
 					hashes = append(hashes, []string{string(password), string(hash)})
 				}
