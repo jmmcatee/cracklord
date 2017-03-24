@@ -910,6 +910,9 @@ func (q *Queue) updateQueue() {
 			if q.stack[i].Status != common.STATUS_RUNNING {
 				// Release the resources from this change
 				log.WithField("JobID", q.stack[i].UUID).Debug("Job has finished.")
+
+				go 
+				
 				var hw string
 				for _, v := range q.pool[q.stack[i].ResAssigned].Tools {
 					if v.UUID == q.stack[i].ToolUUID {
