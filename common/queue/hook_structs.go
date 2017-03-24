@@ -1,10 +1,18 @@
-package main
+package queue
 
 import (
-	"encoding/json"
 	"time"
-	"net/http"
 )
+
+// A struct that we can use as parameters to track our hooks from the
+// configuration file down.
+type HookParameters struct {
+	JobCreate       []string
+	JobFinish       []string
+	JobStart        []string
+	ResourceConnect []string
+	QueueReorder    []string
+}
 
 // Jobs structure for hook
 type HookJob struct {
@@ -26,13 +34,9 @@ type HookJob struct {
 
 // Resource structure to be used for hooks
 type HookResource struct {
-	ID      string            `json:"id"`
-	Name    string            `json:"name"`
-	Address string            `json:"address"`
-	Manager string            `json:"manager"`
-	Params  map[string]string `json:"params"`
-	Status  string            `json:"status"`
-	Tools   []APITool         `json:"tools"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
 }
 
 type HookQueueOrder struct {
@@ -40,14 +44,12 @@ type HookQueueOrder struct {
 }
 
 type HookQueueOrderJobData struct {
-	ID               string            `json:"id"`
-	Name             string            `json:"name"`
-	Status           string            `json:"status"`
-	ResourceID       string            `json:"resourceid"`
-	Owner            string            `json:"owner"`
-	StartTime        time.Time         `json:"starttime"`
-	ETC              string            `json:"etc"`
-	CrackedHashes    int64             `json:"crackedhashes"`
-	TotalHashes      int64             `json:"totalhashes"`
-	Progress         float64           `json:"progress"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Status        string    `json:"status"`
+	Owner         string    `json:"owner"`
+	StartTime     time.Time `json:"starttime"`
+	CrackedHashes int64     `json:"crackedhashes"`
+	TotalHashes   int64     `json:"totalhashes"`
+	Progress      float64   `json:"progress"`
 }
