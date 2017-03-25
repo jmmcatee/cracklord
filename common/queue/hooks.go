@@ -10,11 +10,15 @@ package queue
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
+	"github.com/robertkrimen/otto"
 )
 
 /* Runs on Job Creation
@@ -101,10 +105,66 @@ func hookPerformWebPOST(url string, data interface{}) error {
 	return err
 }
 
-/* Not yet implemented.  TODO
+/* Takes the path to a file, opens that file, passes the data object to that
+ * script, and executes the JavaScript.
  */
 func hookPerformScriptExecute(path string, data interface{}) error {
+	file, err := os.Open(path)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": path,
+			"msg":  err.Error(),
+		}).Error("Unable to open hook script file.")
+		return err
+	}
+
+	hookRunUnsafeCode(file)
+
 	return nil
+}
+
+/* This function actually runs the JavaScript file, but it will limit how long
+ * a script will execute.  The amount of time is configured in the Queue config
+ * file, otherwise this uses a goroutine that sleeps for the total number of
+ * configured seconds, and then writes a function to a channel on the executing
+ * library.  That function is then immediately executed, in this case using a
+ * panic to immediately stop the function.  Finally, we have a deferred function
+ * to cleanup.
+ */
+func hookRunUnsafeCode(unsafe *os.File) {
+	halt := errors.New("Stahp")
+
+	start := time.Now() // Start a timer to track execution
+	defer func() {      // This function will cleanup when completed.
+		duration := time.Since(start)
+		if caught := recover(); caught != nil {
+			if caught == halt {
+				log.WithFields(log.Fields{
+					"path":     unsafe.Name(),
+					"duration": duration,
+				}).Warn("Hook script took too long to execute, stopping")
+				return
+			}
+			log.WithField("msg", caught).Error("Something happened while executing hook script, stopping execution.")
+		}
+		log.WithFields(log.Fields{
+			"path":     unsafe.Name(),
+			"duration": duration,
+		}).Debug("Hook code ran successfully, script completed.")
+	}()
+
+	vm := otto.New()                    // Create the Otto object.
+	vm.Interrupt = make(chan func(), 1) // Channel to handle our interrupt function
+
+	go func() { // goroutine to interreupt after number of seconds
+		time.Sleep(time.Duration(Hooks.ScriptTimeout) * time.Second)
+		vm.Interrupt <- func() {
+			panic(halt)
+		}
+	}()
+
+	vm.Run(unsafe) // Here be dragons (risky code)
 }
 
 /* Takes a common Job type and concerts it into the struct type we have

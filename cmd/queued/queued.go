@@ -285,6 +285,14 @@ func main() {
 	}
 
 	var hooks queue.HookParameters
+
+	hooksConf := confFile.Section("Hooks")
+	if hooksConf == nil {
+		hooks.ScriptTimeout = 60
+	} else {
+		hooks.ScriptTimeout, _ = strconv.Atoi(hooksConf["scripttimeout"])
+	}
+
 	hooks.JobCreate = processHookSection(confFile.Section("Hooks.JobCreate"))
 	hooks.JobFinish = processHookSection(confFile.Section("Hooks.JobFinish"))
 	hooks.JobStart = processHookSection(confFile.Section("Hooks.JobStart"))

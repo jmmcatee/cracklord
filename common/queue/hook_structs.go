@@ -7,6 +7,7 @@ import (
 // A struct that we can use as parameters to track our hooks from the
 // configuration file down.
 type HookParameters struct {
+	ScriptTimeout   int
 	JobCreate       []string
 	JobFinish       []string
 	JobStart        []string
