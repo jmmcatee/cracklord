@@ -4,6 +4,7 @@ go:
   - tip
 
 install: 
+  - go get -t -v ./...
   - gem install fpm
 
 after_success:
