@@ -36,7 +36,5 @@ fpm -s dir -t deb -n "cracklord-queued" -v "$VER" --before-install $QSRC/beforei
 echo "done"
 
 echo -n "Generating resource package using FPM"
-fpm -s dir -t deb -n "cracklord-resourced" -v "$VER" --before-install $RESOURCESRC/beforeinstall.sh --after-install $RESOURCESRC/afterinstall.sh --before-remove $RESOURCESRC/beforeremove.sh --after-remove $RESOURCESRC/afterremove.sh --url "$URL" --config-files etc/cracklord --description "Cracklord job management system resource server" -m "$MAINT" -C $RDST usr etc
+fpm -s dir -t deb -n "cracklord-resourced" -v "$VER" --before-install $RSRC/beforeinstall.sh --after-install $RSRC/afterinstall.sh --before-remove $RSRC/beforeremove.sh --after-remove $RSRC/afterremove.sh --url "$URL" --config-files etc/cracklord --description "Cracklord job management system resource server" -m "$MAINT" -C $RDST usr etc
 echo "done"
-
-ls

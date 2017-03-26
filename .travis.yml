@@ -6,15 +6,16 @@ go:
 install: 
   - go get -t -v ./...
   - gem install fpm
+  - gem install package_cloud
 
 after_success:
-  - ls
   - bash build/travis-after_success.sh
 
+before_deploy: 
+  - ruby build/travis-before_deploy.rb
+
 deploy:
-  provider: packagecloud
-  repository: "cracklord"
-  username: "emperorcow"
-  token: "YOUR TOKEN"
-  dist: "ubuntu/trusty"
-  skip_cleanup: true
+  provider: script
+  script: build/travis-deploy.sh
+  on: 
+    branch: travis-ci-migration
