@@ -2,3 +2,18 @@ language: go
 
 go:
   - tip
+
+install: 
+  - gem install fpm
+
+after_success:
+  - ls
+  - bash build/travis-after_success.sh
+
+deploy:
+  provider: packagecloud
+  repository: "cracklord"
+  username: "emperorcow"
+  token: "YOUR TOKEN"
+  dist: "ubuntu/trusty"
+  skip_cleanup: true
