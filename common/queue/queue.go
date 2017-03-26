@@ -28,6 +28,7 @@ const (
 var KeeperDuration time.Duration
 var NetworkTimeout time.Duration
 var StateFileLocation string
+var Hooks HookParameters
 
 type Queue struct {
 	status   string // Empty, Running, Paused, Exhausted
@@ -44,11 +45,12 @@ type StateFile struct {
 	Pool  ResourcePool `json:"pool"`
 }
 
-func NewQueue(statefile string, updatetime int, timeout int) Queue {
+func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameters) Queue {
 	//Setup the options
 	StateFileLocation = statefile
 	KeeperDuration = time.Duration(updatetime) * time.Second
 	NetworkTimeout = time.Duration(timeout) * time.Second
+	Hooks = hooks
 
 	// Build the queue
 	q := Queue{
@@ -161,6 +163,9 @@ func (q *Queue) AddJob(j common.Job) error {
 	jobIndex := len(q.stack) - 1
 	logger.Debug("job added to stack.")
 
+	// Call out to the registered hooks to inform them of job creation
+	go HookOnJobCreate(Hooks.JobCreate, j)
+
 	// Add stats
 	// TODO: Add more stats
 	q.stats.IncJob()
@@ -222,6 +227,9 @@ func (q *Queue) AddJob(j common.Job) error {
 
 				// Note the resources as being used
 				q.pool[i].Hardware[tool.Requirements] = false
+
+				// Call out to our registered hooks to note job start
+				go HookOnJobStart(Hooks.JobStart, j)
 
 				// We should be done so return no errors
 				return nil
@@ -658,6 +666,8 @@ func (q *Queue) StackReorder(uuids []string) error {
 		return errors.New("There was an error pausing jobs.")
 	}
 
+	go HookOnQueueReorder(Hooks.QueueReorder, q.stack)
+
 	return nil
 }
 
@@ -844,6 +854,10 @@ func (q *Queue) keeper() {
 												// Job has been started so mark the hardware as in use and assign the resource ID
 												q.stack[jobKey].ResAssigned = resKey
 												q.pool[resKey].Hardware[hardwareKey] = false
+
+												// Call out to our registered hooks to note job has started
+												go HookOnJobStart(Hooks.JobStart, q.stack[jobKey])
+
 												break HardwareLoop
 											}
 										}
@@ -910,6 +924,10 @@ func (q *Queue) updateQueue() {
 			if q.stack[i].Status != common.STATUS_RUNNING {
 				// Release the resources from this change
 				log.WithField("JobID", q.stack[i].UUID).Debug("Job has finished.")
+
+				// Call out to the registered hooks that the job is complete
+				go HookOnJobFinish(Hooks.JobFinish, q.stack[i])
+
 				var hw string
 				for _, v := range q.pool[q.stack[i].ResAssigned].Tools {
 					if v.UUID == q.stack[i].ToolUUID {
@@ -1256,6 +1274,9 @@ func (q *Queue) AddResource(name string) (string, error) {
 	q.Lock()
 	q.pool[resourceuuid] = res
 	q.Unlock()
+
+	// Call out to the registered hooks about resource creation
+	go HookOnResourceConnect(Hooks.ResourceConnect, resourceuuid, res)
 
 	return resourceuuid, nil
 }

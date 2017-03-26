@@ -4,6 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/jmmcatee/cracklord/common"
@@ -12,12 +17,20 @@ import (
 	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws"
 	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
 	"github.com/unrolled/secure"
-	"github.com/vaughan0/go-ini"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"strconv"
+	ini "github.com/vaughan0/go-ini"
 )
+
+func processHookSection(section map[string]string) []string {
+	var results []string
+
+	for k, v := range section {
+		if v == "true" {
+			results = append(results, k)
+		}
+	}
+
+	return results
+}
 
 func main() {
 	// Define the flags
@@ -271,11 +284,26 @@ func main() {
 		}).Info("Active directory authentication configured successfully.")
 	}
 
+	var hooks queue.HookParameters
+
+	hooksConf := confFile.Section("Hooks")
+	if hooksConf == nil {
+		hooks.ScriptTimeout = 60
+	} else {
+		hooks.ScriptTimeout, _ = strconv.Atoi(hooksConf["scripttimeout"])
+	}
+
+	hooks.JobCreate = processHookSection(confFile.Section("Hooks.JobCreate"))
+	hooks.JobFinish = processHookSection(confFile.Section("Hooks.JobFinish"))
+	hooks.JobStart = processHookSection(confFile.Section("Hooks.JobStart"))
+	hooks.ResourceConnect = processHookSection(confFile.Section("Hooks.ResourceConnect"))
+	hooks.QueueReorder = processHookSection(confFile.Section("Hooks.QueueReorder"))
+
 	// Configure the TokenStore
 	server.T = NewTokenStore()
 
 	// Configure the Queue
-	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout)
+	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout, hooks)
 
 	caBytes, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
