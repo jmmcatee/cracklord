@@ -3,10 +3,11 @@ package resource
 import (
 	"bytes"
 	"errors"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/jmmcatee/cracklord/common"
 )
 
 type SimpleTimerTooler struct {
@@ -70,14 +71,21 @@ type SimpleTimer struct {
 
 func (t *SimpleTimer) Status() common.Job {
 	if t.j.Status == common.STATUS_PAUSED {
-		t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.r))
+		tmpData := make([]string, 1)
+		tmpData[0] = strconv.Itoa(int(t.r))
+
+		t.j.OutputData[0] = tmpData
 	}
 
 	if t.j.Status == common.STATUS_RUNNING {
 		if t.r == 0 {
-			t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s)))
+			tmpData := make([]string, 1)
+			tmpData[0] = strconv.Itoa(int(t.d - time.Since(t.s)))
+			t.j.OutputData[0] = tmpData
 		} else {
-			t.j.OutputData["TimeLeft"] = strconv.Itoa(int(t.d - time.Since(t.s) - t.r))
+			tmpData := make([]string, 1)
+			tmpData[0] = strconv.Itoa(int(t.d - time.Since(t.s) - t.r))
+			t.j.OutputData[0] = tmpData
 		}
 
 	}

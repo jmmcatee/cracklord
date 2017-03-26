@@ -255,7 +255,7 @@ func TestParseShowPotFile_1(t *testing.T) {
 	r := strings.NewReader(PotFileContent_1)
 
 	// leftSplit is 0 because the input would be just an NTLM hash in this instance
-	count, hashes := ParseShowPotFile(r, 0)
+	count, hashes := ParseShowPotFile(r, 0, "")
 	fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
@@ -271,7 +271,7 @@ func TestParseShowPotFile_2(t *testing.T) {
 	r := strings.NewReader(PotFileContent_2)
 
 	// leftSplit is 1 because the input would be an Oracle hash of hash:salt
-	count, hashes := ParseShowPotFile(r, 1)
+	count, hashes := ParseShowPotFile(r, 1, "")
 	fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
@@ -292,7 +292,7 @@ func TestParseShowPotFile_3(t *testing.T) {
 	r := strings.NewReader(PotFileContent_3)
 
 	// leftSplit is 6 because the input would be an PWDUMP format file
-	count, hashes := ParseShowPotFile(r, 6)
+	count, hashes := ParseShowPotFile(r, 6, "")
 	fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {

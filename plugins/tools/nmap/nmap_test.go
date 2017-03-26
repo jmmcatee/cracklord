@@ -3,11 +3,12 @@ package nmap
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jmmcatee/cracklord/common"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/jmmcatee/cracklord/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTooler(t *testing.T) {
@@ -94,5 +95,5 @@ func TestCalcTotalTargets(t *testing.T) {
 
 	count, err := calcTotalTargets(data)
 	assert.NoError(t, err, "Unable to get total count")
-	assert.Equal(t, 65282, count)
+	assert.Equal(t, int64(65282), count)
 }
