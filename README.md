@@ -1,6 +1,6 @@
 # Cracklord #
 [![GoDoc](https://godoc.org/github.com/jmmcatee/cracklord?status.svg)](http://godoc.org/github.com/jmmcatee/cracklord)
-[![Build Status](https://drone.io/github.com/jmmcatee/cracklord/status.png)](https://drone.io/github.com/jmmcatee/cracklord/latest)
+[![Build Status](https://travis-ci.org/jmmcatee/cracklord.svg?branch=master)](https://travis-ci.org/jmmcatee/cracklord)
 
 ### http://jmmcatee.github.io/cracklord/ ###
 
