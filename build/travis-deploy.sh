@@ -3,9 +3,9 @@
 echo "Deployment starting"
 
 
-distros = (
-  "ubuntu/trusty"
-  "debian/jessie"
+distros = ( \
+  "ubuntu/trusty" \
+  "debian/jessie" \
 )
 
 ls
