@@ -217,32 +217,32 @@ var TestStatus6 = `STATUS	2	SPEED	200116	2.474344	EXEC_RUNTIME	2.010319	CURKU	37
 
 func TestParseStatus1(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus1)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 func TestParseStatus2(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus2)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 func TestParseStatus3(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus3)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 func TestParseStatus4(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus4)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 func TestParseStatus5(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus5)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 func TestParseStatus6(t *testing.T) {
 	status, _ := ParseMachineOutput(TestStatus6)
-	fmt.Printf("%+v\n", status)
+	//fmt.Printf("%+v\n", status)
 }
 
 var PotFileContent_1 = `7C77EE05A297638DFF9D75B7C28561E3:PQLSDJK
@@ -256,11 +256,12 @@ func TestParseShowPotFile_1(t *testing.T) {
 
 	// leftSplit is 0 because the input would be just an NTLM hash in this instance
 	count, hashes := ParseShowPotFile(r, 0, "")
+	/*
 	fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
 
 var PotFileContent_2 = `342c0cf1ddcad9f3:user:PASSWORD
@@ -272,11 +273,11 @@ func TestParseShowPotFile_2(t *testing.T) {
 
 	// leftSplit is 1 because the input would be an Oracle hash of hash:salt
 	count, hashes := ParseShowPotFile(r, 1, "")
-	fmt.Printf("Count: %d\n", count)
+	/*fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
 
 var PotFileContent_3 = `user1:500:E52CAC67419A9A224A3B108F3FA6CB6D:A4F49C406510BDCAB6824EE7C30FD852::::Password
@@ -293,11 +294,11 @@ func TestParseShowPotFile_3(t *testing.T) {
 
 	// leftSplit is 6 because the input would be an PWDUMP format file
 	count, hashes := ParseShowPotFile(r, 6, "")
-	fmt.Printf("Count: %d\n", count)
+	/*fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
 
 var PotFileContent_4 = `A4F49C406510BDCAB6824EE7C30FD852:Password
@@ -314,11 +315,11 @@ func TestParseShowPotFile_4a(t *testing.T) {
 
 	// leftSplit is 6 because the input would be an PWDUMP format file
 	count, hashes := ParseHashcatOutputFile(r, 6, "1000")
-	fmt.Printf("Count: %d\n", count)
+	/*fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
 
 func TestParseShowPotFile_4b(t *testing.T) {
@@ -326,11 +327,11 @@ func TestParseShowPotFile_4b(t *testing.T) {
 
 	// leftSplit is 6 because the input would be an PWDUMP format file
 	count, hashes := ParseHashcatOutputFile(r, 6, "3000")
-	fmt.Printf("Count: %d\n", count)
+	/*fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
 
 func TestParseShowPotFile_4c(t *testing.T) {
@@ -338,9 +339,9 @@ func TestParseShowPotFile_4c(t *testing.T) {
 
 	// leftSplit is 0 because the input would be NTLM only
 	count, hashes := ParseHashcatOutputFile(r, 0, "1000")
-	fmt.Printf("Count: %d\n", count)
+	/*fmt.Printf("Count: %d\n", count)
 	fmt.Printf("Hashes:\n")
 	for i := range hashes {
 		fmt.Printf("\t%v\n", hashes[i])
-	}
+	}*/
 }
