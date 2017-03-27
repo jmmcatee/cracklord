@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo "Deployment starting"
+
+
 distros = (
   "ubuntu/trusty"
   "debian/jessie"
