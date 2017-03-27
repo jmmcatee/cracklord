@@ -25,7 +25,7 @@ def processPackage(distName, pkgName)
     distro_version = to_yank["distro_version"]
     filename = to_yank["filename"]
     yank_url = "/#{distro_version}/#{filename}"
-    url = base_url + yank_url
+    url = BASE_URL + yank_url
 
     result = RestClient.delete(url)
     if result == {}
