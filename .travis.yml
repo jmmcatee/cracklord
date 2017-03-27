@@ -19,4 +19,4 @@ deploy:
   script: "bash $TRAVIS_BUILD_DIR/build/travis-deploy.sh"
   skip_cleanup: true
   on: 
-    branch: travis-ci-migration
+    branch: master
