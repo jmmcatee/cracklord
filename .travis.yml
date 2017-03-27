@@ -17,5 +17,6 @@ before_deploy:
 deploy:
   provider: script
   script: build/travis-deploy.sh
+  skip_cleanup: true
   on: 
     branch: travis-ci-migration
