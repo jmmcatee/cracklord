@@ -5,13 +5,13 @@ go:
 
 install: 
   - go get -t -v ./...
-  - gem install fpm
-  - gem install package_cloud
 
 after_success:
   - bash build/travis-after_success.sh
 
 before_deploy: 
+  - gem install fpm
+  - gem install package_cloud
   - ruby build/travis-before_deploy.rb
 
 deploy:

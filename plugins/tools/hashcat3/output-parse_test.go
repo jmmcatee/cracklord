@@ -1,7 +1,6 @@
 package hashcat3
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
