@@ -3,12 +3,10 @@
 echo "Deployment starting"
 
 
-distros = ( \
-  "ubuntu/trusty" \
-  "debian/jessie" \
+distros=( 
+  "ubuntu/trusty" 
+  "debian/jessie" 
 )
-
-ls
 
 for i in "${distros[@]}"; do
 	echo -n "Pushing files to packagecloud for $i..."

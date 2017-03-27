@@ -10,7 +10,6 @@ install:
 
 after_success:
   - bash build/travis-after_success.sh
-  - bash build/travis-deploy.sh
 
 before_deploy: 
   - ruby build/travis-before_deploy.rb
