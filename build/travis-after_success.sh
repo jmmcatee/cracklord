@@ -14,7 +14,9 @@ URL="http://jmmcatee.github.io/cracklord/"
 MAINT="emperorcow@gmail.com"
 
 echo -n "Creating queue server package directories..."
-mkdir -p $QDST/usr/bin 
+mkdir -p $QDST/usr/bin
+go get -v ./cmd/queued
+go build -v -o $QDST/usr/bin/cracklord-queued ./cmd/queued
 mkdir -p $QDST/etc/cracklord
 cp -r $QSRC/conf/* $QDST/etc/cracklord/
 mkdir -p $QDST/var/cracklord/www
@@ -25,6 +27,8 @@ echo "done"
 
 echo -n "Creating resource server package directories"
 mkdir -p $RDST/usr/bin
+go get -v ./cmd/resourced
+go build -v -o $RDST/usr/bin/cracklord-resourced ./cmd/resourced
 mkdir -p $RDST/etc/cracklord
 cp -r $RSRC/conf/* $RDST/etc/cracklord/
 mkdir -p $RDST/etc/init
