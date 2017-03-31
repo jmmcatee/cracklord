@@ -294,7 +294,7 @@ func main() {
 	}
 
 	hooks.JobCreate = processHookSection(confFile.Section("Hooks.JobCreate"))
-	hooks.JobFinish = processHookSection(confFile.Section("Hooks.JobFinish"))
+	hooks.JobFinish = processHookSection(confFile.Section("Hooks.JobEnd"))
 	hooks.JobStart = processHookSection(confFile.Section("Hooks.JobStart"))
 	hooks.ResourceConnect = processHookSection(confFile.Section("Hooks.ResourceConnect"))
 	hooks.QueueReorder = processHookSection(confFile.Section("Hooks.QueueReorder"))

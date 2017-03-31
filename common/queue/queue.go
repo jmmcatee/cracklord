@@ -1158,6 +1158,9 @@ func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) err
 	q.LoadRemoteResourceHardware(resUUID)
 	q.LoadRemoteResourceTools(resUUID)
 
+	// Call out to the registered hooks about resource creation
+	go HookOnResourceConnect(Hooks.ResourceConnect, resUUID, localRes)
+
 	return nil
 }
 
@@ -1274,9 +1277,6 @@ func (q *Queue) AddResource(name string) (string, error) {
 	q.Lock()
 	q.pool[resourceuuid] = res
 	q.Unlock()
-
-	// Call out to the registered hooks about resource creation
-	go HookOnResourceConnect(Hooks.ResourceConnect, resourceuuid, res)
 
 	return resourceuuid, nil
 }

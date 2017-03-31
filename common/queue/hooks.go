@@ -91,6 +91,7 @@ func hookPerformWebPOST(url string, data interface{}) error {
 	// It's always important to log.
 	log.WithFields(log.Fields{
 		"url": url,
+		"data": b,
 	}).Debug("POSTing to webhook")
 
 	// POST up our data and then return if we got an error or not.
@@ -119,7 +120,7 @@ func hookPerformScriptExecute(path string, data interface{}) error {
 		return err
 	}
 
-	hookRunUnsafeCode(file)
+	hookRunUnsafeCode(file, data)
 
 	return nil
 }
@@ -132,7 +133,7 @@ func hookPerformScriptExecute(path string, data interface{}) error {
  * panic to immediately stop the function.  Finally, we have a deferred function
  * to cleanup.
  */
-func hookRunUnsafeCode(unsafe *os.File) {
+func hookRunUnsafeCode(unsafe *os.File, data interface{}) {
 	halt := errors.New("Stahp")
 
 	start := time.Now() // Start a timer to track execution
@@ -154,8 +155,10 @@ func hookRunUnsafeCode(unsafe *os.File) {
 		}).Debug("Hook code ran successfully, script completed.")
 	}()
 
-	vm := otto.New()                    // Create the Otto object.
-	vm.Interrupt = make(chan func(), 1) // Channel to handle our interrupt function
+	vm := otto.New()                                                             // Create the Otto object.
+	vm.Interrupt = make(chan func(), 1)                                          // Channel to handle our interrupt function
+
+	vm.Set("data", data)                                                         // Make our data available to the script
 
 	go func() { // goroutine to interreupt after number of seconds
 		time.Sleep(time.Duration(Hooks.ScriptTimeout) * time.Second)
@@ -164,7 +167,13 @@ func hookRunUnsafeCode(unsafe *os.File) {
 		}
 	}()
 
-	vm.Run(unsafe) // Here be dragons (risky code)
+	_, err := vm.Run(unsafe) // Here be dragons (risky code)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": unsafe.Name(),
+			"msg": err,
+		}).Warn("File hook ran with errors.")
+	}
 }
 
 /* Takes a common Job type and concerts it into the struct type we have
