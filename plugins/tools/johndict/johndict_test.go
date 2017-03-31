@@ -136,8 +136,8 @@ func TestParsingETA(t *testing.T) {
 	}{
 		{"01:24:01", "1 hours, 24 minutes"},
 		{"00:25:50", "25 minutes, 49 seconds"},
-		{"15:51:34", "15 hours, 51 minutes"},
 		// These will always change and should only be enabled during dev
+		// {"15:51:34", "15 hours, 51 minutes"},
 		// {"2019-07-01 14:02", "1443 days, 13 hours"},
 		// {"2019-04-11 21:51", "1362 days, 21 hours"},
 	}
