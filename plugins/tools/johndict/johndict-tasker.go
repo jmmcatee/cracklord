@@ -543,56 +543,29 @@ func parseJohnETA(eta string) (time.Time, error) {
 		t := time.Now().UTC()
 		parts := strings.Split(eta, ":")
 
-		// Add hours
-		sec, err := time.ParseDuration(parts[2] + "s")
-		min, err := time.ParseDuration(parts[1] + "m")
-		h, err := time.ParseDuration(parts[0] + "h")
+		dur, err := time.ParseDuration(fmt.Sprintf("%sh%sm%ss", parts[0], parts[1], parts[2]))	
+
 		if err != nil {
 			return time.Time{}, err
 		}
 
-		t = t.Add(sec)
-		t = t.Add(min)
-		t = t.Add(h)
+		t = t.Add(dur)
 
-		// Prepend the current YYYY-MM-DD
-		year := strconv.Itoa(t.Year())
-		month := strconv.Itoa(int(t.Month()))
-		day := strconv.Itoa(t.Day())
-		hour := strconv.Itoa(t.Hour())
-		minute := strconv.Itoa(t.Minute())
-		second := strconv.Itoa(t.Second())
+		return t ,nil
 
-		if int(time.Now().Month()) < 10 {
-			month = "0" + month
-		}
-
-		if t.Minute() < 10 {
-			minute = "0" + minute
-		}
-
-		if t.Hour() < 10 {
-			hour = "0" + hour
-		}
-
-		if t.Second() < 10 {
-			second = "0" + second
-		}
-
-		eta = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second
 	} else if len(eta) == 16 {
 		eta = eta + ":00"
+		t, err := time.Parse("2006-01-02 15:04:05", eta)
+		if err != nil {
+			return time.Time{}, err
+		}
+
+		return t, nil
+
 	} else {
 		// Neither correct size for provided so return an error
 		return time.Time{}, errors.New("Time format provided was not supported.")
 	}
-
-	t, err := time.Parse("2006-01-02 15:04:05", eta)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return t, nil
 }
 
 // Print the duration from now until ETA in a pretty fashion
