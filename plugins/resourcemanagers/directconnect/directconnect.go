@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common/queue"
+	"github.com/vaughan0/go-ini"
 	"time"
 )
 
@@ -20,12 +21,57 @@ type directResourceManager struct {
 	tls       *tls.Config
 }
 
-func Setup(qpointer *queue.Queue, tlspointer *tls.Config) queue.ResourceManager {
-	return &directResourceManager{
+func Setup(confPath string, qpointer *queue.Queue, tlspointer *tls.Config) (queue.ResourceManager, error) {
+	dc := directResourceManager{
 		resources: protectedmap.New(),
 		q:         qpointer,
 		tls:       tlspointer,
 	}
+
+	log.Debug("Setting up the direct connect resource manager")
+
+	// Load the configuration file from the path provided during the setup function
+	confFile, err := ini.LoadFile(confPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+			"file":  confPath,
+		}).Error("Unable to load configuration file for direct resource manager.")
+		return &directResourceManager{}, err
+	}
+
+	// Get the hosts section of the config (if it exists, it's optional)
+	confHosts := confFile.Section("Hosts")
+	if confHosts == nil || len(confHosts) == 0 {
+		// If it doesn't exist, that's fine, let's just put an info message out there so the user knows it's possible
+		log.Info("No hosts pre-configured for directconnect resource manager, moving on.")
+	} else {
+		// If it's configured, we'll loop through every key/value pair.  They should be in the format address=name (k=v)
+		for k, v := range confHosts {
+			// We'll loop through each host and connect to it on startup.
+			log.WithFields(log.Fields{
+				"address": k, 
+				"name": v,
+			}).Debug("Attempting to connect to resource from direct connect configuration file")
+
+			// Perform the connection attempt
+			err := dc.AddResource(map[string]string{
+				"address": k,
+				"name"   : v,
+			})
+
+			// If it fails, we shouldn't error out the queue, but we should log an error
+			if err != nil {
+				log.WithFields(log.Fields{
+					"address": k, 
+					"name": v,
+					"msg": err,
+				}).Error("Unable to conenct to resource in directconnect configuration file.")
+			}
+		}
+	}
+
+	return &dc, nil
 }
 
 func (this directResourceManager) SystemName() string {

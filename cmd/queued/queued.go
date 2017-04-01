@@ -380,14 +380,18 @@ func main() {
 	}
 
 	// First, let's setup the direct connect manager if we have anything there
-	if _, ok := confResMgr["directconnect"]; ok {
-		resmgr_dc := directconnectresourcemanager.Setup(&server.Q, qandrTLSConfig)
-		server.Q.AddResourceManager(resmgr_dc)
+	if resDC, ok := confResMgr["directconnect"]; ok {
+		resmgr_dc, err := directconnectresourcemanager.Setup(resDC, &server.Q, qandrTLSConfig)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Unable to setup direct connect resource manager.")	
+		} else {
+			server.Q.AddResourceManager(resmgr_dc)
+		}
 	}
 
 	// Now let's setup the AWS manager if we have a config file
-	if resDC, ok := confResMgr["aws"]; ok {
-		resmgr_aws, err := awsresourcemanager.Setup(resDC, &server.Q, qandrTLSConfig, caCertPath, caKeyPath)
+	if resAWS, ok := confResMgr["aws"]; ok {
+		resmgr_aws, err := awsresourcemanager.Setup(resAWS, &server.Q, qandrTLSConfig, caCertPath, caKeyPath)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
 		} else {

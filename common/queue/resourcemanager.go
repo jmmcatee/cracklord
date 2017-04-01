@@ -6,6 +6,10 @@ import ()
  * resources throughout the queue.  All resource actions (add, remove, update)
  * will need to go through a manager, even for default or physical resources.
  * This interface is what the queue will expect for all manager operations.
+ * Creation of managers should occur through the setup function, which takes
+ * the path to the configuration file, and gets called when the Queue daemon is
+ * setting everything up.  The Setup function should return a ResourceManager
+ * interface below for the Queue to use. 
  */
 type ResourceManager interface {
 	//SystemName returns the string used internally in the queue as a key.  This
