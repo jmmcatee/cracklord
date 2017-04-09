@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	"bytes"
+
 	log "github.com/Sirupsen/logrus"
 )
 
