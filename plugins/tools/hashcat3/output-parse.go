@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	"bytes"
+
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -113,7 +114,11 @@ func ParseMachineOutput(out string) (Status, error) {
 			}
 
 			// Calculate the speed for this device
-			status.Speed = append(status.Speed, speedCnt/speedMs*1000)
+			if speedMs == 0 {
+				status.Speed = append(status.Speed, 0)
+			} else {
+				status.Speed = append(status.Speed, speedCnt/speedMs*1000)
+			}
 		}
 
 		// Speed

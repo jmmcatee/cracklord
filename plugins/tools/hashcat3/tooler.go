@@ -677,7 +677,7 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	}
 
 	var hashBytes []byte
-	hashFilePath := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
+	hashFilePath := filepath.Join(t.wd, USER_HASHES_FILENAME)
 	if hashUseUploadBool {
 		// Use an uploaded hashfile
 		if _, hashUploadOk := t.job.Parameters["hashes_file_upload"]; hashUploadOk {
