@@ -20,7 +20,7 @@ go build -v -o $QDST/usr/bin/cracklord-queued ./cmd/queued
 mkdir -p $QDST/etc/cracklord
 cp -r $QSRC/conf/* $QDST/etc/cracklord/
 mkdir -p $QDST/var/cracklord/www
-cp -r $BASEDIR/web $QDST/var/cracklord/www
+cp -r $BASEDIR/web/* $QDST/var/cracklord/www
 mkdir -p $QDST/etc/init
 cp -r $QSRC/cracklord-queued.conf $QDST/etc/init/
 echo "done"
