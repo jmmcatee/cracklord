@@ -217,7 +217,7 @@ func main() {
 		if su == "" {
 			log.Fatal("An standard user was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
-		sp := common.StripQuotes(confAuth["standarduser"])
+		sp := common.StripQuotes(confAuth["standardpass"])
 		if sp == "" {
 			log.Fatal("An standard password was not configured. See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files#queue-auth")
 		}
