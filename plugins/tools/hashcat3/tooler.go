@@ -777,7 +777,10 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
 	t.resume = append(t.resume, config.Args...)
-	t.showPot = append(t.showPotLeft, "--hash-type="+htype, "--separator", ":", "--potfile-path", config.PotFilePath)
+	t.showPot = append(t.showPotLeft, "--hash-type="+htype, "--separator", ":")
+	if config.PotFilePath != "" {
+		t.showPot = append(t.showPot, "--potfile-path", config.PotFilePath)
+	}
 
 	// Setup the start and resume options
 	t.start = append(t.start, "--session="+t.job.UUID)
