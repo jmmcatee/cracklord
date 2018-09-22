@@ -41,7 +41,6 @@ REPOSITORY = 'cracklord'
 LIMIT = 2    
 BASE_URL = "https://#{API_TOKEN}:@packagecloud.io/api/v1/repos/#{USER}/#{REPOSITORY}"
 DISTROS = [
-  "ubuntu/bionic",
   'ubuntu/trusty',
   'ubuntu/xenial',
   'debian/jessie'

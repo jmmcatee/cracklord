@@ -4,7 +4,6 @@ echo "Deployment starting"
 
 
 distros=( 
-  "ubuntu/bionic" 
   "ubuntu/trusty" 
   "ubuntu/xenial"
   "debian/jessie" 
