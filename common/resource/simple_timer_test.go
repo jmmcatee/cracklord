@@ -147,7 +147,7 @@ func (t *SimpleTimer) Quit() common.Job {
 	t.t.Stop()
 	t.kill <- true
 
-	if t.j.Status != common.STATUS_DONE || t.j.Status != common.STATUS_FAILED || t.j.Status != common.STATUS_QUIT {
+	if t.j.Status != common.STATUS_DONE && t.j.Status != common.STATUS_FAILED && t.j.Status != common.STATUS_QUIT {
 		t.j.Error = "Stopped by user"
 		t.j.Status = common.STATUS_QUIT
 		return t.j

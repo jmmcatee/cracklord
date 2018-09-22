@@ -17,9 +17,10 @@ import (
 	"syscall"
 	"time"
 
+	"sort"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
-	"sort"
 )
 
 var regLastStatusIndex *regexp.Regexp
@@ -650,7 +651,7 @@ func (v *hascatTasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	v.Status()
 
-	if v.job.Status == common.STATUS_RUNNING && v.job.Status == common.STATUS_PAUSED {
+	if v.job.Status == common.STATUS_RUNNING || v.job.Status == common.STATUS_PAUSED {
 		v.mux.Lock()
 
 		if runtime.GOOS == "windows" {

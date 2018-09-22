@@ -3,8 +3,9 @@ package resource
 import (
 	"bytes"
 	"errors"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
+
+	"github.com/jmmcatee/cracklord/common"
 )
 
 type simpleFailerTooler struct {
@@ -112,7 +113,7 @@ func (t *simpleFailureTask) Pause() error {
 }
 
 func (t *simpleFailureTask) Quit() common.Job {
-	if t.j.Status != common.STATUS_DONE || t.j.Status != common.STATUS_FAILED || t.j.Status != common.STATUS_QUIT {
+	if t.j.Status != common.STATUS_DONE && t.j.Status != common.STATUS_FAILED && t.j.Status != common.STATUS_QUIT {
 		t.failFunc, _ = t.j.Parameters["failFunc"]
 
 		if t.failFunc == "Quit" {
