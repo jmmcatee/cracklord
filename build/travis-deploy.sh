@@ -2,6 +2,7 @@
 
 echo "Deployment starting"
 
+gem install package_cloud
 
 distros=( 
   "ubuntu/trusty" 
