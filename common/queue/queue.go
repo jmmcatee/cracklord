@@ -703,7 +703,7 @@ func (q *Queue) Quit() []common.Job {
 		s := q.stack[i].Status
 
 		// If the job is running quit it
-		if s == common.STATUS_RUNNING && s == common.STATUS_PAUSED {
+		if s == common.STATUS_RUNNING || s == common.STATUS_PAUSED {
 			// Build the quit call
 			quitJob := common.RPCCall{Job: q.stack[i]}
 
