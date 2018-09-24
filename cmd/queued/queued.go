@@ -299,11 +299,24 @@ func main() {
 	hooks.ResourceConnect = processHookSection(confFile.Section("Hooks.ResourceConnect"))
 	hooks.QueueReorder = processHookSection(confFile.Section("Hooks.QueueReorder"))
 
+	purgeConf := confFile.Section("JobPurge")
+	purgeTime, ok := purgeConf["purgetime"]
+	if !ok {
+		purgeTime = "30"
+	} else {
+		purgeTime = common.StripQuotes(purgeTime)
+	}
+	purgeTimeInt, err := strconv.Atoi(purgeTime)
+	if err != nil {
+		log.Errorf("Purge time was provided, but not parsable to a integer. %s\n", err.Error())
+		purgeTimeInt = 30
+	}
+
 	// Configure the TokenStore
 	server.T = NewTokenStore()
 
 	// Configure the Queue
-	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout, hooks)
+	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout, hooks, purgeTimeInt)
 
 	caBytes, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
@@ -383,7 +396,7 @@ func main() {
 	if resDC, ok := confResMgr["directconnect"]; ok {
 		resmgr_dc, err := directconnectresourcemanager.Setup(resDC, &server.Q, qandrTLSConfig)
 		if err != nil {
-			log.WithField("error", err.Error()).Error("Unable to setup direct connect resource manager.")	
+			log.WithField("error", err.Error()).Error("Unable to setup direct connect resource manager.")
 		} else {
 			server.Q.AddResourceManager(resmgr_dc)
 		}

@@ -36,6 +36,7 @@ type Queue struct {
 	stack    []common.Job
 	managers protectedmap.ProtectedMap
 	stats    Stats
+	jpurge   int
 	sync.RWMutex
 	qk chan bool
 }
@@ -45,7 +46,7 @@ type StateFile struct {
 	Pool  ResourcePool `json:"pool"`
 }
 
-func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameters) Queue {
+func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameters, purgetime int) Queue {
 	//Setup the options
 	StateFileLocation = statefile
 	KeeperDuration = time.Duration(updatetime) * time.Second
@@ -59,6 +60,7 @@ func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameter
 		stack:    []common.Job{},
 		managers: protectedmap.New(),
 		stats:    NewStats(),
+		jpurge:   purgetime,
 	}
 
 	if _, err := os.Stat(StateFileLocation); err == nil {
@@ -935,6 +937,30 @@ func (q *Queue) updateQueue() {
 					}
 				}
 				q.pool[q.stack[i].ResAssigned].Hardware[hw] = true
+
+				// Set a purge time
+				q.stack[i].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
+				// Log purge time
+				log.WithFields(log.Fields{
+					"JobID":     q.stack[i].UUID,
+					"PurgeTime": q.stack[i].PurgeTime,
+				})
+			}
+		}
+
+		// Check and delete jobs past their purge timer
+		if q.stack[i].Status == common.STATUS_DONE || q.stack[i].Status == common.STATUS_FAILED || q.stack[i].Status == common.STATUS_QUIT {
+			if time.Now().After(q.stack[i].PurgeTime) {
+				// Job should now be quit so lets rebuild the stack
+				newStack := []common.Job{}
+				for _, v := range q.stack {
+					if v.UUID != q.stack[i].UUID {
+						newStack = append(newStack, v)
+					}
+				}
+
+				// Rest stack
+				q.stack = newStack
 			}
 		}
 	}
