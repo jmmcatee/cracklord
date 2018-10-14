@@ -13,7 +13,13 @@ require 'time'
 # it deletes them. 
 def processPackage(distName, pkgName) 
   url = BASE_URL + "/package/deb/#{distName}/#{pkgName}/amd64/versions.json"
-  versions = RestClient.get(url)
+  begin
+    versions = RestClient.get(url)
+  rescue StandardError => msg
+    puts msg
+    return
+  end
+
   parsed_versions = JSON.parse(versions)
   sorted_versions = parsed_versions.sort_by { |x| Time.parse(x["created_at"]) }
 

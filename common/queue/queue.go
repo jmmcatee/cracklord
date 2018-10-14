@@ -136,12 +136,20 @@ func (q *Queue) parseState() error {
 		q.pool[id] = v
 	}
 	for i, _ := range s.Stack {
+		if time.Now().After(s.Stack[i].PurgeTime) {
+			continue
+		}
+
+		if s.Stack[i].Status == common.STATUS_CREATED || s.Stack[i].Status == common.STATUS_PAUSED || s.Stack[i].Status == common.STATUS_RUNNING {
+			s.Stack[i].Status = common.STATUS_QUIT
+			s.Stack[i].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
+		}
+
+		q.stack = append(q.stack, s.Stack[i])
 		log.WithFields(log.Fields{
 			"name": s.Stack[i].Name,
 			"id":   s.Stack[i].UUID,
 		}).Debug("Added job from state file.")
-		s.Stack[i].Status = common.STATUS_QUIT
-		q.stack = append(q.stack, s.Stack[i])
 	}
 
 	return nil
