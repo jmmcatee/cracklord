@@ -918,6 +918,7 @@ func (q *Queue) keeper() {
 // This is an internal function used to update the status of all Jobs.
 // A LOCK SHOULD ALREADY BE HELD TO CALL THIS FUNCTION.
 func (q *Queue) updateQueue() {
+	purge := []int{}
 	// Loop through jobs and get the status of running jobs
 	for i, _ := range q.stack {
 		if q.stack[i].Status == common.STATUS_RUNNING {
@@ -959,18 +960,23 @@ func (q *Queue) updateQueue() {
 		// Check and delete jobs past their purge timer
 		if q.stack[i].Status == common.STATUS_DONE || q.stack[i].Status == common.STATUS_FAILED || q.stack[i].Status == common.STATUS_QUIT {
 			if time.Now().After(q.stack[i].PurgeTime) {
-				// Job should now be quit so lets rebuild the stack
-				newStack := []common.Job{}
-				for _, v := range q.stack {
-					if v.UUID != q.stack[i].UUID {
-						newStack = append(newStack, v)
-					}
-				}
-
-				// Rest stack
-				q.stack = newStack
+				purge = append(purge, i)
 			}
 		}
+	}
+
+	// Before we are done we need to remove all purged jobs
+	for i := range purge {
+		// Job should now be quit so lets rebuild the stack
+		newStack := []common.Job{}
+		for _, v := range q.stack {
+			if v.UUID != q.stack[i].UUID {
+				newStack = append(newStack, v)
+			}
+		}
+
+		// Rest stack
+		q.stack = newStack
 	}
 }
 
