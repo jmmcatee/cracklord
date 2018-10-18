@@ -382,6 +382,14 @@ func (q *Queue) QuitJob(jobuuid string) error {
 					}).Error("An error occurred while trying to quit a remote job.")
 					return err
 				}
+				
+				// Set a purge time
+				q.stack[i].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
+				// Log purge time
+				log.WithFields(log.Fields{
+					"JobID":     q.stack[i].UUID,
+					"PurgeTime": q.stack[i].PurgeTime,
+				}).Debug("Updated PurgeTime value")
 
 				// Task has been quit without errors so update the available hardware and return
 				// Find the real ToolUUID since the Job's might have changed (See AddJob)
