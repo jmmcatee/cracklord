@@ -953,7 +953,7 @@ func (q *Queue) updateQueue() {
 				log.WithFields(log.Fields{
 					"JobID":     q.stack[i].UUID,
 					"PurgeTime": q.stack[i].PurgeTime,
-				})
+				}).Debug("Updated PurgeTime value")
 			}
 		}
 
@@ -965,17 +965,25 @@ func (q *Queue) updateQueue() {
 		}
 	}
 
-	// Before we are done we need to remove all purged jobs
-	for i := range purge {
-		// Job should now be quit so lets rebuild the stack
+	// Do we need to purge?
+	if len(purge) > 0 {
+		// Let the purge begin
 		newStack := []common.Job{}
-		for _, v := range q.stack {
-			if v.UUID != q.stack[i].UUID {
-				newStack = append(newStack, v)
+		// Loop on the stack looking for index values that patch a value in the purge
+		for i := range q.stack {
+			// Check if our index is in the purge
+			var inPurge bool
+			for _, v := range purge {
+				if i == v {
+					inPurge = true	
+				}
+			}
+
+			// It is not in the purge so append to new stack
+			if !inPurge {
+				newStack = append(newStack, q.stack[i])
 			}
 		}
-
-		// Rest stack
 		q.stack = newStack
 	}
 }
