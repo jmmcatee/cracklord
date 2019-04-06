@@ -592,6 +592,13 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	// Pull Job info from the Queue
 	job := a.Q.JobInfo(jobid)
 
+	// Remove the file and hashes parameters
+	delete(job.Parameters, "hashes_multiline")
+	delete(job.Parameters, "hashes_file_upload")
+	delete(job.Parameters, "dict_rules_custom_file")
+	delete(job.Parameters, "dict_rules_use_custom")
+	delete(job.Parameters, "dict_custom_prepend")
+
 	// Build the response structure
 	resp.Status = RESP_CODE_OK
 	resp.Message = RESP_CODE_OK_T
