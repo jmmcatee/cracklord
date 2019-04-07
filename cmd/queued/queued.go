@@ -151,6 +151,10 @@ func main() {
 
 	var statefile string
 	statefile = common.StripQuotes(genConf["StateFile"])
+	bboltDB, err := queue.NewJobDB(common.StripQuotes(genConf["BBoltDBFilePath"]))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var updatetime int
 	var resourcetimeout int
@@ -316,7 +320,7 @@ func main() {
 	server.T = NewTokenStore()
 
 	// Configure the Queue
-	server.Q = queue.NewQueue(statefile, updatetime, resourcetimeout, hooks, purgeTimeInt)
+	server.Q = queue.NewQueue(updatetime, resourcetimeout, hooks, purgeTimeInt, bboltDB)
 
 	caBytes, err := ioutil.ReadFile(caCertPath)
 	if err != nil {

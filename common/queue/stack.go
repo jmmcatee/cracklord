@@ -25,33 +25,33 @@ type JobDB struct {
 }
 
 // NewJobDB returns a new instance of the JobDB structure
-func NewJobDB(path string) (JobDB, error) {
+func NewJobDB(path string) (*JobDB, error) {
 	var jb JobDB
 
 	db, err := bbolt.Open(filepath.Clean(path), 0600, nil)
 	if err != nil {
-		return JobDB{}, err
+		return &JobDB{}, err
 	}
 
 	tx, err := db.Begin(true)
 	if err != nil {
-		return JobDB{}, err
+		return &JobDB{}, err
 	}
 
 	_, err = tx.CreateBucketIfNotExists(BucketJobs)
 	if err != nil {
 		tx.Rollback()
-		return JobDB{}, err
+		return &JobDB{}, err
 	}
 
 	_, err = tx.CreateBucketIfNotExists(BucketJobOrder)
 	if err != nil {
 		tx.Rollback()
-		return JobDB{}, err
+		return &JobDB{}, err
 	}
 
 	jb.boltdb = db
-	return jb, nil
+	return &jb, nil
 }
 
 // Count returns the number of jobs in the queue

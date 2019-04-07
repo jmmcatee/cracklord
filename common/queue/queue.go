@@ -25,7 +25,6 @@ const (
 
 var KeeperDuration time.Duration
 var NetworkTimeout time.Duration
-var StateFileLocation string
 var Hooks HookParameters
 
 type Queue struct {
@@ -45,9 +44,8 @@ type StateFile struct {
 	Pool  ResourcePool `json:"pool"`
 }
 
-func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameters, purgetime int, jdb *JobDB) Queue {
+func NewQueue(updatetime int, timeout int, hooks HookParameters, purgetime int, jdb *JobDB) Queue {
 	//Setup the options
-	StateFileLocation = statefile
 	KeeperDuration = time.Duration(updatetime) * time.Second
 	NetworkTimeout = time.Duration(timeout) * time.Second
 	Hooks = hooks
@@ -64,7 +62,7 @@ func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameter
 	}
 
 	log.WithFields(log.Fields{
-		"statefile":  StateFileLocation,
+		"bboltdb":    q.db.boltdb.GoString(),
 		"keepertime": KeeperDuration,
 		"nettimeout": NetworkTimeout,
 	}).Debug("Setup a new queue")
