@@ -2,12 +2,10 @@ package queue
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"io"
 	"net"
 	"net/rpc"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -31,9 +29,9 @@ var StateFileLocation string
 var Hooks HookParameters
 
 type Queue struct {
-	status   string // Empty, Running, Paused, Exhausted
-	pool     ResourcePool
-	stack    []common.Job
+	status string // Empty, Running, Paused, Exhausted
+	pool   ResourcePool
+	//stack    []common.Job
 	db       *JobDB
 	managers protectedmap.ProtectedMap
 	stats    Stats
@@ -56,17 +54,13 @@ func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameter
 
 	// Build the queue
 	q := Queue{
-		status:   STATUS_EMPTY,
-		pool:     NewResourcePool(),
-		stack:    []common.Job{},
+		status: STATUS_EMPTY,
+		pool:   NewResourcePool(),
+		//stack:    []common.Job{},
 		db:       jdb,
 		managers: protectedmap.New(),
 		stats:    NewStats(),
 		jpurge:   purgetime,
-	}
-
-	if _, err := os.Stat(StateFileLocation); err == nil {
-		q.parseState()
 	}
 
 	log.WithFields(log.Fields{
@@ -76,85 +70,6 @@ func NewQueue(statefile string, updatetime int, timeout int, hooks HookParameter
 	}).Debug("Setup a new queue")
 
 	return q
-}
-
-func (q *Queue) writeState() error {
-	var s StateFile
-
-	//Create a state fila in case we are rebooted
-	stateFile, err := os.Create(StateFileLocation)
-	if err != nil {
-		log.WithField("error", err.Error()).Fatal("Unable to write to state file")
-		return err
-	}
-	stateEncoder := json.NewEncoder(stateFile)
-
-	s.Stack = make([]common.Job, len(q.stack))
-	copy(s.Stack, q.stack)
-
-	s.Pool = make(map[string]Resource)
-	for k, v := range q.pool {
-		s.Pool[k] = v
-	}
-
-	stateEncoder.Encode(s)
-	stateFile.Close()
-
-	log.Debug("State file written successfully.")
-
-	return nil
-}
-
-func (q *Queue) parseState() error {
-	var s StateFile
-
-	stateFile, err := os.Open(StateFileLocation)
-	if err != nil {
-		log.WithField("error", err.Error()).Error("An error occured opening the state file.")
-		return err
-	}
-
-	stateDecoder := json.NewDecoder(stateFile)
-	err = stateDecoder.Decode(&s)
-	if err != nil {
-		log.WithField("error", err.Error()).Error("An error occured decoding the state file.")
-		return err
-	}
-	stateFile.Close()
-
-	for id, v := range s.Pool {
-		log.WithFields(log.Fields{
-			"name": v.Name,
-			"id":   id,
-		}).Debug("Added resource from state file.")
-
-		v.Address = "(disconnected)"
-		v.Status = common.STATUS_QUIT
-
-		for tool, _ := range v.Tools {
-			delete(v.Tools, tool)
-		}
-
-		q.pool[id] = v
-	}
-	for i, _ := range s.Stack {
-		if time.Now().After(s.Stack[i].PurgeTime) {
-			continue
-		}
-
-		if s.Stack[i].Status == common.STATUS_CREATED || s.Stack[i].Status == common.STATUS_PAUSED || s.Stack[i].Status == common.STATUS_RUNNING {
-			s.Stack[i].Status = common.STATUS_QUIT
-			s.Stack[i].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
-		}
-
-		q.stack = append(q.stack, s.Stack[i])
-		log.WithFields(log.Fields{
-			"name": s.Stack[i].Name,
-			"id":   s.Stack[i].UUID,
-		}).Debug("Added job from state file.")
-	}
-
-	return nil
 }
 
 // Add a job to the queue at the end of the stack
@@ -460,19 +375,24 @@ func (q *Queue) PauseResource(resUUID string) error {
 		return errors.New("Resource with UUID provided does not exist!")
 	}
 
+	jobs, err := q.db.GetAllJobs()
+	if err != nil {
+		return err
+	}
+
 	// Loop through and pause any tasks running on the selected resource
-	for i, _ := range q.stack {
+	for i, _ := range jobs {
 		log.WithFields(log.Fields{
-			"resource":  q.stack[i].ResAssigned,
-			"job":       q.stack[i].UUID,
-			"jobstatus": q.stack[i].Status,
+			"resource":  jobs[i].ResAssigned,
+			"job":       jobs[i].UUID,
+			"jobstatus": jobs[i].Status,
 		}).Debug("Identifying running jobs on paused resource.")
 
-		if q.stack[i].ResAssigned == resUUID && q.stack[i].Status == common.STATUS_RUNNING {
+		if jobs[i].ResAssigned == resUUID && jobs[i].Status == common.STATUS_RUNNING {
 			// We found a task that is running so lets pause it
-			pauseJob := common.RPCCall{Job: q.stack[i]}
+			pauseJob := common.RPCCall{Job: jobs[i]}
 
-			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &q.stack[i])
+			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &jobs[i])
 			if err != nil {
 				return err
 			}
@@ -480,14 +400,19 @@ func (q *Queue) PauseResource(resUUID string) error {
 			// Task should now be paused to free up the resource
 			// Find the real ToolUUID since the Job's might have changed (See AddJob)
 			var tUUID, hw string
-			for qUUID, tool := range q.pool[q.stack[i].ResAssigned].Tools {
-				if q.stack[i].ToolUUID == tool.UUID {
+			for qUUID, tool := range q.pool[jobs[i].ResAssigned].Tools {
+				if jobs[i].ToolUUID == tool.UUID {
 					// We found the UUID of the tool is so store it
 					tUUID = qUUID
 				}
 			}
-			hw = q.pool[q.stack[i].ResAssigned].Tools[tUUID].Requirements
-			q.pool[q.stack[i].ResAssigned].Hardware[hw] = true
+			hw = q.pool[jobs[i].ResAssigned].Tools[tUUID].Requirements
+			q.pool[jobs[i].ResAssigned].Hardware[hw] = true
+
+			err = q.db.UpdateJob(jobs[i])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1337,17 +1262,27 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	q.Lock()
 	defer q.Unlock()
 
+	jobs, err := q.db.GetAllJobs()
+	if err != nil {
+		return err
+	}
+
 	// Loop through any jobs assigned to the resource and quit them if they are not completed
-	for i, v := range q.stack {
+	for i, v := range jobs {
 		if v.ResAssigned == resUUID {
 			// Check status
 			if v.Status == common.STATUS_RUNNING || v.Status == common.STATUS_PAUSED {
 				// Quit the task
 				quitTask := common.RPCCall{Job: v}
 
-				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &q.stack[i])
+				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &jobs[i])
 				if err != nil {
 					log.Println(err.Error())
+				}
+
+				err = q.db.UpdateJob(jobs[i])
+				if err != nil {
+					log.Error(err)
 				}
 			}
 		}
