@@ -149,8 +149,6 @@ func main() {
 		}
 	}
 
-	var statefile string
-	statefile = common.StripQuotes(genConf["StateFile"])
 	bboltDB, err := queue.NewJobDB(common.StripQuotes(genConf["BBoltDBFilePath"]))
 	if err != nil {
 		log.Fatal(err)
