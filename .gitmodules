@@ -1,0 +1,7 @@
+[submodule "goschemaform"]
+	path = vendor/github.com/jmmcatee/goschemaform
+	url = git://github.com/jmmcatee/goschemaform
+
+[submodule "testify"]
+	path = vendor/github.com/stretchr/testify
+	url = git://github.com/stretchr/testify
