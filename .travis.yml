@@ -15,8 +15,8 @@ deploy:
   api_key:
     secure: eXXq4JRQFg7spiMKrOTi5tg4FODZ4RPJqjOhIiPC2v52eDMnrW1ltOZ8IL/VDR3pvKpkrOsuSr75BNrfT2l5ZvTAN4Z3HcX1DFTAcWDwG1IktZIyKP7kz3kJHBAPgNFwOT7ub60z1izUwZsDy2X5UqOAOxttZhS4yKol2TXwAkM=
   file_glob: true
-  file: *.deb
+  file: "*.deb"
   skip_cleanup: true
   on:
+    tags: true
     repo: jmmcatee/cracklord
-    tags: true    
