@@ -1116,6 +1116,55 @@ func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) err
 	return nil
 }
 
+// ReconnectResource function will reconnect to a resource that has failed
+func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
+	q.RLock()
+	localRes := q.pool[resUUID]
+	q.RUnlock()
+
+	// Get the existing resource address
+	target := localRes.Address
+
+	// Check to see if we have a port, otherwise use the default 9443
+	if !strings.Contains(target, ":") {
+		target += ":9443"
+	}
+	log.WithField("addr", target).Info("Reconnecting to resource")
+
+	dialer := &net.Dialer{
+		Timeout: 15 * time.Second,
+	}
+
+	conn, err := tls.DialWithDialer(dialer, "tcp", target, tlsconfig)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"addr":       target,
+			"servername": localRes.Address,
+		}).Debug("An error occured while building the TLS connection to reconnect to the resource")
+		return err
+	}
+
+	// Build the RPC client for the resource
+	localRes.Client = rpc.NewClient(conn)
+	if err != nil {
+		log.WithField("addr", target).Debug("An error occured while creating new client for the reconnection to the resource")
+		return err
+	}
+
+	// Let the user know we connected
+	log.WithField("target", localRes.Address).Info("Successfully reconnected to resource")
+	localRes.Status = common.STATUS_RUNNING
+
+	q.Lock()
+	q.pool[resUUID] = localRes
+	q.Unlock()
+
+	// Call out to the registered hooks about resource creation
+	go HookOnResourceConnect(Hooks.ResourceConnect, resUUID, localRes)
+
+	return nil
+}
+
 //Checks to see if our RPC connection to a resource is still valid, if not it
 //will return false, otherwise it will return true.
 func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {

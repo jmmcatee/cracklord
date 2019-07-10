@@ -3,11 +3,12 @@ package directconnectresourcemanager
 import (
 	"crypto/tls"
 	"errors"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/vaughan0/go-ini"
-	"time"
 )
 
 type resourceInfo struct {
@@ -50,22 +51,22 @@ func Setup(confPath string, qpointer *queue.Queue, tlspointer *tls.Config) (queu
 		for k, v := range confHosts {
 			// We'll loop through each host and connect to it on startup.
 			log.WithFields(log.Fields{
-				"address": k, 
-				"name": v,
+				"address": k,
+				"name":    v,
 			}).Debug("Attempting to connect to resource from direct connect configuration file")
 
 			// Perform the connection attempt
 			err := dc.AddResource(map[string]string{
 				"address": k,
-				"name"   : v,
+				"name":    v,
 			})
 
 			// If it fails, we shouldn't error out the queue, but we should log an error
 			if err != nil {
 				log.WithFields(log.Fields{
-					"address": k, 
-					"name": v,
-					"msg": err,
+					"address": k,
+					"name":    v,
+					"msg":     err,
 				}).Error("Unable to conenct to resource in directconnect configuration file.")
 			}
 		}
@@ -271,6 +272,8 @@ func (this *directResourceManager) Keep() {
 		//otherwise, we'll want to see about reconnecting
 		if status {
 			localResource.lastGoodCheck = time.Now()
+		} else {
+			this.q.ReconnectResource(data.Key, this.tls)
 		}
 
 		//Update our local data for the resource

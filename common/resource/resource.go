@@ -2,10 +2,11 @@ package resource
 
 import (
 	"errors"
+	"sync"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/pborman/uuid"
-	"sync"
 )
 
 // TODO: Add function for adding tools and assign a UUID
@@ -253,6 +254,23 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	delete(q.stack, rpc.Job.UUID)
 
 	log.WithField("task", rpc.Job.UUID).Debug("Task quit and removed successfully")
+
+	return nil
+}
+
+// TaskDone is called by the Queue to tell the Resource that it will no longer be asking about this task and we can
+// remove it from our local stack.
+func (q *Queue) TaskDone(rpc common.RPCCall, j *common.Job) error {
+	log.WithField("task", rpc.Job.UUID).Debug("Queue said it is done with this task.")
+
+	// Get a lock and make sure we unlock the stack on return
+	q.Lock()
+	defer q.Unlock()
+
+	// Delete the specific job
+	delete(q.stack, rpc.Job.UUID)
+
+	log.WithField("task", rpc.Job.UUID).Debug("Task has been removed from the local stack.")
 
 	return nil
 }

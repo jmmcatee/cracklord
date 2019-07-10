@@ -247,6 +247,7 @@ func (t *Tasker) Run() error {
 
 	t.job.StartTime = time.Now()
 	t.job.Status = common.STATUS_RUNNING
+	t.job.ETC = "Warming up..."
 
 	go func() {
 		// Wait for the job to finish
