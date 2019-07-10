@@ -103,7 +103,7 @@ func (t *Tasker) Status() common.Job {
 				t.job.CrackedHashes = status.RecoveredHashes
 				t.job.TotalHashes = status.TotalHashes
 			} else {
-				log.Debug(err.Error)
+				log.Debug(err.Error())
 			}
 		}
 
