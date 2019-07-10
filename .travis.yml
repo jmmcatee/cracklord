@@ -10,13 +10,13 @@ after_success:
   - gem install fpm
   - bash build/travis-after_success.sh
 
-before_deploy: 
-  - gem install package_cloud
-  - ruby build/travis-before_deploy.rb
-
 deploy:
-  provider: script
-  script: "bash $TRAVIS_BUILD_DIR/build/travis-deploy.sh"
+  provider: releases
+  api_key:
+    secure: eXXq4JRQFg7spiMKrOTi5tg4FODZ4RPJqjOhIiPC2v52eDMnrW1ltOZ8IL/VDR3pvKpkrOsuSr75BNrfT2l5ZvTAN4Z3HcX1DFTAcWDwG1IktZIyKP7kz3kJHBAPgNFwOT7ub60z1izUwZsDy2X5UqOAOxttZhS4yKol2TXwAkM=
+  file_glob: true
+  file: *.deb
   skip_cleanup: true
-  on: 
-    branch: master
+  on:
+    repo: jmmcatee/cracklord
+    tags: true    

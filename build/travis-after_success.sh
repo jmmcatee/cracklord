@@ -11,7 +11,7 @@ RDST="$BUILDDIR/resource"
 
 WEBDIR="./web"
 URL="http://jmmcatee.github.io/cracklord/"
-MAINT="emperorcow@gmail.com"
+MAINT="jmmcatee@gmail.com"
 
 echo -n "Creating queue server package directories..."
 mkdir -p $QDST/usr/bin
