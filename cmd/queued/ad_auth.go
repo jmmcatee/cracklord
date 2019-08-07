@@ -1,13 +1,14 @@
 package main
 
 import (
-	"reflect"
 	"crypto/rand"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/gokerb"
-	"github.com/jmmcatee/goldap/ad"
+	"reflect"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	kerb "github.com/jmmcatee/gokerb"
+	"github.com/jmmcatee/goldap/ad"
 )
 
 // Active Directory structure to implement the basic authenticator
@@ -47,9 +48,10 @@ func (a *ADAuth) Login(user, pass string) (User, error) {
 	creds, err := kerb.NewCredential(user, a.realm, pass, &credConf)
 	if err != nil {
 		logger.Error("Error verifying kerberos credentials.")
+		logger.Error(err)
 		return User{}, err
 	}
-	logger.Debug("Validated kerberos credentials.")	
+	logger.Debug("Validated kerberos credentials.")
 
 	// Get a ticket to prove the creds are valid
 	_, err = creds.GetTicket("krbtgt/"+a.realm, nil)
@@ -104,9 +106,9 @@ func (a *ADAuth) recurseGroup(group string, db *ad.DB) []string {
 		}
 
 		if reflect.TypeOf(dn).String() == "*ad.Group" {
-			users = append(users, a.recurseGroup(dn.(*ad.Group).SAMAccountName , db)...)
+			users = append(users, a.recurseGroup(dn.(*ad.Group).SAMAccountName, db)...)
 		} else {
-			users = append(users, dn.(*ad.User).SAMAccountName )
+			users = append(users, dn.(*ad.User).SAMAccountName)
 		}
 	}
 
