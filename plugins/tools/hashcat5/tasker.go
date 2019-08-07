@@ -39,7 +39,8 @@ type Tasker struct {
 	stdoutPipe io.ReadCloser
 	stdinPipe  io.WriteCloser
 
-	doneWG sync.WaitGroup // Used for checking if the job is done
+	doneWG       sync.WaitGroup // Used for checking if the job is done
+	returnStatus string         // Used to note if we quit from an error, completed, or paused
 }
 
 // Status returns the common.Job option of the Tasker
@@ -52,35 +53,39 @@ func (t *Tasker) Status() common.Job {
 	if t.job.Status == common.STATUS_RUNNING {
 		if !t.stderrCp {
 			go func() {
+				log.WithFields(log.Fields{
+					"jobUUID": t.job.UUID,
+				}).Debug("Stopping Stderr Pipe Copy")
+
 				t.stderrCp = true
 				for t.job.Status == common.STATUS_RUNNING {
-					cpNE, err := io.Copy(t.stderr, t.stderrPipe)
-					if err != nil {
-						log.WithField("error", err.Error()).Warn("Error copying from CMD Stderr Pipe.")
-					}
-
-					log.WithFields(log.Fields{
-						"stderrCount": cpNE,
-					}).Debug("Number of bytes copied from Stderr of CMD.")
+					io.Copy(t.stderr, t.stderrPipe)
+					// We do not care about this error as we will just keep trying until the job status changes.
 				}
 				t.stderrCp = false
+
+				log.WithFields(log.Fields{
+					"jobUUID": t.job.UUID,
+				}).Debug("Stopping Stderr Pipe Copy")
 			}()
 		}
 
 		if !t.stdoutCp {
 			go func() {
+				log.WithFields(log.Fields{
+					"jobUUID": t.job.UUID,
+				}).Debug("Stopping Stdout Pipe Copy")
+
 				t.stdoutCp = true
 				for t.job.Status == common.STATUS_RUNNING {
-					cpNO, err := io.Copy(t.stdout, t.stdoutPipe)
-					if err != nil {
-						log.WithField("error", err.Error()).Warn("Error copying from CMD Stdout Pipe.")
-					}
-
-					log.WithFields(log.Fields{
-						"stdoutCount": cpNO,
-					}).Debug("Number of bytes copied from Stdout of CMD.")
+					io.Copy(t.stdout, t.stdoutPipe)
+					// We do not care about this error as we will just keep trying until the job status changes.
 				}
 				t.stdoutCp = false
+
+				log.WithFields(log.Fields{
+					"jobUUID": t.job.UUID,
+				}).Debug("Stopping Stdout Pipe Copy")
 			}()
 		}
 
@@ -127,7 +132,7 @@ func (t *Tasker) Status() common.Job {
 	}
 
 	if len(hashes) != 0 {
-		t.job.OutputData = hashes
+		t.job.OutputData = dedupHashes(hashes)
 	}
 
 	t.stderr.Reset()
@@ -144,14 +149,14 @@ func (t *Tasker) Run() error {
 
 	// Check that we have not already finished this job
 	if t.job.Status == common.STATUS_DONE || t.job.Status == common.STATUS_QUIT || t.job.Status == common.STATUS_FAILED {
-		log.WithField("Status", t.job.Status).Debug("Unable to start hashcat3 job as it is done.")
+		log.WithField("Status", t.job.Status).Debug("Unable to start hashcat5 job as it is done.")
 		return errors.New("Job already finished.")
 	}
 
 	// Check if this job is running
 	if t.job.Status == common.STATUS_RUNNING {
 		// Job already running so return no errors
-		log.Debug("hashcat3 job already running, doing nothing")
+		log.Debug("hashcat5 job already running, doing nothing")
 		return nil
 	}
 
@@ -252,23 +257,60 @@ func (t *Tasker) Run() error {
 	go func() {
 		// Wait for the job to finish
 		t.exec.Wait()
+		t.mux.Lock()
 		log.WithField("task", t.job.UUID).Debug("Job exec returned Wait().")
 
-		t.mux.Lock()
-		log.WithField("task", t.job.UUID).Debug("Took lock on job to change status to done.")
-		t.job.Status = common.STATUS_DONE
-		t.mux.Unlock()
-		log.WithField("task", t.job.UUID).Debug("Unlocked job after setting done.")
+		//log.WithField("task", t.job.UUID).Debug("Took lock on job to change status to done.")
+		switch t.returnStatus {
+		case "":
+			t.job.Status = common.STATUS_DONE
+		case common.STATUS_PAUSED:
+			t.job.Status = common.STATUS_PAUSED
+		case common.STATUS_QUIT:
+			t.job.Status = common.STATUS_QUIT
+		}
+
+		//log.WithField("task", t.job.UUID).Debug("Unlocked job after setting done.")
 
 		// Get the status now because we need the last output of hashes
-		log.WithField("task", t.job.UUID).Debug("Calling final status call for the job.")
+		//log.WithField("task", t.job.UUID).Debug("Calling final status call for the job.")
 		t.Status()
 
-		log.WithField("task", t.job.UUID).Debug("Releasing wait group.")
+		//log.WithField("task", t.job.UUID).Debug("Releasing wait group.")
 		t.doneWG.Done()
+		t.mux.Unlock()
 	}()
 
 	return nil
+}
+
+func (t *Tasker) quitExec(returnStatus string) {
+	t.mux.Lock()
+
+	if runtime.GOOS == "windows" {
+		t.exec.Process.Kill()
+	} else {
+		io.WriteString(t.stdinPipe, "q")
+	}
+
+	// We tried the soft quit so now let's wait and see if that works and if not, kill it hard
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		t.doneWG.Wait()
+	}()
+
+	// Check for a 30 second timeout
+	select {
+	case <-c:
+	// Task quit so we are good to go
+	case <-time.After(30 * time.Second):
+		t.exec.Process.Kill()
+	}
+
+	t.returnStatus = returnStatus
+
+	t.mux.Unlock()
 }
 
 // Pause kills the hashcat process and marks the job as paused
@@ -279,30 +321,10 @@ func (t *Tasker) Pause() error {
 	t.Status()
 
 	if t.job.Status == common.STATUS_RUNNING {
-		t.mux.Lock()
+		t.quitExec(common.STATUS_PAUSED)
 
-		if runtime.GOOS == "windows" {
-			t.exec.Process.Kill()
-		} else {
-			io.WriteString(t.stdinPipe, "c")
-
-			time.Sleep(1 * time.Second)
-
-			io.WriteString(t.stdinPipe, "q")
-		}
-
-		t.mux.Unlock()
-
-		// Wait for the program to actually exit
-		t.doneWG.Wait()
+		log.WithField("task", t.job.UUID).Debug("Task paused successfully")
 	}
-
-	// Change status to pause
-	t.mux.Lock()
-	t.job.Status = common.STATUS_PAUSED
-	t.mux.Unlock()
-
-	log.WithField("task", t.job.UUID).Debug("Task paused successfully")
 
 	return nil
 }
@@ -314,37 +336,11 @@ func (t *Tasker) Quit() common.Job {
 	// Call status to update the job internals before quiting
 	t.Status()
 
-	if t.job.Status == common.STATUS_RUNNING || t.job.Status == common.STATUS_PAUSED {
-		t.mux.Lock()
-		log.WithField("task", t.job.UUID).Debug("Grab lock to push quit signal to hashcat.")
+	if t.job.Status == common.STATUS_RUNNING {
+		t.quitExec(common.STATUS_QUIT)
 
-		if runtime.GOOS == "windows" {
-			log.WithField("task", t.job.UUID).Debug("Attempting to send Windows Process.Kill() Signal.")
-			t.exec.Process.Kill()
-		} else {
-			log.WithField("task", t.job.UUID).Debug("Attempting UNIX kill with 'c' and 'q'.")
-			io.WriteString(t.stdinPipe, "c")
-
-			log.WithField("task", t.job.UUID).Debug("Sent 'c' command and waiting 1 second.")
-			time.Sleep(1 * time.Second)
-
-			log.WithField("task", t.job.UUID).Debug("Sending 'q' command to kill the process.")
-			io.WriteString(t.stdinPipe, "q")
-		}
-
-		t.mux.Unlock()
-		log.WithField("task", t.job.UUID).Debug("Unlocking job and waiting for quit WaitGroup.")
-
-		// Wait for the program to actually exit
-		t.doneWG.Wait()
-		log.WithField("task", t.job.UUID).Debug("Wait group returned. Task quit successfully.")
+		log.WithField("task", t.job.UUID).Debug("Task quit successfully")
 	}
-
-	t.mux.Lock()
-	t.job.Status = common.STATUS_QUIT
-	t.mux.Unlock()
-
-	log.WithField("task", t.job.UUID).Debug("Task quit successfully")
 	return t.job
 }
 

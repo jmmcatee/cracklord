@@ -59,7 +59,7 @@ func NewTooler() common.Tooler {
 		// This should not happen as the executable has already run once during the
 		// Setup command. It is a possible error, but not sure how to hanlde it without
 		// Update the interface, which we can do later.
-		log.WithField("error", err.Error()).Error("Could not pull hashcat 3.x version")
+		log.WithField("error", err.Error()).Error("Could not pull hashcat 5.x version")
 	}
 
 	tooler := &hashcat3Tooler{}

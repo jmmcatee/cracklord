@@ -4,20 +4,22 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
+	"io/ioutil"
+	"net/rpc"
+	"os"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmmcatee/cracklord/common"
-	"github.com/jmmcatee/cracklord/common/log"
+	cracklog "github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/resource"
 	"github.com/jmmcatee/cracklord/plugins/tools/hashcat"
 	"github.com/jmmcatee/cracklord/plugins/tools/hashcat3"
+	"github.com/jmmcatee/cracklord/plugins/tools/hashcat5"
 	"github.com/jmmcatee/cracklord/plugins/tools/johndict"
 	"github.com/jmmcatee/cracklord/plugins/tools/nmap"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimercpu"
 	"github.com/jmmcatee/cracklord/plugins/tools/testtimergpu"
 	"github.com/vaughan0/go-ini"
-	"io/ioutil"
-	"net/rpc"
-	"os"
 )
 
 func main() {
@@ -148,6 +150,10 @@ func main() {
 	}
 	if common.StripQuotes(pluginConf["hashcat3"]) != "" {
 		hashcat3.Setup(common.StripQuotes(pluginConf["hashcat3"]))
+		resQueue.AddTool(hashcat3.NewTooler())
+	}
+	if common.StripQuotes(pluginConf["hashcat5"]) != "" {
+		hashcat5.Setup(common.StripQuotes(pluginConf["hashcat5"]))
 		resQueue.AddTool(hashcat3.NewTooler())
 	}
 	if common.StripQuotes(pluginConf["testtimer"]) == "true" {

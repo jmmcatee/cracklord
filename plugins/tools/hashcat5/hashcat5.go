@@ -28,7 +28,7 @@ var config Config
 
 // Setup configures this plugin for running and returns and error something is wrong.
 func Setup(confPath string) error {
-	log.Debug("Setting up hashcat 3.x plugin...")
+	log.Debug("Setting up hashcat 5.x plugin...")
 
 	// Load the configuration file
 	confFile, err := ini.LoadFile(confPath)
@@ -186,7 +186,7 @@ func Setup(confPath string) error {
 
 	}
 
-	log.Info("Hashcat 3.x tool successfully setup")
+	log.Info("Hashcat 5.x tool successfully setup")
 
 	return nil
 }
