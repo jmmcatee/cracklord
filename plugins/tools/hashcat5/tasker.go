@@ -45,7 +45,7 @@ type Tasker struct {
 
 // Status returns the common.Job option of the Tasker
 func (t *Tasker) Status() common.Job {
-	log.WithField("task", t.job.UUID).Debug("Status call for hashcat3 Tasker")
+	log.WithField("task", t.job.UUID).Debug("Status call for hashcat5 Tasker")
 
 	t.mux.Lock()
 	defer t.mux.Unlock()
