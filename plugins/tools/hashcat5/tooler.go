@@ -776,7 +776,6 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
-	t.resume = append(t.resume, config.Args...)
 	t.showPot = append(t.showPotLeft, "--hash-type="+htype, "--separator", ":")
 	if config.PotFilePath != "" {
 		t.showPot = append(t.showPot, "--potfile-path", config.PotFilePath)
@@ -799,7 +798,6 @@ func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 	// Apply the args parsed from the parameters
 	t.start = append(t.start, args...)
-	t.resume = append(t.resume, args...)
 
 	// Setup the OutputTitles column headers
 	t.job.OutputTitles = []string{"Plaintext", "Hashes"}
