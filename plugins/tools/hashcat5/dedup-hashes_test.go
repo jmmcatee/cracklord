@@ -27,7 +27,7 @@ func TestDedupOneDuplicate(t *testing.T) {
 }
 
 func TestDedupManyDuplicate(t *testing.T) {
-	ManyDuplciateSlice = append(OneDuplicateSlice, one, two, three, four, two, six, six, five, four, one, three, two, five, one, one, three)
+	ManyDuplciateSlice = append(ManyDuplciateSlice, one, two, three, four, two, six, six, five, four, one, three, two, five, one, one, three)
 	if len(ManyDuplciateSlice) != 16 {
 		t.Fatalf("Input length is %d", len(ManyDuplciateSlice))
 	}
