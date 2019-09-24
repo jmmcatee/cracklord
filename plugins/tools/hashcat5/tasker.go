@@ -258,7 +258,10 @@ func (t *Tasker) Run() error {
 		// Wait for the job to finish
 		t.exec.Wait()
 		t.mux.Lock()
-		log.WithField("task", t.job.UUID).Debug("Job exec returned Wait().")
+		log.WithFields(log.Fields{
+			"task":           t.job.UUID,
+			"returnedStatus": t.returnStatus,
+		}).Debug("Job exec returned Wait().")
 
 		//log.WithField("task", t.job.UUID).Debug("Took lock on job to change status to done.")
 		switch t.returnStatus {
@@ -274,7 +277,7 @@ func (t *Tasker) Run() error {
 
 		// Get the status now because we need the last output of hashes
 		//log.WithField("task", t.job.UUID).Debug("Calling final status call for the job.")
-		t.Status()
+		//t.Status()
 
 		//log.WithField("task", t.job.UUID).Debug("Releasing wait group.")
 		t.doneWG.Done()

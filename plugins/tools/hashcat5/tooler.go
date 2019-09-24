@@ -355,7 +355,15 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	var argHash string // hash|hashfile|hccapfile
 	var argDmD string  // [dictionary|mask|directory]
 
-	log.WithField("params", t.job.Parameters).Debug("Create Hashcat Job Parameters.")
+	logParam := map[string]string{}
+
+	for k, v := range t.job.Parameters {
+		if k != "hashes_multiline" && k != "hashes_file_upload" {
+			logParam[k] = v
+		}
+	}
+
+	log.WithField("params", logParam).Debug("Create Hashcat Job Parameters.")
 
 	// Get the hash type and add an argument
 	htype, ok := t.job.Parameters["hashmode"]
