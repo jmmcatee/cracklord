@@ -22,32 +22,32 @@ const (
 	HASH_OUTPUT_FILENAME      = "output-hashes.txt"
 )
 
-type hashcat3Tooler struct {
+type hashcat5Tooler struct {
 	toolUUID string
 	version  string
 }
 
-func (h *hashcat3Tooler) Name() string {
+func (h *hashcat5Tooler) Name() string {
 	return "Hashcat"
 }
 
-func (h *hashcat3Tooler) Type() string {
+func (h *hashcat5Tooler) Type() string {
 	return "Password Cracking"
 }
 
-func (h *hashcat3Tooler) Version() string {
+func (h *hashcat5Tooler) Version() string {
 	return h.version
 }
 
-func (h *hashcat3Tooler) UUID() string {
+func (h *hashcat5Tooler) UUID() string {
 	return h.toolUUID
 }
 
-func (h *hashcat3Tooler) SetUUID(s string) {
+func (h *hashcat5Tooler) SetUUID(s string) {
 	h.toolUUID = s
 }
 
-func (h *hashcat3Tooler) Requirements() string {
+func (h *hashcat5Tooler) Requirements() string {
 	return common.RES_GPU
 }
 
@@ -62,13 +62,13 @@ func NewTooler() common.Tooler {
 		log.WithField("error", err.Error()).Error("Could not pull hashcat 5.x version")
 	}
 
-	tooler := &hashcat3Tooler{}
+	tooler := &hashcat5Tooler{}
 	tooler.version = string(version)
 
 	return tooler
 }
 
-func (h *hashcat3Tooler) Parameters() string {
+func (h *hashcat5Tooler) Parameters() string {
 	hashcatForm := goschemaform.NewSchemaForm()
 
 	// Setup the dropdown for the hashing hashmode to use
@@ -337,7 +337,7 @@ func (h *hashcat3Tooler) Parameters() string {
 	return hashcatForm.SchemaForm()
 }
 
-func (h *hashcat3Tooler) NewTask(job common.Job) (common.Tasker, error) {
+func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	t := Tasker{}
 
 	t.job = job

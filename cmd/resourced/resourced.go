@@ -154,7 +154,7 @@ func main() {
 	}
 	if common.StripQuotes(pluginConf["hashcat5"]) != "" {
 		hashcat5.Setup(common.StripQuotes(pluginConf["hashcat5"]))
-		resQueue.AddTool(hashcat3.NewTooler())
+		resQueue.AddTool(hashcat5.NewTooler())
 	}
 	if common.StripQuotes(pluginConf["testtimer"]) == "true" {
 		testtimergpu.Setup()
