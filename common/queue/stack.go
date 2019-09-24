@@ -147,7 +147,6 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 	log.Debug("Attempting to get all jobs from the database")
 
 	var jobs []common.Job
-	var job common.Job
 
 	err := db.boltdb.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(BucketJobs)
@@ -155,6 +154,8 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 
 		c := bo.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var job common.Job
+
 			jvalue := b.Get(v)
 			err := json.Unmarshal(jvalue, &job)
 			if err != nil {

@@ -41,6 +41,7 @@ type Tasker struct {
 
 	doneWG       sync.WaitGroup // Used for checking if the job is done
 	returnStatus string         // Used to note if we quit from an error, completed, or paused
+	speedMag     float64        // magnitude of the speed to display (will divide by this number 1,000 [kH/s], 1,000,000 [MH/s], or 1,000,000,000 [GH/s] )
 }
 
 // Status returns the common.Job option of the Tasker
@@ -93,17 +94,30 @@ func (t *Tasker) Status() common.Job {
 			status, err := ParseMachineOutput(t.stdout.String())
 
 			if err == nil {
-				if t.job.PerformanceTitle == "" {
-					t.job.PerformanceTitle = "MH/s"
-				}
-				t.job.Progress = status.Progress
-				t.job.ETC = status.EstimateTime
-
 				var totalSpeed float64
 				for i := range status.Speed {
 					totalSpeed += status.Speed[i]
 				}
-				t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/1000000)
+
+				if t.job.PerformanceTitle == "" {
+					if totalSpeed < 1000 {
+						t.job.PerformanceTitle = "H/s"
+						t.speedMag = 1
+					} else if totalSpeed < 1000000 {
+						t.job.PerformanceTitle = "kH/s"
+						t.speedMag = 1000
+					} else if totalSpeed < 1000000000 {
+						t.job.PerformanceTitle = "MH/s"
+						t.speedMag = 1000000
+					} else {
+						t.job.PerformanceTitle = "GH/s"
+						t.speedMag = 1000000000
+					}
+				}
+				t.job.Progress = status.Progress
+				t.job.ETC = status.EstimateTime
+
+				t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/t.speedMag)
 
 				t.job.CrackedHashes = status.RecoveredHashes
 				t.job.TotalHashes = status.TotalHashes

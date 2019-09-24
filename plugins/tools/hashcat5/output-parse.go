@@ -27,6 +27,8 @@ type Status struct {
 	RecoveredHashes int64
 	TotalHashes     int64
 	Temperature     []int
+	Rejected        int64
+	Utilization     []int
 }
 
 // StatusTable is a table to convert status numbers in hashcat to a word
@@ -78,6 +80,7 @@ func ParseMachineOutput(out string) (Status, error) {
 	// Scan each word and begin populating our status
 	var speedLoop bool
 	var tempLoop bool
+	var utilLoop bool
 	for wordScanner.Scan() {
 		log.WithField("line", wordScanner.Text()).Info("Line")
 		// Status
@@ -105,20 +108,10 @@ func ParseMachineOutput(out string) (Status, error) {
 				continue
 			}
 
-			wordScanner.Scan()
-			speedMs, err := strconv.ParseFloat(wordScanner.Text(), 64)
-			if err != nil {
-				// We had an error parsing this so skip this word
-				log.WithField("error", err).Error("Error parsing speed per ms.")
-				continue
-			}
+			// Dump the legacy 1000 value
+			wordScanner.Text()
 
-			// Calculate the speed for this device
-			if speedMs == 0 {
-				status.Speed = append(status.Speed, 0)
-			} else {
-				status.Speed = append(status.Speed, speedCnt/speedMs*1000)
-			}
+			status.Speed = append(status.Speed, speedCnt)
 		}
 
 		// Speed
@@ -177,6 +170,18 @@ func ParseMachineOutput(out string) (Status, error) {
 
 		}
 
+		if strings.Compare(wordScanner.Text(), "REJECTED") == 0 {
+			tempLoop = false
+
+			rej, err := strconv.ParseInt(wordScanner.Text(), 10, 64)
+			if err != nil {
+				log.WithField("error", err).Error("Error parsing rejected number")
+				continue
+			}
+
+			status.Rejected = rej
+		}
+
 		// TEMP
 		if tempLoop {
 			temp, err := strconv.Atoi(wordScanner.Text())
@@ -192,6 +197,21 @@ func ParseMachineOutput(out string) (Status, error) {
 		if strings.Compare(wordScanner.Text(), "TEMP") == 0 {
 			tempLoop = true
 		}
+
+		if strings.Compare(wordScanner.Text(), "UTIL") == 0 {
+			utilLoop = true
+		}
+
+		if utilLoop {
+			util, err := strconv.Atoi(wordScanner.Text())
+			if err != nil {
+				log.WithField("error", err).Error("Error parsing utilization number.")
+				continue
+			}
+
+			status.Utilization = append(status.Utilization, util)
+		}
+
 	}
 
 	// If we did not find a status line return a failure and nil status
