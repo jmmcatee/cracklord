@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/etcd-io/bbolt"
 	"github.com/jmmcatee/cracklord/common"
 )
@@ -26,17 +27,22 @@ type JobDB struct {
 
 // NewJobDB returns a new instance of the JobDB structure
 func NewJobDB(path string) (*JobDB, error) {
+	logger := log.WithFields(log.Fields{
+		"path": path,
+	})
 	var jb JobDB
 
 	db, err := bbolt.Open(filepath.Clean(path), 0600, nil)
 	if err != nil {
 		return &JobDB{}, err
 	}
+	logger.Debug("Opened boltdb database")
 
 	tx, err := db.Begin(true)
 	if err != nil {
 		return &JobDB{}, err
 	}
+	logger.Debug("Begin database setup transaction")
 
 	_, err = tx.CreateBucketIfNotExists(BucketJobs)
 	if err != nil {
@@ -49,6 +55,12 @@ func NewJobDB(path string) (*JobDB, error) {
 		tx.Rollback()
 		return &JobDB{}, err
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &JobDB{}, err
+	}
+	logger.Debug("End database setup transaction")
 
 	jb.boltdb = db
 	return &jb, nil
@@ -70,25 +82,48 @@ func (db *JobDB) Count() int {
 
 // AddJob adds a common.Job structure to the BBoltDB
 func (db *JobDB) AddJob(j common.Job) error {
+	logger := log.WithFields(log.Fields{
+		"jobID":   j.UUID,
+		"jobName": j.Name,
+	})
+	logger.Debug("Attempting to Job to database")
+
 	value, err := json.Marshal(j)
 	if err != nil {
 		return err
 	}
+	logger.Debug("Marshaled Job to JSON for storing")
 
 	return db.boltdb.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(BucketJobs)
 		bo := tx.Bucket(BucketJobOrder)
 
-		b.Put([]byte(j.UUID), value)
-		id, _ := bo.NextSequence()
-		bo.Put(itob(id), []byte(j.UUID))
+		err := b.Put([]byte(j.UUID), value)
+		if err != nil {
+			return err
+		}
+		id, err := bo.NextSequence()
+		if err != nil {
+			return err
+		}
 
+		err = bo.Put(itob(id), []byte(j.UUID))
+		if err != nil {
+			return err
+		}
+
+		logger.Debug("Job successfully added to the database.")
 		return nil
 	})
 }
 
 // GetJob returns the common.Job for the given UUID
 func (db *JobDB) GetJob(uuid string) (common.Job, error) {
+	logger := log.WithFields(log.Fields{
+		"jobID": uuid,
+	})
+	logger.Debug("Attempting to get job from the database")
+
 	var j common.Job
 
 	err := db.boltdb.View(func(tx *bbolt.Tx) error {
@@ -109,6 +144,8 @@ func (db *JobDB) GetJob(uuid string) (common.Job, error) {
 
 // GetAllJobs returns the full Queue of Jobs
 func (db *JobDB) GetAllJobs() ([]common.Job, error) {
+	log.Debug("Attempting to get all jobs from the database")
+
 	var jobs []common.Job
 	var job common.Job
 
@@ -130,15 +167,26 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 		return nil
 	})
 
+	logger := log.WithFields(log.Fields{
+		"jobCount": len(jobs),
+	})
+	logger.Debug("Walked database collecting jobs")
 	return jobs, err
 }
 
 // UpdateJob updates the value of a common.Job already in the database
 func (db *JobDB) UpdateJob(j common.Job) error {
+	logger := log.WithFields(log.Fields{
+		"jobID":   j.UUID,
+		"jobName": j.Name,
+	})
+	logger.Debug("Attempting to update job in the database")
+
 	value, err := json.Marshal(j)
 	if err != nil {
 		return err
 	}
+	logger.Debug("Job marshaled to JSON")
 
 	return db.boltdb.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(BucketJobs)
@@ -149,10 +197,16 @@ func (db *JobDB) UpdateJob(j common.Job) error {
 
 // DeleteJob removes a given common.Job by UUID from the DB
 func (db *JobDB) DeleteJob(uuid string) error {
+	logger := log.WithFields(log.Fields{
+		"jobID": uuid,
+	})
+	logger.Debug("Attempting to delete job in the database")
+
 	return db.boltdb.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(BucketJobs)
 		bo := tx.Bucket(BucketJobOrder)
 
+		logger.Debug("Find job in order bucket for removal")
 		var boKey []byte
 		c := bo.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -160,17 +214,23 @@ func (db *JobDB) DeleteJob(uuid string) error {
 				boKey = k
 			}
 		}
+
+		boLogger := log.WithField("orderKey", boKey)
+		boLogger.Debug("Order key found, now delete the value")
 		err := bo.Delete(boKey)
 		if err != nil {
 			return err
 		}
 
+		logger.Debug("Deleted job value based on UUID")
 		return b.Delete([]byte(uuid))
 	})
 }
 
 // ReorderJobs deletes the order bucket, recreates it with new order
 func (db *JobDB) ReorderJobs(uuids []string) error {
+	log.Debug("Attempting to reorder jobs in the database")
+
 	return db.boltdb.Update(func(tx *bbolt.Tx) error {
 		bo := tx.Bucket(BucketJobOrder)
 		c := bo.Cursor()
@@ -199,8 +259,14 @@ func (db *JobDB) ReorderJobs(uuids []string) error {
 		}
 
 		for i := range uuids {
-			id, _ := bo.NextSequence()
-			bo.Put(itob(id), []byte(uuids[i]))
+			id, err := bo.NextSequence()
+			if err != nil {
+				return err
+			}
+			err = bo.Put(itob(id), []byte(uuids[i]))
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil

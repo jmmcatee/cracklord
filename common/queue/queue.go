@@ -84,8 +84,6 @@ func (q *Queue) AddJob(j common.Job) error {
 	logger.Debug("Queue locked.")
 
 	// Add job to stack
-	// q.stack = append(q.stack, j)
-	// jobIndex := len(q.stack) - 1
 	err := q.db.AddJob(j)
 	if err != nil {
 		return err
