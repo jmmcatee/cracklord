@@ -16,17 +16,18 @@ import (
 	"github.com/jmmcatee/cracklord/common/queue"
 )
 
-// All handler functions are created as part of the base AppController. This is done to
+// AppController all handler functions are created as part of the base AppController. This is done to
 // allow type safe dependency injection to all handler functions. This also make
 // expandablility related to adding a database or other dependencies much easier
 // for future development.
 type AppController struct {
 	T    TokenStore
 	Auth Authenticator
-	Q    queue.Queue
+	Q    *queue.Queue
 	TLS  *tls.Config
 }
 
+// Returns the muxRouter
 func (a *AppController) Router() *mux.Router {
 	r := mux.NewRouter().StrictSlash(false)
 

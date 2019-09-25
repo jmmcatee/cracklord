@@ -12,10 +12,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/jmmcatee/cracklord/common"
-	"github.com/jmmcatee/cracklord/common/log"
+	cracklog "github.com/jmmcatee/cracklord/common/log"
 	"github.com/jmmcatee/cracklord/common/queue"
-	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws"
-	"github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
+	awsresourcemanager "github.com/jmmcatee/cracklord/plugins/resourcemanagers/aws"
+	directconnectresourcemanager "github.com/jmmcatee/cracklord/plugins/resourcemanagers/directconnect"
 	"github.com/unrolled/secure"
 	ini "github.com/vaughan0/go-ini"
 )
@@ -396,7 +396,7 @@ func main() {
 
 	// First, let's setup the direct connect manager if we have anything there
 	if resDC, ok := confResMgr["directconnect"]; ok {
-		resmgr_dc, err := directconnectresourcemanager.Setup(resDC, &server.Q, qandrTLSConfig)
+		resmgr_dc, err := directconnectresourcemanager.Setup(resDC, server.Q, qandrTLSConfig)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup direct connect resource manager.")
 		} else {
@@ -406,7 +406,7 @@ func main() {
 
 	// Now let's setup the AWS manager if we have a config file
 	if resAWS, ok := confResMgr["aws"]; ok {
-		resmgr_aws, err := awsresourcemanager.Setup(resAWS, &server.Q, qandrTLSConfig, caCertPath, caKeyPath)
+		resmgr_aws, err := awsresourcemanager.Setup(resAWS, server.Q, qandrTLSConfig, caCertPath, caKeyPath)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Unable to setup AWS resource manager.")
 		} else {
