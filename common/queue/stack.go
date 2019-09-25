@@ -178,6 +178,7 @@ func (db *JobDB) UpdateJob(j *common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"uuid":   j.UUID,
 		"name":   j.Name,
+		"resid":  j.ResAssigned,
 		"params": common.CleanJobParamsForLogging(j),
 	})
 	logger.Debug("Attempting to update job in the database")
