@@ -41,7 +41,7 @@ type Queue struct {
 }
 
 // NewQueue returns a new instance of the Queue structure initialized
-func NewQueue(updatetime int, timeout int, hooks HookParameters, purgetime int, jdb *JobDB) Queue {
+func NewQueue(updatetime int, timeout int, hooks HookParameters, purgetime int, jdb *JobDB) *Queue {
 	//Setup the options
 	KeeperDuration = time.Duration(updatetime) * time.Second
 	NetworkTimeout = time.Duration(timeout) * time.Second
@@ -64,7 +64,7 @@ func NewQueue(updatetime int, timeout int, hooks HookParameters, purgetime int, 
 		"nettimeout": NetworkTimeout,
 	}).Debug("Setup a new queue")
 
-	return q
+	return &q
 }
 
 // AddJob adds a job to the queue at the end of the stack
@@ -86,7 +86,6 @@ func (q *Queue) AddJob(j common.Job) error {
 	if err != nil {
 		return err
 	}
-	logger.Debug("job added to stack.")
 
 	// Call out to the registered hooks to inform them of job creation
 	go HookOnJobCreate(Hooks.JobCreate, j)
@@ -141,7 +140,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				var retJob common.Job
 
 				logger.Debug("Queue.AddTask RPC call started.")
-				err := q.pool[i].Client.Call("Queue.AddTask", addJob, retJob)
+				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &retJob)
 				if err != nil {
 					logger.Error(err)
 					retJob.Status = common.STATUS_FAILED
@@ -293,10 +292,10 @@ func (q *Queue) PauseJob(jobuuid string) error {
 		err = q.db.UpdateJob(retJob)
 
 		return err
-	} else {
-		// The job was found but was not running so lets return an error
-		return errors.New("Job given is not running. Current status is " + job.Status)
 	}
+
+	// The job was found but was not running so lets return an error
+	return errors.New("Job given is not running. Current status is " + job.Status)
 }
 
 // QuitJob attempts to quit the job given a UUID
@@ -1030,9 +1029,9 @@ func (q *Queue) GetResourceManager(systemname string) (ResourceManager, bool) {
 	if ok == true {
 		mgrtype := manager.(ResourceManager)
 		return mgrtype, ok
-	} else {
-		return nil, ok
 	}
+
+	return nil, ok
 }
 
 // AddResourceManager is used to add a resource manager to the map of all available
@@ -1334,19 +1333,20 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	}
 
 	// Loop through any jobs assigned to the resource and quit them if they are not completed
-	for i, v := range jobs {
-		if v.ResAssigned == resUUID {
+	for i := range jobs {
+		if jobs[i].ResAssigned == resUUID {
 			// Check status
-			if v.Status == common.STATUS_RUNNING || v.Status == common.STATUS_PAUSED {
+			if jobs[i].Status == common.STATUS_RUNNING || jobs[i].Status == common.STATUS_PAUSED {
 				// Quit the task
-				quitTask := common.RPCCall{Job: v}
+				quitTask := common.RPCCall{Job: jobs[i]}
+				var retJob common.Job
 
-				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &jobs[i])
+				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &retJob)
 				if err != nil {
 					log.Println(err.Error())
 				}
 
-				err = q.db.UpdateJob(jobs[i])
+				err = q.db.UpdateJob(retJob)
 				if err != nil {
 					log.Error(err)
 				}
@@ -1365,7 +1365,7 @@ func (q *Queue) RemoveResource(resUUID string) error {
 		delete(res.Tools, key)
 	}
 	q.pool[resUUID] = res
-	for i, _ := range q.pool[resUUID].Hardware {
+	for i := range q.pool[resUUID].Hardware {
 		q.pool[resUUID].Hardware[i] = false
 	}
 

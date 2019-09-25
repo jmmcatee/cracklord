@@ -85,7 +85,7 @@ func (db *JobDB) AddJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"jobID":   j.UUID,
 		"jobName": j.Name,
-		"params":  j.Parameters,
+		"params":  common.CleanJobParamsForLogging(j),
 	})
 	logger.Debug("Attempting to Job to database")
 

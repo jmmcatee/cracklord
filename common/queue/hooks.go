@@ -90,7 +90,7 @@ func hookPerformWebPOST(url string, data interface{}) error {
 
 	// It's always important to log.
 	log.WithFields(log.Fields{
-		"url": url,
+		"url":  url,
 		"data": b,
 	}).Debug("POSTing to webhook")
 
@@ -155,10 +155,10 @@ func hookRunUnsafeCode(unsafe *os.File, data interface{}) {
 		}).Debug("Hook code ran successfully, script completed.")
 	}()
 
-	vm := otto.New()                                                             // Create the Otto object.
-	vm.Interrupt = make(chan func(), 1)                                          // Channel to handle our interrupt function
+	vm := otto.New()                    // Create the Otto object.
+	vm.Interrupt = make(chan func(), 1) // Channel to handle our interrupt function
 
-	vm.Set("data", data)                                                         // Make our data available to the script
+	vm.Set("data", data) // Make our data available to the script
 
 	go func() { // goroutine to interreupt after number of seconds
 		time.Sleep(time.Duration(Hooks.ScriptTimeout) * time.Second)
@@ -171,7 +171,7 @@ func hookRunUnsafeCode(unsafe *os.File, data interface{}) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"path": unsafe.Name(),
-			"msg": err,
+			"msg":  err,
 		}).Warn("File hook ran with errors.")
 	}
 }
@@ -231,9 +231,9 @@ func copyJobToHookQueueJob(src common.Job) (dst HookQueueOrderJobData) {
 func hookParseType(target string) string {
 	if strings.HasPrefix(target, "http") {
 		return "web"
-	} else {
-		return "script"
 	}
+
+	return "script"
 }
 
 /* This function runs the hooks that have been passed into it utilizing the data
