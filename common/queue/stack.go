@@ -85,6 +85,7 @@ func (db *JobDB) AddJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"jobID":   j.UUID,
 		"jobName": j.Name,
+		"params":  j.Parameters,
 	})
 	logger.Debug("Attempting to Job to database")
 
@@ -129,9 +130,7 @@ func (db *JobDB) GetJob(uuid string) (common.Job, error) {
 	err := db.boltdb.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(BucketJobs)
 
-		value := b.Get([]byte(uuid))
-
-		err := json.Unmarshal(value, &j)
+		err := json.Unmarshal(b.Get([]byte(uuid)), &j)
 		if err != nil {
 			return err
 		}
@@ -156,8 +155,7 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var job common.Job
 
-			jvalue := b.Get(v)
-			err := json.Unmarshal(jvalue, &job)
+			err := json.Unmarshal(b.Get(v), &job)
 			if err != nil {
 				return err
 			}
@@ -178,8 +176,9 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 // UpdateJob updates the value of a common.Job already in the database
 func (db *JobDB) UpdateJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
-		"jobID":   j.UUID,
-		"jobName": j.Name,
+		"uuid":   j.UUID,
+		"name":   j.Name,
+		"params": common.CleanJobParamsForLogging(j),
 	})
 	logger.Debug("Attempting to update job in the database")
 

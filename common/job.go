@@ -40,3 +40,16 @@ func NewJob(tooluuid string, name string, owner string, params map[string]string
 		PerformanceData: make(map[string]string),
 	}
 }
+
+// CleanJobParamsForLogging takes a job and returns a map of parameters than can be used in loggin without sensitive information
+func CleanJobParamsForLogging(j Job) map[string]string {
+	logParam := make(map[string]string)
+
+	for k, v := range j.Parameters {
+		if k != "hashes_multiline" && k != "hashes_file_upload" && k != "dict_use_custom_prepend" && k != "dict_rules_use_custom" && k != "dict_rules_custom_file" {
+			logParam[k] = v
+		}
+	}
+
+	return logParam
+}

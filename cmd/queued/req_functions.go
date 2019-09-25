@@ -538,9 +538,16 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	// Build a job structure
 	job := common.NewJob(req.ToolID, req.Name, user.Username, params)
 
+	// Log the new job structure and parameters used for job creation
+	logNewJob := log.WithFields(log.Fields{
+		"jobID":     job.UUID,
+		"jobName":   job.Name,
+		"jobParams": common.CleanJobParamsForLogging(job),
+	})
+
 	err = a.Q.AddJob(job)
 	if err != nil {
-		log.Println(err.Error())
+		log.Error(err)
 		resp.Status = RESP_CODE_BADREQ
 		resp.Message = "An error occured when trying to create the job: " + err.Error()
 
@@ -557,6 +564,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
 
+	logNewJob.Debug("New job submitted via the API")
 	log.WithFields(log.Fields{
 		"uuid": job.UUID,
 		"name": job.Name,
@@ -591,13 +599,11 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 
 	// Pull Job info from the Queue
 	job := a.Q.JobInfo(jobid)
-
-	// Remove the file and hashes parameters
-	delete(job.Parameters, "hashes_multiline")
-	delete(job.Parameters, "hashes_file_upload")
-	delete(job.Parameters, "dict_rules_custom_file")
-	delete(job.Parameters, "dict_rules_use_custom")
-	delete(job.Parameters, "dict_custom_prepend")
+	logJob := log.WithFields(log.Fields{
+		"jobID":     job.UUID,
+		"jobName":   job.Name,
+		"jobParams": common.CleanJobParamsForLogging(job),
+	})
 
 	// Build the response structure
 	resp.Status = RESP_CODE_OK
@@ -612,7 +618,7 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	resp.Job.CrackedHashes = job.CrackedHashes
 	resp.Job.TotalHashes = job.TotalHashes
 	resp.Job.Progress = job.Progress
-	resp.Job.Params = job.Parameters
+	resp.Job.Params = common.CleanJobParamsForLogging(job)
 	resp.Job.ToolID = job.ToolUUID
 	resp.Job.PerformanceTitle = job.PerformanceTitle
 	resp.Job.PerformanceData = job.PerformanceData
@@ -622,6 +628,7 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(RESP_CODE_OK)
 	respJSON.Encode(resp)
 
+	logJob.Debug("Job data pulled from Queue for API call")
 	log.WithFields(log.Fields{
 		"uuid": job.UUID,
 		"name": job.Name,

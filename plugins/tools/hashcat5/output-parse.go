@@ -34,16 +34,18 @@ type Status struct {
 // StatusTable is a table to convert status numbers in hashcat to a word
 var StatusTable = map[string]string{
 	"0":  "Init",
-	"1":  "Starting",
-	"2":  "Running",
-	"3":  "Paused",
-	"4":  "Exhausted",
-	"5":  "Cracked",
-	"6":  "Aborted",
-	"7":  "Quit",
-	"8":  "Bypass",
-	"9":  "StopAtCheckpoint",
-	"10": "Autotune",
+	"1":  "Autotune",
+	"2":  "SelfTest",
+	"3":  "Running",
+	"4":  "Paused",
+	"5":  "Exhausted",
+	"6":  "Cracked",
+	"7":  "Aborted",
+	"8":  "Quit",
+	"9":  "Bypass",
+	"10": "Aborted_Checkpoint",
+	"11": "Aborted_Runtime",
+	"13": "Error",
 }
 
 // ParseMachineOutput returns a Status for a given status line
@@ -109,7 +111,7 @@ func ParseMachineOutput(out string) (Status, error) {
 			}
 
 			// Dump the legacy 1000 value
-			wordScanner.Text()
+			wordScanner.Scan()
 
 			status.Speed = append(status.Speed, speedCnt)
 		}
@@ -173,6 +175,7 @@ func ParseMachineOutput(out string) (Status, error) {
 		if strings.Compare(wordScanner.Text(), "REJECTED") == 0 {
 			tempLoop = false
 
+			wordScanner.Scan()
 			rej, err := strconv.ParseInt(wordScanner.Text(), 10, 64)
 			if err != nil {
 				log.WithField("error", err).Error("Error parsing rejected number")
@@ -180,6 +183,15 @@ func ParseMachineOutput(out string) (Status, error) {
 			}
 
 			status.Rejected = rej
+		}
+
+		// TEMP
+		if strings.Compare(wordScanner.Text(), "TEMP") == 0 {
+			tempLoop = true
+		}
+
+		if strings.Compare(wordScanner.Text(), "UTIL") == 0 {
+			utilLoop = true
 		}
 
 		// TEMP
@@ -191,15 +203,6 @@ func ParseMachineOutput(out string) (Status, error) {
 			}
 
 			status.Temperature = append(status.Temperature, temp)
-		}
-
-		// TEMP
-		if strings.Compare(wordScanner.Text(), "TEMP") == 0 {
-			tempLoop = true
-		}
-
-		if strings.Compare(wordScanner.Text(), "UTIL") == 0 {
-			utilLoop = true
 		}
 
 		if utilLoop {
