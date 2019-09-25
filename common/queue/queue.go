@@ -904,6 +904,11 @@ func (q *Queue) updateQueue() {
 						hw = v.Requirements
 					}
 				}
+				log.WithFields(log.Fields{
+					"resassigned": retJob.ResAssigned,
+					"pool":        q.pool,
+					"hardware":    hw,
+				}).Debug("Resetting hardware availability")
 				q.pool[retJob.ResAssigned].Hardware[hw] = true
 
 				// Set a purge time
