@@ -83,9 +83,9 @@ func (db *JobDB) Count() int {
 // AddJob adds a common.Job structure to the BBoltDB
 func (db *JobDB) AddJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
-		"jobID":   j.UUID,
-		"jobName": j.Name,
-		"params":  common.CleanJobParamsForLogging(j),
+		"uuid":   j.UUID,
+		"name":   j.Name,
+		"params": common.CleanJobParamsForLogging(&j),
 	})
 	logger.Debug("Attempting to Job to database")
 
@@ -174,7 +174,7 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 }
 
 // UpdateJob updates the value of a common.Job already in the database
-func (db *JobDB) UpdateJob(j common.Job) error {
+func (db *JobDB) UpdateJob(j *common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"uuid":   j.UUID,
 		"name":   j.Name,
