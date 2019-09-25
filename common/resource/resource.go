@@ -146,7 +146,8 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 		return errors.New("Task with UUID provided does not exist.")
 	}
 
-	*j = q.stack[rpc.Job.UUID].Status()
+	tjob := q.stack[rpc.Job.UUID].Status()
+	j = &tjob
 
 	return nil
 }

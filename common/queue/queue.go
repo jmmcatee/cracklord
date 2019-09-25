@@ -883,6 +883,11 @@ func (q *Queue) updateQueue() {
 			// Build status update call
 			jobStatus := common.RPCCall{Job: jobs[i]}
 
+			log.WithFields(log.Fields{
+				"jobuuid": jobs[i].UUID,
+				"jobname": jobs[i].Name,
+				"resuuid": jobs[i].ResAssigned,
+			}).Debug("Making RPC call to resource to get job status")
 			retJob := common.EmptyJob()
 			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskStatus", jobStatus, &retJob)
 			// we care about the errors, but only from a logging perspective

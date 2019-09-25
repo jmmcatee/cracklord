@@ -152,6 +152,7 @@ func (t *Tasker) Status() common.Job {
 	t.stderr.Reset()
 	t.stdout.Reset()
 
+	log.WithField("job", t.job).Debug("Returning job with status call")
 	return t.job
 }
 
