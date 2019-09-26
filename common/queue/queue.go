@@ -803,9 +803,13 @@ func (q *Queue) keeper() {
 													continue JobLoop
 												}
 
+												log.WithField("JOB", retJob).Debug("JOB DEBUG AFTER RETURN")
+
 												// Job has been started so mark the hardware as in use and assign the resource ID
 												retJob.ResAssigned = resKey
 												q.pool[resKey].Hardware[hardwareKey] = false
+
+												log.WithField("JOB", retJob).Debug("JOB DEBUG BEFORE UPDATE")
 
 												err = q.db.UpdateJob(retJob)
 												if err != nil {
