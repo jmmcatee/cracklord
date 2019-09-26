@@ -31,11 +31,11 @@ type Job struct {
 }
 
 // EmptyJob returns an initialized but empty job struct
-func EmptyJob() *Job {
-	return &Job{
-		Parameters:      map[string]string{},
-		PerformanceData: map[string]string{},
-	}
+func EmptyJob() Job {
+	var j Job
+	j.Parameters = map[string]string{}
+
+	return j
 }
 
 // NewJob creates a new job with the provided parameters
