@@ -1484,6 +1484,7 @@ func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {
 			"ping":  ping,
 			"reply": reply,
 		}).Error("ping did not return the correct value")
+		return false
 	}
 
 	return true

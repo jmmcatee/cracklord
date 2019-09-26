@@ -46,12 +46,14 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 
 // Task RPC functions
 func (q *Queue) Ping(ping int, pong *int) error {
-	q.Lock()
-	defer q.Unlock()
-
 	calc := ping * ping
 
 	pong = &calc
+
+	log.WithFields(log.Fields{
+		"ping": ping,
+		"pong": calc,
+	}).Debug("RPC ping called")
 
 	return nil
 }
