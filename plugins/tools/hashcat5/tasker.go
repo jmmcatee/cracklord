@@ -119,7 +119,9 @@ func (t *Tasker) Status() common.Job {
 
 				t.job.PerformanceData[fmt.Sprintf("%d", time.Now().Unix())] = fmt.Sprintf("%f", totalSpeed/t.speedMag)
 
-				t.job.CrackedHashes = status.RecoveredHashes
+				if status.RecoveredHashes > t.job.CrackedHashes {
+					t.job.CrackedHashes = status.RecoveredHashes
+				}
 				t.job.TotalHashes = status.TotalHashes
 			} else {
 				log.Debug(err.Error())
@@ -222,8 +224,13 @@ func (t *Tasker) Run() error {
 	t.job.TotalHashes = leftCount + potCount
 	t.job.CrackedHashes = potCount
 
+	// We need to check for a restore file. If it does not exist we have to start over and not give the --restore command
+	hashcatBinFolder := filepath.Dir(config.BinPath)
+	_, err = os.Stat(filepath.Join(hashcatBinFolder, t.job.UUID+".restore"))
+	log.WithField("error", err).Debug("Stat of restore file returned error")
+
 	// Set commands for restore or start
-	if t.job.Status == common.STATUS_CREATED {
+	if t.job.Status == common.STATUS_CREATED || os.IsNotExist(err) {
 		t.exec = *exec.Command(config.BinPath, t.start...)
 	} else {
 		t.exec = *exec.Command(config.BinPath, t.resume...)
@@ -288,13 +295,8 @@ func (t *Tasker) Run() error {
 			t.job.Status = common.STATUS_QUIT
 		}
 
-		//log.WithField("task", t.job.UUID).Debug("Unlocked job after setting done.")
+		t.returnStatus = ""
 
-		// Get the status now because we need the last output of hashes
-		//log.WithField("task", t.job.UUID).Debug("Calling final status call for the job.")
-		//t.Status()
-
-		//log.WithField("task", t.job.UUID).Debug("Releasing wait group.")
 		t.doneWG.Done()
 		t.mux.Unlock()
 	}()

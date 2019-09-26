@@ -974,6 +974,12 @@ func (q *Queue) updateQueue() {
 					"JobID":     retJob.UUID,
 					"PurgeTime": retJob.PurgeTime,
 				}).Debug("Updated PurgeTime value")
+
+				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskDone", jobStatus, &retJob)
+				// we care about the errors, but only from a logging perspective
+				if err != nil {
+					log.WithField("rpc error", err.Error()).Error("Error during RPC call.")
+				}
 			}
 
 			err = q.db.UpdateJob(retJob)

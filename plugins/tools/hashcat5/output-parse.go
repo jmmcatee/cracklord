@@ -50,7 +50,7 @@ var StatusTable = map[string]string{
 
 // ParseMachineOutput returns a Status for a given status line
 func ParseMachineOutput(out string) (Status, error) {
-	log.WithField("status2Parse", out).Debug("Parsing machine output")
+	//log.WithField("status2Parse", out).Debug("Parsing machine output")
 
 	if len(out) < 6 {
 		// Empty stdout so return empty status
