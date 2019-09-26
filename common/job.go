@@ -30,14 +30,6 @@ type Job struct {
 	OutputTitles     []string          // The headers for the 2D array of rows above
 }
 
-// EmptyJob returns an initialized but empty job struct
-func EmptyJob() Job {
-	var j Job
-	j.Parameters = map[string]string{}
-
-	return j
-}
-
 // NewJob creates a new job with the provided parameters
 func NewJob(tooluuid string, name string, owner string, params map[string]string) Job {
 	return Job{
@@ -62,4 +54,28 @@ func CleanJobParamsForLogging(j Job) map[string]string {
 	}
 
 	return logParam
+}
+
+// CopyJob takes an existing job and copies all values to a new job overwriting any existing values
+func CopyJob(src Job, dst *Job) {
+	dst.UUID = src.UUID
+	dst.ToolUUID = src.ToolUUID
+	dst.Name = src.Name
+	dst.Status = src.Status
+	dst.Error = src.Error
+	dst.StartTime = src.StartTime
+	dst.PurgeTime = src.PurgeTime
+	dst.RunTime = src.RunTime
+	dst.ETC = src.ETC
+	dst.Owner = src.Owner
+	dst.TeamVisible = src.TeamVisible
+	dst.ResAssigned = src.ResAssigned
+	dst.CrackedHashes = src.CrackedHashes
+	dst.TotalHashes = src.TotalHashes
+	dst.Progress = src.Progress
+	dst.Parameters = src.Parameters
+	dst.PerformanceData = src.PerformanceData
+	dst.PerformanceTitle = src.PerformanceTitle
+	dst.OutputData = src.OutputData
+	dst.OutputTitles = src.OutputTitles
 }

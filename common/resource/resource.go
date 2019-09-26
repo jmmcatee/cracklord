@@ -69,11 +69,6 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 		"uuid": rpc.Job.UUID,
 	}).Info("Job added")
 
-	log.WithFields(log.Fields{
-		"uuid":       rpc.Job.UUID,
-		"parameters": rpc.Job.Parameters,
-	})
-
 	// Add a defered catch for panic from within the tools
 	defer func() {
 		if err := recover(); err != nil {
@@ -120,7 +115,7 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	}
 
 	// Grab the status and return that job to the control queue
-	*rj = q.stack[rpc.Job.UUID].Status()
+	common.CopyJob(q.stack[rpc.Job.UUID].Status(), rj)
 
 	return nil
 }
@@ -146,8 +141,7 @@ func (q *Queue) TaskStatus(rpc common.RPCCall, j *common.Job) error {
 		return errors.New("Task with UUID provided does not exist.")
 	}
 
-	tjob := q.stack[rpc.Job.UUID].Status()
-	j = &tjob
+	common.CopyJob(q.stack[rpc.Job.UUID].Status(), j)
 
 	return nil
 }
@@ -182,7 +176,7 @@ func (q *Queue) TaskPause(rpc common.RPCCall, j *common.Job) error {
 		return err
 	}
 
-	*j = q.stack[rpc.Job.UUID].Status()
+	common.CopyJob(q.stack[rpc.Job.UUID].Status(), j)
 
 	log.WithField("task", j.UUID).Debug("Task paused successfully")
 
@@ -217,7 +211,7 @@ func (q *Queue) TaskRun(rpc common.RPCCall, j *common.Job) error {
 		return err
 	}
 
-	*j = q.stack[rpc.Job.UUID].Status()
+	common.CopyJob(q.stack[rpc.Job.UUID].Status(), j)
 
 	log.WithField("task", j.UUID).Debug("Task ran successfully")
 
@@ -249,7 +243,7 @@ func (q *Queue) TaskQuit(rpc common.RPCCall, j *common.Job) error {
 	}
 
 	// Quit the task and return the final result
-	*j = q.stack[rpc.Job.UUID].Quit()
+	common.CopyJob(q.stack[rpc.Job.UUID].Quit(), j)
 
 	// Remove quit job from stack
 	delete(q.stack, rpc.Job.UUID)
@@ -267,6 +261,8 @@ func (q *Queue) TaskDone(rpc common.RPCCall, j *common.Job) error {
 	// Get a lock and make sure we unlock the stack on return
 	q.Lock()
 	defer q.Unlock()
+
+	common.CopyJob(q.stack[rpc.Job.UUID].Status(), j)
 
 	// Delete the specific job
 	delete(q.stack, rpc.Job.UUID)
@@ -335,13 +331,40 @@ func (q *Queue) AllTaskStatus(rpc common.RPCCall, j *[]common.Job) error {
 
 	q.Lock()
 
-	for i, _ := range q.stack {
+	for i := range q.stack {
 		jobs = append(jobs, q.stack[i].Status())
 	}
 
 	*j = jobs
 
 	q.Unlock()
+
+	return nil
+}
+
+func (q *Queue) JobManTest(rpc common.RPCCall, job *common.Job) error {
+	common.CopyJob(rpc.Job, job)
+	job.Status = "DONE"
+	job.PerformanceTitle = "GH/s"
+	job.PerformanceData = map[string]string{
+		"1": "100",
+		"2": "1000",
+		"3": "10000",
+		"4": "100000",
+	}
+	job.Parameters = map[string]string{
+		"adv_options_loopback":     "false",
+		"brute_increment":          "true",
+		"brute_max_length":         "9",
+		"brute_min_length":         "7",
+		"brute_predefined_charset": "UPPER, lower, Number [9]",
+		"brute_use_custom_chars":   "false",
+		"dict_rules_use_random":    "false",
+		"hashes_use_upload":        "false",
+		"hashmode":                 "500",
+		"use_adv_options":          "false",
+		"new_param":                "true",
+	}
 
 	return nil
 }
