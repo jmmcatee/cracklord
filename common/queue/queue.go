@@ -137,7 +137,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				// Tool exist, lets start the job on this resource and assign the resource to the job
 				j.ResAssigned = i
 				addJob := common.RPCCall{Job: j}
-				retJob := common.EmptyJob()
+				var retJob common.Job
 
 				logger.Debug("Queue.AddTask RPC call started.")
 				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &retJob)
@@ -266,7 +266,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 	if job.Status == common.STATUS_RUNNING {
 		// Job is running so lets tell it to pause
 		pauseJob := common.RPCCall{Job: job}
-		retJob := common.EmptyJob()
+		var retJob common.Job
 
 		log.WithField("job", pauseJob.Job.UUID).Debug("Calling Queue.TaskPause on remote resource.")
 		err := q.pool[job.ResAssigned].Client.Call("Queue.TaskPause", pauseJob, &retJob)
@@ -324,7 +324,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 		job.Status != common.STATUS_CREATED {
 		// Lets build the call to stop the job
 		quitJob := common.RPCCall{Job: job}
-		retJob := common.EmptyJob()
+		var retJob common.Job
 
 		log.WithField("uuid", quitJob.Job.UUID).Debug("Attempting to call Queue.TaskQuit on remote resource.")
 		err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
@@ -428,7 +428,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 		if jobs[i].ResAssigned == resUUID && jobs[i].Status == common.STATUS_RUNNING {
 			// We found a task that is running so lets pause it
 			pauseJob := common.RPCCall{Job: jobs[i]}
-			retJob := common.EmptyJob()
+			var retJob common.Job
 
 			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &retJob)
 			if err != nil {
@@ -536,7 +536,7 @@ func (q *Queue) PauseQueue() []error {
 
 			// This task is running and needs to be paused
 			pauseJob := common.RPCCall{Job: jobs[i]}
-			retJob := common.EmptyJob()
+			var retJob common.Job
 
 			joblog.Debug("Calling Queue.TaskPause on job")
 			err := q.pool[resuuid].Client.Call("Queue.TaskPause", pauseJob, &retJob)
@@ -667,7 +667,7 @@ func (q *Queue) Quit() []common.Job {
 		if s == common.STATUS_RUNNING || s == common.STATUS_PAUSED {
 			// Build the quit call
 			quitJob := common.RPCCall{Job: jobs[i]}
-			retJob := common.EmptyJob()
+			var retJob common.Job
 
 			joblog.Debug("Quiting tasks")
 			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
@@ -834,7 +834,7 @@ func (q *Queue) keeper() {
 												q.pool[resKey].Hardware[hardwareKey] = false
 
 												logger.Debug("Calling Queue.AddTask to start the job.")
-												retJob := common.EmptyJob()
+												var retJob common.Job
 												err := q.pool[resKey].Client.Call("Queue.AddTask", common.RPCCall{Job: jobs[jobKey]}, &retJob)
 												if err != nil {
 													// Something failed so let's mark the job as failed
@@ -872,7 +872,7 @@ func (q *Queue) keeper() {
 														// The job requires the hardware that is available on this resource to resume
 														logger.Debug("Attempting to resume job.")
 
-														retJob := common.EmptyJob()
+														var retJob common.Job
 														err := q.pool[resKey].Client.Call("Queue.TaskRun", common.RPCCall{Job: jobs[jobKey]}, &retJob)
 														if err != nil {
 															// Something failed so let's mark the job as failed
@@ -932,7 +932,7 @@ func (q *Queue) updateQueue() {
 		if jobs[i].Status == common.STATUS_RUNNING {
 			// Build status update call
 			jobStatus := common.RPCCall{Job: jobs[i]}
-			retJob := common.EmptyJob()
+			var retJob common.Job
 
 			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskStatus", jobStatus, &retJob)
 			// we care about the errors, but only from a logging perspective
@@ -1400,7 +1400,7 @@ func (q *Queue) RemoveResource(resUUID string) error {
 			if jobs[i].Status == common.STATUS_RUNNING || jobs[i].Status == common.STATUS_PAUSED {
 				// Quit the task
 				quitTask := common.RPCCall{Job: jobs[i]}
-				retJob := common.EmptyJob()
+				var retJob common.Job
 
 				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &retJob)
 				if err != nil {
