@@ -273,6 +273,7 @@ func (this *directResourceManager) Keep() {
 		if status {
 			localResource.lastGoodCheck = time.Now()
 		} else {
+			logger.Debug("attempting resource reconnect")
 			this.q.ReconnectResource(data.Key, this.tls)
 		}
 
