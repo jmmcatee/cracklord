@@ -49,7 +49,9 @@ func (q *Queue) Ping(ping int, pong *int) error {
 	q.Lock()
 	defer q.Unlock()
 
-	pong = &ping
+	calc := ping * ping
+
+	pong = &calc
 
 	return nil
 }

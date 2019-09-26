@@ -3,7 +3,6 @@ package queue
 import (
 	"crypto/tls"
 	"errors"
-	"io"
 	"net"
 	"net/rpc"
 	"strings"
@@ -1471,10 +1470,20 @@ func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
 // CheckResourceConnectionStatus checks to see if our RPC connection to a resource is still valid, if not it
 // will return false, otherwise it will return true.
 func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {
-	var reply int64
-	err := res.Client.Call("Queue.Ping", 12345, &reply)
-	if err == rpc.ErrShutdown || err == io.EOF || err == io.ErrUnexpectedEOF {
+	var reply int
+	ping := int(12345)
+	err := res.Client.Call("Queue.Ping", ping, &reply)
+	//if err == rpc.ErrShutdown || err == io.EOF || err == io.ErrUnexpectedEOF {
+	if err != nil {
+		log.WithField("error", err.Error()).Debug("Error pinging RPC server")
 		return false
+	}
+
+	if reply != (ping * ping) {
+		log.WithFields(log.Fields{
+			"ping":  ping,
+			"reply": reply,
+		}).Error("ping did not return the correct value")
 	}
 
 	return true
