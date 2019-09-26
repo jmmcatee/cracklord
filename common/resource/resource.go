@@ -48,7 +48,7 @@ func (q *Queue) AddTool(tooler common.Tooler) {
 func (q *Queue) Ping(ping int, pong *int) error {
 	calc := ping * ping
 
-	pong = &calc
+	*pong = calc
 
 	log.WithFields(log.Fields{
 		"ping": ping,

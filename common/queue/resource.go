@@ -1,8 +1,9 @@
 package queue
 
 import (
-	"github.com/jmmcatee/cracklord/common"
 	"net/rpc"
+
+	"github.com/jmmcatee/cracklord/common"
 )
 
 type ResourcePool map[string]Resource

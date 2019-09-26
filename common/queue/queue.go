@@ -139,7 +139,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				var retJob common.Job
 
 				logger.Debug("Queue.AddTask RPC call started.")
-				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &retJob)
+				err := q.resCall(q.pool[i].Client, "Queue.AddTask", addJob, &retJob)
 				if err != nil {
 					logger.Error(err)
 					j.Status = common.STATUS_FAILED
@@ -287,7 +287,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 		var retJob common.Job
 
 		log.WithField("job", pauseJob.Job.UUID).Debug("Calling Queue.TaskPause on remote resource.")
-		err := q.pool[job.ResAssigned].Client.Call("Queue.TaskPause", pauseJob, &retJob)
+		err := q.resCall(q.pool[job.ResAssigned].Client, "Queue.TaskPause", pauseJob, &retJob)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"uuid":  pauseJob.Job.UUID,
@@ -312,7 +312,7 @@ func (q *Queue) PauseJob(jobuuid string) error {
 				log.Error(err)
 			}
 
-			err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+			err := q.resCall(q.pool[job.ResAssigned].Client, "Queue.TaskQuit", pauseJob, &retJob)
 			if err != nil {
 				// This probably means something really bad happened on the resource, so throw an error in the log
 				log.Error(err)
@@ -371,7 +371,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 		var retJob common.Job
 
 		log.WithField("uuid", quitJob.Job.UUID).Debug("Attempting to call Queue.TaskQuit on remote resource.")
-		err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
+		err := q.resCall(q.pool[job.ResAssigned].Client, "Queue.TaskQuit", quitJob, &retJob)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"job":   quitJob.Job.UUID,
@@ -397,7 +397,7 @@ func (q *Queue) QuitJob(jobuuid string) error {
 				log.Error(err)
 			}
 
-			err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
+			err := q.resCall(q.pool[job.ResAssigned].Client, "Queue.TaskQuit", quitJob, &retJob)
 			if err != nil {
 				// This probably means something really bad happened on the resource, so throw an error in the log
 				log.Error(err)
@@ -500,7 +500,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 			pauseJob := common.RPCCall{Job: jobs[i]}
 			var retJob common.Job
 
-			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &retJob)
+			err := q.resCall(q.pool[resUUID].Client, "Queue.TaskPause", pauseJob, &retJob)
 			if err != nil {
 				return err
 			}
@@ -521,7 +521,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 					log.Error(err)
 				}
 
-				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+				err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskQuit", pauseJob, &retJob)
 				if err != nil {
 					// This probably means something really bad happened on the resource, so throw an error in the log
 					log.Error(err)
@@ -635,7 +635,7 @@ func (q *Queue) PauseQueue() []error {
 			var retJob common.Job
 
 			joblog.Debug("Calling Queue.TaskPause on job")
-			err := q.pool[resuuid].Client.Call("Queue.TaskPause", pauseJob, &retJob)
+			err := q.resCall(q.pool[resuuid].Client, "Queue.TaskPause", pauseJob, &retJob)
 			if err != nil {
 				// Note the error but now mark the job as Failed
 				// This is a definied way of dealing with this to avoid complicated error handling
@@ -662,7 +662,7 @@ func (q *Queue) PauseQueue() []error {
 					log.Error(err)
 				}
 
-				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+				err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskQuit", pauseJob, &retJob)
 				if err != nil {
 					// This probably means something really bad happened on the resource, so throw an error in the log
 					log.Error(err)
@@ -804,7 +804,7 @@ func (q *Queue) Quit() []common.Job {
 			var retJob common.Job
 
 			joblog.Debug("Quiting tasks")
-			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
+			err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskQuit", quitJob, &retJob)
 			// Log any errors but we don't care from a flow perspective
 			if err != nil {
 				log.Error(err.Error())
@@ -983,7 +983,7 @@ func (q *Queue) keeper() {
 
 												logger.Debug("Calling Queue.AddTask to start the job.")
 												var retJob common.Job
-												err := q.pool[resKey].Client.Call("Queue.AddTask", common.RPCCall{Job: jobs[jobKey]}, &retJob)
+												err := q.resCall(q.pool[resKey].Client, "Queue.AddTask", common.RPCCall{Job: jobs[jobKey]}, &retJob)
 												if err != nil {
 													// Something failed so let's mark the job as failed
 													logger.WithField("error", err.Error()).Error("Error while attempting to start job on remote resource.")
@@ -1042,7 +1042,7 @@ func (q *Queue) keeper() {
 														logger.Debug("Attempting to resume job.")
 
 														var retJob common.Job
-														err := q.pool[resKey].Client.Call("Queue.TaskRun", common.RPCCall{Job: jobs[jobKey]}, &retJob)
+														err := q.resCall(q.pool[resKey].Client, "Queue.TaskRun", common.RPCCall{Job: jobs[jobKey]}, &retJob)
 														if err != nil {
 															// Something failed so let's mark the job as failed
 															logger.WithField("error", err.Error()).Error("Error while attempting to resume job on remote resource.")
@@ -1127,7 +1127,7 @@ func (q *Queue) updateQueue() {
 				"resuuid": jobs[i].ResAssigned,
 				"client":  q.pool[jobs[i].ResAssigned].Client,
 			}).Debug("RPC call for task status")
-			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskStatus", jobStatus, &retJob)
+			err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskStatus", jobStatus, &retJob)
 			// we care about the errors, but only from a logging perspective
 			if err != nil {
 				log.WithField("rpc error", err.Error()).Error("Error during RPC call.")
@@ -1149,7 +1149,7 @@ func (q *Queue) updateQueue() {
 					log.Error(err)
 				}
 
-				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", jobStatus, &retJob)
+				err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskQuit", jobStatus, &retJob)
 				if err != nil {
 					// This probably means something really bad happened on the resource, so throw an error in the log
 					log.Error(err)
@@ -1194,7 +1194,7 @@ func (q *Queue) updateQueue() {
 					"PurgeTime": retJob.PurgeTime,
 				}).Debug("Updated PurgeTime value")
 
-				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskDone", jobStatus, &retJob)
+				err := q.resCall(q.pool[jobs[i].ResAssigned].Client, "Queue.TaskDone", jobStatus, &retJob)
 				// we care about the errors, but only from a logging perspective
 				if err != nil {
 					log.WithField("rpc error", err.Error()).Error("Error during RPC call.")
@@ -1470,6 +1470,10 @@ func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
 // CheckResourceConnectionStatus checks to see if our RPC connection to a resource is still valid, if not it
 // will return false, otherwise it will return true.
 func (q *Queue) CheckResourceConnectionStatus(res *Resource) bool {
+	if res.Client == nil {
+		return false
+	}
+
 	var reply int
 	ping := int(12345)
 	err := res.Client.Call("Queue.Ping", ping, &reply)
@@ -1497,7 +1501,7 @@ func (q *Queue) LoadRemoteResourceHardware(resUUID string) {
 	q.RUnlock()
 
 	// Get Hardware
-	err := localRes.Client.Call("Queue.ResourceHardware", common.RPCCall{}, &localRes.Hardware)
+	err := q.resCall(localRes.Client, "Queue.ResourceHardware", common.RPCCall{}, &localRes.Hardware)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":    err.Error(),
@@ -1526,7 +1530,7 @@ func (q *Queue) LoadRemoteResourceTools(resUUID string) {
 
 	// Get Tools
 	var tools []common.Tool
-	err := localRes.Client.Call("Queue.ResourceTools", common.RPCCall{}, &tools)
+	err := q.resCall(localRes.Client, "Queue.ResourceTools", common.RPCCall{}, &tools)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":    err.Error(),
@@ -1638,7 +1642,7 @@ func (q *Queue) RemoveResource(resUUID string) error {
 				quitTask := common.RPCCall{Job: jobs[i]}
 				var retJob common.Job
 
-				err := q.pool[resUUID].Client.Call("Queue.TaskQuit", quitTask, &retJob)
+				err := q.resCall(q.pool[resUUID].Client, "Queue.TaskQuit", quitTask, &retJob)
 				if err != nil {
 					log.Println(err.Error())
 				}
@@ -1691,4 +1695,18 @@ func (q *Queue) RemoveResource(resUUID string) error {
 	}
 
 	return nil
+}
+
+// resCall attempts to make a RPC call, but checks for a nil client first
+// This really feels like a work around for something broken elsewhere...
+func (q *Queue) resCall(client *rpc.Client, serviceMethod string, args interface{}, reply interface{}) error {
+	// Check for nil client
+	if client == nil {
+		// Run all resource manager keep routines
+		q.KeepAllResourceManagers()
+
+		// Hopefully this detects and fixes the issue
+	}
+
+	return client.Call(serviceMethod, args, reply)
 }
