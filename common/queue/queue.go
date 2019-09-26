@@ -143,30 +143,49 @@ func (q *Queue) AddJob(j common.Job) error {
 				err := q.pool[i].Client.Call("Queue.AddTask", addJob, &retJob)
 				if err != nil {
 					logger.Error(err)
-					retJob.Status = common.STATUS_FAILED
+					j.Status = common.STATUS_FAILED
 
-					updateErr := q.db.UpdateJob(retJob)
+					updateErr := q.db.UpdateJob(j)
 					if updateErr != nil {
 						logger.WithFields(log.Fields{
-							"uuid":   retJob.UUID,
-							"name":   retJob.Name,
-							"params": common.CleanJobParamsForLogging(retJob),
+							"uuid":   j.UUID,
+							"name":   j.Name,
+							"params": common.CleanJobParamsForLogging(j),
 							"action": "failed updating job after unsuccesful RPC call",
 						}).Error(updateErr)
 
 						// We could not update the job so try and delete it
-						delErr := q.db.DeleteJob(retJob.UUID)
+						delErr := q.db.DeleteJob(j.UUID)
 						if delErr != nil {
 							logger.WithFields(log.Fields{
-								"uuid":   retJob.UUID,
-								"name":   retJob.Name,
-								"params": common.CleanJobParamsForLogging(retJob),
+								"uuid":   j.UUID,
+								"name":   j.Name,
+								"params": common.CleanJobParamsForLogging(j),
 								"action": "failed delete job after unsuccesful update",
 							}).Error(updateErr)
 						}
 					}
 
 					return err
+				}
+
+				if common.IsEmpty(retJob) {
+					// The RPC call returned and empty job... something bad has happened
+					// so let's quit this job in the Queue
+					log.WithFields(log.Fields{
+						"jobuuid":       j.UUID,
+						"jobname":       j.Name,
+						"resource_uuid": j.ResAssigned,
+					}).Error("task add returned an empty job so it has failed")
+
+					j.Status = common.STATUS_FAILED
+
+					err = q.db.UpdateJob(j)
+					if err != nil {
+						log.Error(err)
+					}
+
+					continue
 				}
 
 				log.WithFields(log.Fields{
@@ -278,6 +297,32 @@ func (q *Queue) PauseJob(jobuuid string) error {
 			return err
 		}
 
+		if common.IsEmpty(retJob) {
+			// The RPC call returned and empty job... something bad has happened
+			// so let's quit this job in the Queue and try and quit it on the resource
+			log.WithFields(log.Fields{
+				"jobuuid":       job.UUID,
+				"jobname":       job.Name,
+				"resource_uuid": job.ResAssigned,
+			}).Error("task pause returned an empty job so it has failed")
+
+			job.Status = common.STATUS_FAILED
+
+			err = q.db.UpdateJob(job)
+			if err != nil {
+				log.Error(err)
+			}
+
+			err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+			if err != nil {
+				// This probably means something really bad happened on the resource, so throw an error in the log
+				log.Error(err)
+				log.WithField("resource_uuid", job.ResAssigned).Error("resource might be dead or broken")
+			}
+
+			return errors.New("empty job returned by pause RPC call")
+		}
+
 		log.WithFields(log.Fields{
 			"uuid":   retJob.UUID,
 			"name":   retJob.Name,
@@ -335,6 +380,32 @@ func (q *Queue) QuitJob(jobuuid string) error {
 			}).Error("An error occurred while trying to quit a remote job")
 
 			return err
+		}
+
+		if common.IsEmpty(retJob) {
+			// The RPC call returned and empty job... something bad has happened
+			// so let's quit this job in the Queue and try and quit it on the resource
+			log.WithFields(log.Fields{
+				"jobuuid":       job.UUID,
+				"jobname":       job.Name,
+				"resource_uuid": job.ResAssigned,
+			}).Error("task quit returned an empty job so it has failed")
+
+			job.Status = common.STATUS_FAILED
+
+			err = q.db.UpdateJob(job)
+			if err != nil {
+				log.Error(err)
+			}
+
+			err := q.pool[job.ResAssigned].Client.Call("Queue.TaskQuit", quitJob, &retJob)
+			if err != nil {
+				// This probably means something really bad happened on the resource, so throw an error in the log
+				log.Error(err)
+				log.WithField("resource_uuid", job.ResAssigned).Error("resource might be dead or broken")
+			}
+
+			return errors.New("empty job returned by quit RPC call")
 		}
 
 		// Set a purge time
@@ -433,6 +504,32 @@ func (q *Queue) PauseResource(resUUID string) error {
 			err := q.pool[resUUID].Client.Call("Queue.TaskPause", pauseJob, &retJob)
 			if err != nil {
 				return err
+			}
+
+			if common.IsEmpty(retJob) {
+				// The RPC call returned and empty job... something bad has happened
+				// so let's quit this job in the Queue and try and quit it on the resource
+				log.WithFields(log.Fields{
+					"jobuuid":       jobs[i].UUID,
+					"jobname":       jobs[i].Name,
+					"resource_uuid": jobs[i].ResAssigned,
+				}).Error("task pausing returned an empty job so it has failed")
+
+				jobs[i].Status = common.STATUS_FAILED
+
+				err = q.db.UpdateJob(jobs[i])
+				if err != nil {
+					log.Error(err)
+				}
+
+				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+				if err != nil {
+					// This probably means something really bad happened on the resource, so throw an error in the log
+					log.Error(err)
+					log.WithField("resource_uuid", jobs[i].ResAssigned).Error("resource might be dead or broken")
+				}
+
+				continue
 			}
 
 			log.WithFields(log.Fields{
@@ -548,6 +645,44 @@ func (q *Queue) PauseQueue() []error {
 				e = append(e, err)
 
 				joblog.Debug("There was a problem pausing the remote job.")
+			}
+
+			if common.IsEmpty(retJob) {
+				// The RPC call returned and empty job... something bad has happened
+				// so let's quit this job in the Queue and try and quit it on the resource
+				log.WithFields(log.Fields{
+					"jobuuid":       jobs[i].UUID,
+					"jobname":       jobs[i].Name,
+					"resource_uuid": jobs[i].ResAssigned,
+				}).Error("task pausing returned an empty job so it has failed")
+
+				jobs[i].Status = common.STATUS_FAILED
+
+				err = q.db.UpdateJob(jobs[i])
+				if err != nil {
+					log.Error(err)
+				}
+
+				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", pauseJob, &retJob)
+				if err != nil {
+					// This probably means something really bad happened on the resource, so throw an error in the log
+					log.Error(err)
+					log.WithField("resource_uuid", jobs[i].ResAssigned).Error("resource might be dead or broken")
+				}
+
+				// Update available hardware
+				// Find the real ToolUUID since the Job's might have changed (See AddJob)
+				var tUUID, hw string
+				for qUUID, tool := range q.pool[jobs[i].ResAssigned].Tools {
+					if jobs[i].ToolUUID == tool.UUID {
+						// We found the UUID of the tool is so store it
+						tUUID = qUUID
+					}
+				}
+				hw = q.pool[jobs[i].ResAssigned].Tools[tUUID].Requirements
+				q.pool[jobs[i].ResAssigned].Hardware[hw] = true
+
+				continue
 			}
 
 			log.WithFields(log.Fields{
@@ -676,19 +811,37 @@ func (q *Queue) Quit() []common.Job {
 				log.Error(err.Error())
 			}
 
-			log.WithFields(log.Fields{
-				"uuid":   retJob.UUID,
-				"name":   retJob.Name,
-				"resid":  retJob.ResAssigned,
-				"params": common.CleanJobParamsForLogging(retJob),
-			}).Debug("Saving RPC returned Job to Queue")
-
-			err = q.db.UpdateJob(retJob)
-			if err != nil {
+			if common.IsEmpty(retJob) {
+				// The RPC call returned and empty job... something bad has happened
+				// so let's quit this job in the Queue and try and quit it on the resource
 				log.WithFields(log.Fields{
-					"uuid": retJob.UUID,
-					"name": retJob.Name,
-				}).Error("Error updating returned job")
+					"jobuuid":       jobs[i].UUID,
+					"jobname":       jobs[i].Name,
+					"resource_uuid": jobs[i].ResAssigned,
+				}).Error("task quit returned an empty job so it has failed")
+
+				jobs[i].Status = common.STATUS_FAILED
+
+				err = q.db.UpdateJob(jobs[i])
+				if err != nil {
+					log.Error(err)
+				}
+
+			} else {
+				log.WithFields(log.Fields{
+					"uuid":   retJob.UUID,
+					"name":   retJob.Name,
+					"resid":  retJob.ResAssigned,
+					"params": common.CleanJobParamsForLogging(retJob),
+				}).Debug("Saving RPC returned Job to Queue")
+
+				err = q.db.UpdateJob(retJob)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"uuid": retJob.UUID,
+						"name": retJob.Name,
+					}).Error("Error updating returned job")
+				}
 			}
 		}
 	}
@@ -829,10 +982,6 @@ func (q *Queue) keeper() {
 													jobs[jobKey].ToolUUID = tool.UUID
 												}
 
-												// Job has been started so mark the hardware as in use and assign the resource ID
-												jobs[jobKey].ResAssigned = resKey
-												q.pool[resKey].Hardware[hardwareKey] = false
-
 												logger.Debug("Calling Queue.AddTask to start the job.")
 												var retJob common.Job
 												err := q.pool[resKey].Client.Call("Queue.AddTask", common.RPCCall{Job: jobs[jobKey]}, &retJob)
@@ -843,20 +992,41 @@ func (q *Queue) keeper() {
 													continue JobLoop
 												}
 
-												log.WithFields(log.Fields{
-													"uuid":   retJob.UUID,
-													"name":   retJob.Name,
-													"resid":  retJob.ResAssigned,
-													"params": common.CleanJobParamsForLogging(retJob),
-												}).Debug("Saving RPC returned Job to Queue")
+												if common.IsEmpty(retJob) {
+													// The RPC call returned and empty job... something bad has happened
+													// so let's quit this job in the Queue and try and quit it on the resource
+													log.WithFields(log.Fields{
+														"jobuuid":       jobs[jobKey].UUID,
+														"jobname":       jobs[jobKey].Name,
+														"resource_uuid": jobs[jobKey].ResAssigned,
+													}).Error("task add returned an empty job so it has failed")
 
-												err = q.db.UpdateJob(retJob)
-												if err != nil {
-													log.Error(err)
+													jobs[jobKey].Status = common.STATUS_FAILED
+
+													err = q.db.UpdateJob(jobs[jobKey])
+													if err != nil {
+														log.Error(err)
+													}
+												} else {
+													// Job has been started so mark the hardware as in use and assign the resource ID
+													jobs[jobKey].ResAssigned = resKey
+													q.pool[resKey].Hardware[hardwareKey] = false
+
+													log.WithFields(log.Fields{
+														"uuid":   retJob.UUID,
+														"name":   retJob.Name,
+														"resid":  retJob.ResAssigned,
+														"params": common.CleanJobParamsForLogging(retJob),
+													}).Debug("Saving RPC returned Job to Queue")
+
+													err = q.db.UpdateJob(retJob)
+													if err != nil {
+														log.Error(err)
+													}
+
+													// Call out to our registered hooks to note job has started
+													go HookOnJobStart(Hooks.JobStart, retJob)
 												}
-
-												// Call out to our registered hooks to note job has started
-												go HookOnJobStart(Hooks.JobStart, retJob)
 
 												break HardwareLoop
 											}
@@ -881,19 +1051,36 @@ func (q *Queue) keeper() {
 															continue JobLoop
 														}
 
-														// Job has been started so mark the hardware as in use
-														q.pool[resKey].Hardware[hardwareKey] = false
+														if common.IsEmpty(retJob) {
+															// The RPC call returned and empty job... something bad has happened
+															// so let's quit this job in the Queue and try and quit it on the resource
+															log.WithFields(log.Fields{
+																"jobuuid":       jobs[jobKey].UUID,
+																"jobname":       jobs[jobKey].Name,
+																"resource_uuid": jobs[jobKey].ResAssigned,
+															}).Error("task run returned an empty job so it has failed")
 
-														log.WithFields(log.Fields{
-															"uuid":   retJob.UUID,
-															"name":   retJob.Name,
-															"resid":  retJob.ResAssigned,
-															"params": common.CleanJobParamsForLogging(retJob),
-														}).Debug("Saving RPC returned Job to Queue")
+															jobs[jobKey].Status = common.STATUS_FAILED
 
-														err = q.db.UpdateJob(retJob)
-														if err != nil {
-															log.Error(err)
+															err = q.db.UpdateJob(jobs[jobKey])
+															if err != nil {
+																log.Error(err)
+															}
+														} else {
+															// Job has been started so mark the hardware as in use
+															q.pool[resKey].Hardware[hardwareKey] = false
+
+															log.WithFields(log.Fields{
+																"uuid":   retJob.UUID,
+																"name":   retJob.Name,
+																"resid":  retJob.ResAssigned,
+																"params": common.CleanJobParamsForLogging(retJob),
+															}).Debug("Saving RPC returned Job to Queue")
+
+															err = q.db.UpdateJob(retJob)
+															if err != nil {
+																log.Error(err)
+															}
 														}
 
 														break HardwareLoop
@@ -938,6 +1125,32 @@ func (q *Queue) updateQueue() {
 			// we care about the errors, but only from a logging perspective
 			if err != nil {
 				log.WithField("rpc error", err.Error()).Error("Error during RPC call.")
+			}
+
+			if common.IsEmpty(retJob) {
+				// The RPC call returned and empty job... something bad has happened
+				// so let's quit this job in the Queue and try and quit it on the resource
+				log.WithFields(log.Fields{
+					"jobuuid":       jobs[i].UUID,
+					"jobname":       jobs[i].Name,
+					"resource_uuid": jobs[i].ResAssigned,
+				}).Error("task status returned an empty job so it has failed")
+
+				jobs[i].Status = common.STATUS_FAILED
+
+				err = q.db.UpdateJob(retJob)
+				if err != nil {
+					log.Error(err)
+				}
+
+				err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskQuit", jobStatus, &retJob)
+				if err != nil {
+					// This probably means something really bad happened on the resource, so throw an error in the log
+					log.Error(err)
+					log.WithField("resource_uuid", jobs[i].ResAssigned).Error("resource might be dead or broken")
+				}
+
+				continue
 			}
 
 			log.WithFields(log.Fields{
@@ -1413,16 +1626,33 @@ func (q *Queue) RemoveResource(resUUID string) error {
 					log.Println(err.Error())
 				}
 
-				log.WithFields(log.Fields{
-					"uuid":   retJob.UUID,
-					"name":   retJob.Name,
-					"resid":  retJob.ResAssigned,
-					"params": common.CleanJobParamsForLogging(retJob),
-				}).Debug("Saving RPC returned Job to Queue")
+				if common.IsEmpty(retJob) {
+					// The RPC call returned and empty job... something bad has happened
+					// so let's quit this job in the Queue and try and quit it on the resource
+					log.WithFields(log.Fields{
+						"jobuuid":       jobs[i].UUID,
+						"jobname":       jobs[i].Name,
+						"resource_uuid": jobs[i].ResAssigned,
+					}).Error("task quit returned an empty job so it has failed")
 
-				err = q.db.UpdateJob(retJob)
-				if err != nil {
-					log.Error(err)
+					jobs[i].Status = common.STATUS_FAILED
+
+					err = q.db.UpdateJob(jobs[i])
+					if err != nil {
+						log.Error(err)
+					}
+				} else {
+					log.WithFields(log.Fields{
+						"uuid":   retJob.UUID,
+						"name":   retJob.Name,
+						"resid":  retJob.ResAssigned,
+						"params": common.CleanJobParamsForLogging(retJob),
+					}).Debug("Saving RPC returned Job to Queue")
+
+					err = q.db.UpdateJob(retJob)
+					if err != nil {
+						log.Error(err)
+					}
 				}
 			}
 		}

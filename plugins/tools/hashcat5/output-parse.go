@@ -186,15 +186,6 @@ func ParseMachineOutput(out string) (Status, error) {
 		}
 
 		// TEMP
-		if strings.Compare(wordScanner.Text(), "TEMP") == 0 {
-			tempLoop = true
-		}
-
-		if strings.Compare(wordScanner.Text(), "UTIL") == 0 {
-			utilLoop = true
-		}
-
-		// TEMP
 		if tempLoop {
 			temp, err := strconv.Atoi(wordScanner.Text())
 			if err != nil {
@@ -203,6 +194,11 @@ func ParseMachineOutput(out string) (Status, error) {
 			}
 
 			status.Temperature = append(status.Temperature, temp)
+		}
+
+		// TEMP
+		if strings.Compare(wordScanner.Text(), "TEMP") == 0 {
+			tempLoop = true
 		}
 
 		if utilLoop {
@@ -215,6 +211,10 @@ func ParseMachineOutput(out string) (Status, error) {
 			status.Utilization = append(status.Utilization, util)
 		}
 
+		if strings.Compare(wordScanner.Text(), "UTIL") == 0 {
+			utilLoop = true
+		}
+
 	}
 
 	// If we did not find a status line return a failure and nil status
@@ -224,46 +224,49 @@ func ParseMachineOutput(out string) (Status, error) {
 
 	// Set the time estimate
 	attemptsLeft := status.Keyspace - status.Attempted
+	log.WithField("Attempts Left", attemptsLeft).Info()
+
 	var totalSpeed float64
-	log.WithField("speed", status.Speed).Info("Speed Divide by 0")
 	for i := range status.Speed {
 		totalSpeed += status.Speed[i]
 	}
 
 	totalSpeedInt64, _ := big.NewFloat(totalSpeed).Int64()
-	duration := time.Duration(attemptsLeft/totalSpeedInt64) * time.Second
+	if totalSpeedInt64 != 0 {
+		duration := time.Duration(attemptsLeft/totalSpeedInt64) * time.Second
 
-	log.WithField("Attempts Left", attemptsLeft).Info()
+		estHours := int64(math.Floor(duration.Hours()))
+		estMinutes := int64(math.Floor(duration.Minutes()))
+		estSeconds := int64(math.Floor(duration.Seconds()))
 
-	log.WithField("Total Speed", totalSpeedInt64).Info()
-	log.WithField("Duration", duration.String()).Info()
+		days := estHours / 24
+		remainderHours := estHours % 24
 
-	estHours := int64(math.Floor(duration.Hours()))
-	estMinutes := int64(math.Floor(duration.Minutes()))
-	estSeconds := int64(math.Floor(duration.Seconds()))
+		estMinutes = estMinutes % 60
+		estSeconds = estSeconds % 60
 
-	days := estHours / 24
-	remainderHours := estHours % 24
+		estDayString := strconv.FormatInt(days, 10)
+		estHourString := strconv.FormatInt(estHours, 10)
+		estMinutesString := strconv.FormatInt(estMinutes, 10)
+		estSecondsString := strconv.FormatInt(estSeconds, 10)
 
-	estMinutes = estMinutes % 60
-	estSeconds = estSeconds % 60
+		if estHours > 24 {
+			estHourString := strconv.FormatInt(remainderHours, 10)
 
-	estDayString := strconv.FormatInt(days, 10)
-	estHourString := strconv.FormatInt(estHours, 10)
-	estMinutesString := strconv.FormatInt(estMinutes, 10)
-	estSecondsString := strconv.FormatInt(estSeconds, 10)
+			status.EstimateTime = estDayString + "days " + estHourString + "h " + estMinutesString +
+				"m " + estSecondsString + "s"
+		} else if estHours > 0 {
+			status.EstimateTime = estHourString + "h " + estMinutesString + "m " + estSecondsString + "s"
+		} else if estHours <= 0 {
+			status.EstimateTime = estMinutesString + "m " + estSecondsString + "s"
+		} else if estHours <= 0 {
+			status.EstimateTime = estSecondsString + "s"
+		}
 
-	if estHours > 24 {
-		estHourString := strconv.FormatInt(remainderHours, 10)
-
-		status.EstimateTime = estDayString + "days " + estHourString + "h " + estMinutesString +
-			"m " + estSecondsString + "s"
-	} else if estHours > 0 {
-		status.EstimateTime = estHourString + "h " + estMinutesString + "m " + estSecondsString + "s"
-	} else if estHours <= 0 {
-		status.EstimateTime = estMinutesString + "m " + estSecondsString + "s"
-	} else if estHours <= 0 {
-		status.EstimateTime = estSecondsString + "s"
+		log.WithField("Total Speed", totalSpeedInt64).Info()
+		log.WithField("Duration", duration.String()).Info()
+	} else {
+		status.EstimateTime = "Unknown"
 	}
 
 	return status, nil

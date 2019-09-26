@@ -79,3 +79,12 @@ func CopyJob(src Job, dst *Job) {
 	dst.OutputData = src.OutputData
 	dst.OutputTitles = src.OutputTitles
 }
+
+// IsEmpty returns true if the job is initialized, but has no values
+func IsEmpty(j Job) bool {
+	if j.UUID == "" {
+		return true
+	}
+
+	return false
+}
