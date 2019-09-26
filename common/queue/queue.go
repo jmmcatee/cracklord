@@ -1121,6 +1121,13 @@ func (q *Queue) updateQueue() {
 			jobStatus := common.RPCCall{Job: jobs[i]}
 			var retJob common.Job
 
+			log.WithFields(log.Fields{
+				"uuid":    jobs[i].UUID,
+				"name":    jobs[i].Name,
+				"status":  jobs[i].Status,
+				"resuuid": jobs[i].ResAssigned,
+				"client":  q.pool[jobs[i].ResAssigned].Client,
+			}).Debug("RPC call for task status")
 			err := q.pool[jobs[i].ResAssigned].Client.Call("Queue.TaskStatus", jobStatus, &retJob)
 			// we care about the errors, but only from a logging perspective
 			if err != nil {
