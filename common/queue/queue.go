@@ -981,6 +981,9 @@ func (q *Queue) keeper() {
 													jobs[jobKey].ToolUUID = tool.UUID
 												}
 
+												// Add the resource ID
+												jobs[jobKey].ResAssigned = resKey
+
 												logger.Debug("Calling Queue.AddTask to start the job.")
 												var retJob common.Job
 												err := q.resCall(resKey, q.pool[resKey].Client, "Queue.AddTask", common.RPCCall{Job: jobs[jobKey]}, &retJob)
@@ -1008,7 +1011,6 @@ func (q *Queue) keeper() {
 													}
 												} else {
 													// Job has been started so mark the hardware as in use and assign the resource ID
-													retJob.ResAssigned = resKey
 													q.pool[resKey].Hardware[hardwareKey] = false
 
 													log.WithFields(log.Fields{
