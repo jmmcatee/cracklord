@@ -6,15 +6,16 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/emperorcow/protectedmap"
 	"github.com/jmmcatee/cracklord/common"
 	"github.com/jmmcatee/cracklord/common/queue"
 	"github.com/vaughan0/go-ini"
-	"sort"
-	"strconv"
-	"time"
 )
 
 type resourceInfo struct {
@@ -152,6 +153,10 @@ func (this awsResourceManager) SystemName() string {
 
 func (this awsResourceManager) DisplayName() string {
 	return "Amazon Web Services"
+}
+
+func (this *awsResourceManager) GetTLSCOnfig() *tls.Config {
+	return this.tls
 }
 
 func (this awsResourceManager) Description() string {

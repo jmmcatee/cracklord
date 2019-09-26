@@ -1,6 +1,6 @@
 package queue
 
-import ()
+import "crypto/tls"
 
 /* The ResourceManager interface is used to implement functionality to manage
  * resources throughout the queue.  All resource actions (add, remove, update)
@@ -9,7 +9,7 @@ import ()
  * Creation of managers should occur through the setup function, which takes
  * the path to the configuration file, and gets called when the Queue daemon is
  * setting everything up.  The Setup function should return a ResourceManager
- * interface below for the Queue to use. 
+ * interface below for the Queue to use.
  */
 type ResourceManager interface {
 	//SystemName returns the string used internally in the queue as a key.  This
@@ -49,6 +49,8 @@ type ResourceManager interface {
 	//GetManagedResources returns a slice of all resource UUIDs managed by this
 	//resource manager.
 	GetManagedResources() []string
+	// GetTLSConfig returns the TLS configuration for the resouces manager
+	GetTLSCOnfig() *tls.Config
 	//Keep is a function that will be run on a regular basis (timing depends on
 	//queue configuration, job status, etc.) and should process any ongoing needs
 	//of the resource manager.  For example, the physical manager may attempt to

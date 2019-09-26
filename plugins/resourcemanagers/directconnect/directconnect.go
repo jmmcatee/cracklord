@@ -127,6 +127,10 @@ func (this directResourceManager) ParametersSchema() string {
 	}`
 }
 
+func (this *directResourceManager) GetTLSCOnfig() *tls.Config {
+	return this.tls
+}
+
 func (this *directResourceManager) AddResource(params map[string]string) error {
 	//First, we need to get the name and address out of the parameters, as we're getting those from the user in this resource manager
 	address, ok := params["address"]
