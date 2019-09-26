@@ -1418,11 +1418,9 @@ func (q *Queue) ConnectResource(resUUID, addr string, tlsconfig *tls.Config) err
 	return nil
 }
 
-// ReconnectResource function will reconnect to a resource that has failed
-func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
-	q.RLock()
+// reconnectResourceNoLock function will reconnect to a resource that has failed
+func (q *Queue) reconnectResourceNoLock(resUUID string, tlsconfig *tls.Config) error {
 	localRes := q.pool[resUUID]
-	q.RUnlock()
 
 	// Get the existing resource address
 	target := localRes.Address
@@ -1457,14 +1455,20 @@ func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
 	log.WithField("target", localRes.Address).Info("Successfully reconnected to resource")
 	localRes.Status = common.STATUS_RUNNING
 
-	q.Lock()
 	q.pool[resUUID] = localRes
-	q.Unlock()
 
 	// Call out to the registered hooks about resource creation
 	go HookOnResourceConnect(Hooks.ResourceConnect, resUUID, localRes)
 
 	return nil
+}
+
+// ReconnectResource function will reconnect to a resource that has failed
+func (q *Queue) ReconnectResource(resUUID string, tlsconfig *tls.Config) error {
+	q.Lock()
+	defer q.Unlock()
+
+	return q.reconnectResourceNoLock(resUUID, tlsconfig)
 }
 
 // CheckResourceConnectionStatus checks to see if our RPC connection to a resource is still valid, if not it
@@ -1710,7 +1714,7 @@ func (q *Queue) resCall(resID string, client *rpc.Client, serviceMethod string, 
 				continue
 			}
 
-			err = q.ReconnectResource(resID, managers[i].GetTLSCOnfig())
+			err = q.reconnectResourceNoLock(resID, managers[i].GetTLSCOnfig())
 			if err != nil {
 				return err
 			}
