@@ -151,6 +151,11 @@ func (t *Tasker) Status() common.Job {
 		t.job.OutputData = dedupHashes(hashes)
 	}
 
+	// Check if our hashes are in line with our CrackedHashes numbers as sometimes the status will miss this
+	if int64(len(t.job.OutputData)) > t.job.CrackedHashes {
+		t.job.CrackedHashes = int64(len(t.job.OutputData))
+	}
+
 	t.stderr.Reset()
 	t.stdout.Reset()
 
