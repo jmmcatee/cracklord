@@ -52,7 +52,7 @@ func NewJob(tooluuid string, name string, owner string, params map[string]string
 }
 
 // CleanJobParamsForLogging takes a job and returns a map of parameters than can be used in loggin without sensitive information
-func CleanJobParamsForLogging(j *Job) map[string]string {
+func CleanJobParamsForLogging(j Job) map[string]string {
 	logParam := make(map[string]string)
 
 	for k, v := range j.Parameters {

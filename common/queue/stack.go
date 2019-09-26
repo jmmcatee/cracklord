@@ -85,7 +85,7 @@ func (db *JobDB) AddJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"uuid":   j.UUID,
 		"name":   j.Name,
-		"params": common.CleanJobParamsForLogging(&j),
+		"params": common.CleanJobParamsForLogging(j),
 	})
 	logger.Debug("Attempting to Job to database")
 
@@ -174,7 +174,7 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 }
 
 // UpdateJob updates the value of a common.Job already in the database
-func (db *JobDB) UpdateJob(j *common.Job) error {
+func (db *JobDB) UpdateJob(j common.Job) error {
 	logger := log.WithFields(log.Fields{
 		"uuid":   j.UUID,
 		"name":   j.Name,

@@ -543,7 +543,7 @@ func (a *AppController) CreateJob(rw http.ResponseWriter, r *http.Request) {
 	logNewJob := log.WithFields(log.Fields{
 		"jobID":     job.UUID,
 		"jobName":   job.Name,
-		"jobParams": common.CleanJobParamsForLogging(&job),
+		"jobParams": common.CleanJobParamsForLogging(job),
 	})
 
 	err = a.Q.AddJob(job)
@@ -603,7 +603,7 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	logJob := log.WithFields(log.Fields{
 		"jobID":     job.UUID,
 		"jobName":   job.Name,
-		"jobParams": common.CleanJobParamsForLogging(&job),
+		"jobParams": common.CleanJobParamsForLogging(job),
 	})
 
 	// Build the response structure
@@ -619,7 +619,7 @@ func (a *AppController) ReadJob(rw http.ResponseWriter, r *http.Request) {
 	resp.Job.CrackedHashes = job.CrackedHashes
 	resp.Job.TotalHashes = job.TotalHashes
 	resp.Job.Progress = job.Progress
-	resp.Job.Params = common.CleanJobParamsForLogging(&job)
+	resp.Job.Params = common.CleanJobParamsForLogging(job)
 	resp.Job.ToolID = job.ToolUUID
 	resp.Job.PerformanceTitle = job.PerformanceTitle
 	resp.Job.PerformanceData = job.PerformanceData
