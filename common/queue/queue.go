@@ -1008,7 +1008,7 @@ func (q *Queue) keeper() {
 													}
 												} else {
 													// Job has been started so mark the hardware as in use and assign the resource ID
-													jobs[jobKey].ResAssigned = resKey
+													retJob.ResAssigned = resKey
 													q.pool[resKey].Hardware[hardwareKey] = false
 
 													log.WithFields(log.Fields{
@@ -1704,24 +1704,6 @@ func (q *Queue) RemoveResource(resUUID string) error {
 // resCall attempts to make a RPC call, but checks for a nil client first
 // This really feels like a work around for something broken elsewhere...
 func (q *Queue) resCall(resID string, client *rpc.Client, serviceMethod string, args interface{}, reply interface{}) error {
-	// Check for nil client
-	if client == nil {
-		// Find our resource
-		managers := q.AllResourceManagers()
-		for i := range managers {
-			_, _, err := managers[i].GetResource(resID)
-			if err != nil {
-				continue
-			}
-
-			err = q.reconnectResourceNoLock(resID, managers[i].GetTLSCOnfig())
-			if err != nil {
-				return err
-			}
-		}
-
-		// Hopefully this detects and fixes the issue
-	}
 
 	return client.Call(serviceMethod, args, reply)
 }
