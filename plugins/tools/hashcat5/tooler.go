@@ -304,6 +304,13 @@ func (h *hashcat5Tooler) Parameters() string {
 	advancedOptionsFieldset.SetCondition("use_adv_options", false)
 
 	// Build the tabs
+	// Disable Optimized Kernels
+	advOptTabDisableOptimizedKernels := goschemaform.NewTab()
+	advOptTabDisableOptimizedKernels.SetTitle("Disable Optimized Kernels")
+	advOptDisableOptimizedKernelsCheckbox := goschemaform.NewCheckBoxInput("adv_disable_optimized_kernels")
+	advOptDisableOptimizedKernelsCheckbox.SetTitle("Disable Optimized Kernels")
+	advOptTabDisableOptimizedKernels.AddElement(advOptDisableOptimizedKernelsCheckbox)
+	advancedOptionsFieldset.AddTab(advOptTabDisableOptimizedKernels)
 	// Loopback
 	advOptTabLoopback := goschemaform.NewTab()
 	advOptTabLoopback.SetTitle("Loopback Input")
@@ -736,6 +743,24 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		if advancedOptionsBool {
 			// We should check our advanced options
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Check if we should disable the optimized kernels
+			var advDisableOptimizedKernelsBool, removeDisableOptimizedKernelsFlag bool
+			if advDisableOptimizedKernelsString, advDisableOptimizedKernelsOk := t.job.Parameters["adv_disable_optimized_kernels"]; advDisableOptimizedKernelsOk {
+				if advDisableOptimizedKernelsOk, err = strconv.ParseBool(advDisableOptimizedKernelsString); err != nil {
+					log.WithFields(log.Fields{
+						"error":      err,
+						"boolString": advDisableOptimizedKernelsString,
+					}).Error("Error parsing a bool")
+				}
+
+				if advDisableOptimizedKernelsBool {
+					removeDisableOptimizedKernelsFlag = true
+				}
+			}
+			if !removeDisableOptimizedKernelsFlag {
+				opts = append(opts, "-O")
+			}
+
 			/// Loopback option
 			var advEnableLoopbackBool bool
 			if advEnableLoopbackString, advEnableLoopbackOk := t.job.Parameters["adv_options_loopback"]; advEnableLoopbackOk {
