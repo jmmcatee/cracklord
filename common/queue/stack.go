@@ -63,6 +63,12 @@ func NewJobDB(path string) (*JobDB, error) {
 	logger.Debug("End database setup transaction")
 
 	jb.boltdb = db
+
+	err = jb.cleanExistingDatabase()
+	if err != nil {
+		return &JobDB{}, err
+	}
+
 	return &jb, nil
 }
 
@@ -171,6 +177,43 @@ func (db *JobDB) GetAllJobs() ([]common.Job, error) {
 	})
 	logger.Debug("Walked database collecting jobs")
 	return jobs, err
+}
+
+// cleanExistingDatabase walks all jobs and move them to quit if they were running or paused
+func (db *JobDB) cleanExistingDatabase() error {
+	log.Debug("Walking the database to clean it up before if there are stale entries")
+
+	err := db.boltdb.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(BucketJobs)
+
+		jc := b.Cursor()
+		for jk, jv := jc.First(); jk != nil; jk, jv = jc.Next() {
+			var job common.Job
+
+			err := json.Unmarshal(jv, &job)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"key":   jk,
+					"value": jv,
+				}).Error("failed to unmarshal job value from Cursor")
+
+				return err
+			}
+
+			if job.Status == common.STATUS_RUNNING || job.Status == common.STATUS_PAUSED || job.Status == common.STATUS_CREATED || job.Status == common.STATUS_PENDING {
+				job.Status = common.STATUS_QUIT
+			}
+
+			err = b.Put(jk, jv)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 // UpdateJob updates the value of a common.Job already in the database
