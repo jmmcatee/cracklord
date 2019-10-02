@@ -807,6 +807,8 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 					opts = append(opts, "--runtime="+advTimeoutString)
 				}
 			}
+		} else {
+			opts = append(opts, "-O")
 		}
 	} else {
 		opts = append(opts, "-O")
