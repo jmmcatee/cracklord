@@ -210,7 +210,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				}
 
 				// Note the resources as being used
-				if retJob.Status === common.STATUS_RUNNING {
+				if retJob.Status == common.STATUS_RUNNING {
 					q.pool[i].Hardware[tool.Requirements] = false
 				}
 
