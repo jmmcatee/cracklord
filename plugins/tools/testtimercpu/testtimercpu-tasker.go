@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"strconv"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 type testPipe struct {
@@ -103,6 +104,10 @@ func (t *testTimerCPUTasker) Quit() common.Job {
 	t.stop <- true
 	t.job.Status = common.STATUS_QUIT
 	return t.job
+}
+
+func (t *testTimerCPUTasker) Done() {
+
 }
 
 func (t *testTimerCPUTasker) IOE() (io.Writer, io.Reader, io.Reader) {

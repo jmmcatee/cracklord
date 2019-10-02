@@ -645,6 +645,11 @@ func (v *hascatTasker) Pause() error {
 	return nil
 }
 
+// Done is an empty interface function to support the updated interface spec
+func (t *hascatTasker) Done() {
+
+}
+
 func (v *hascatTasker) Quit() common.Job {
 	log.WithField("task", v.job.UUID).Debug("Attempting to quit hashcat task")
 

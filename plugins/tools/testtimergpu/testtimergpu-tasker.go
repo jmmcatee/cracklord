@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"strconv"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 type testPipe struct {
@@ -67,6 +68,10 @@ func (t *testTimerGPUTasker) Status() common.Job {
 	}).Debug("Test timer status.")
 
 	return t.job
+}
+
+func (t *testTimerGPUTasker) Done() {
+
 }
 
 func (t *testTimerGPUTasker) Run() error {

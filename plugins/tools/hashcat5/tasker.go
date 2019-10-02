@@ -354,7 +354,53 @@ func (t *Tasker) Quit() common.Job {
 		log.WithFields(common.LogJob(t.job)).Debug("task quit successfully")
 	}
 
+	t.cleanup()
+
 	return t.job
+}
+
+// Done cleans up the local files associated with the hashcat5.1 job
+func (t *Tasker) Done() {
+	t.cleanup()
+}
+
+// cleanup deletes all files associated with the given task
+func (t *Tasker) cleanup() {
+	// Delete the working directory
+	err := os.RemoveAll(t.wd)
+	if err != nil {
+		log.WithField("workingdir", t.wd).Error(err)
+	}
+
+	// See if a restore file exists in the hashcat bin path
+	err = os.Remove(filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".restore"))
+	if err != nil {
+		log.WithField("file", filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".restore")).Error(err)
+	}
+
+	// See if a log file exists in the hashcat bin path
+	err = os.Remove(filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".log"))
+	if err != nil {
+		log.WithField("file", filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".log")).Error(err)
+	}
+
+	// See if a pid file exists in the hashcat bin path
+	err = os.Remove(filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".pid"))
+	if err != nil {
+		log.WithField("file", filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".pid")).Error(err)
+	}
+
+	// See if a induct dir exists in the hashcat bin path
+	err = os.RemoveAll(filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".induct"))
+	if err != nil {
+		log.WithField("dir", filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".induct")).Error(err)
+	}
+
+	// See if a outfiles dir exists in the hashcat bin path
+	err = os.RemoveAll(filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".outfiles"))
+	if err != nil {
+		log.WithField("dir", filepath.Join(filepath.Dir(config.BinPath), t.job.UUID+".outfiles")).Error(err)
+	}
 }
 
 // IOE is no longer used and is a empty interface for

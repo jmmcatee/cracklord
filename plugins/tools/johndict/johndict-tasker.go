@@ -269,9 +269,9 @@ func (v *johndictTasker) Status() common.Job {
 	if err != nil {
 		v.job.Error = err.Error()
 		log.WithField("Error", err.Error()).Debug("Error running john status command.")
-		// Do not return the job now. Keep running the check so the hashes will be parsed 
+		// Do not return the job now. Keep running the check so the hashes will be parsed
 		// even if the job has quit before a status was pulled.
-		// return v.job 
+		// return v.job
 	}
 
 	log.WithField("StatusStdout", string(status)).Debug("Stdout status return of john call")
@@ -369,6 +369,11 @@ func (v *johndictTasker) Status() common.Job {
 	}).Info("Ongoing task status")
 
 	return v.job
+}
+
+// Done is an empty interface function to support the updated interface spec
+func (t *johndictTasker) Done() {
+
 }
 
 /*
@@ -543,7 +548,7 @@ func parseJohnETA(eta string) (time.Time, error) {
 		t := time.Now().UTC()
 		parts := strings.Split(eta, ":")
 
-		dur, err := time.ParseDuration(fmt.Sprintf("%sh%sm%ss", parts[0], parts[1], parts[2]))	
+		dur, err := time.ParseDuration(fmt.Sprintf("%sh%sm%ss", parts[0], parts[1], parts[2]))
 
 		if err != nil {
 			return time.Time{}, err
@@ -551,7 +556,7 @@ func parseJohnETA(eta string) (time.Time, error) {
 
 		t = t.Add(dur)
 
-		return t ,nil
+		return t, nil
 
 	} else if len(eta) == 16 {
 		eta = eta + ":00"

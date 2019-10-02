@@ -307,6 +307,11 @@ func (t *Tasker) Pause() error {
 	return nil
 }
 
+// Done is an empty interface function to support the updated interface spec
+func (t *Tasker) Done() {
+
+}
+
 // Quit kills the hashcat process and then returns the most up-to-date status
 func (t *Tasker) Quit() common.Job {
 	log.WithField("task", t.job.UUID).Debug("Attempting to quit hashcat task")

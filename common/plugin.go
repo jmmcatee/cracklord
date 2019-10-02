@@ -10,6 +10,7 @@ type Tasker interface {
 	Pause() error
 	Quit() Job
 	IOE() (io.Writer, io.Reader, io.Reader)
+	Done()
 }
 
 type Tooler interface {

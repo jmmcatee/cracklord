@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"net"
 	"os"
@@ -18,6 +16,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 var regHostsCompleted *regexp.Regexp
@@ -236,6 +237,10 @@ func (v *nmapTasker) Status() common.Job {
 	v.stdout.Reset()
 
 	return v.job
+}
+
+func (v *nmapTasker) Done() {
+
 }
 
 func (v *nmapTasker) Run() error {
