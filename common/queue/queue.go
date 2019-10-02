@@ -412,6 +412,11 @@ func (q *Queue) QuitJob(jobuuid string) error {
 			return errors.New("empty job returned by quit RPC call")
 		}
 
+		if retJob.Status == common.STATUS_PAUSED {
+			// Job needs to be marked as Quit since it did not need to be stopped
+			retJob.Status = common.STATUS_QUIT
+		}
+
 		// Set a purge time
 		retJob.PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 		// Log purge time
@@ -1690,6 +1695,10 @@ func (q *Queue) RemoveResource(resUUID string) error {
 						log.Error(err)
 					}
 				} else {
+					if retJob.Status == common.STATUS_PAUSED {
+						// Job needs to be marked as Quit since it did not need to be stopped
+						retJob.Status = common.STATUS_QUIT
+					}
 					retJob.PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 					log.WithFields(log.Fields{

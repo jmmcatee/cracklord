@@ -353,6 +353,7 @@ func (t *Tasker) Quit() common.Job {
 
 		log.WithFields(common.LogJob(t.job)).Debug("task quit successfully")
 	}
+
 	return t.job
 }
 
