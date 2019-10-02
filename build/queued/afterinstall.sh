@@ -25,10 +25,12 @@ if [ -f $SSLDIR/cracklord_ca_ssl.conf -a -f $SSLDIR/cracklord_queued_ssl.conf -a
 	fi
 
 	# Remove requests and config files
-	rm -r /etc/cracklord/ssl/*.csr
+	rm -r /etc/cracklord/ssl/*.csr >/dev/null 2>&1 || true
 fi 
 
 # Set to startup on boot
-systemctl enable cracklord-queued
+if [ ! -f /etc/systemd/system/cracklord-queued.service ]; then
+	systemctl enable cracklord-queued
+fi
 
 systemctl restart cracklord-queued
