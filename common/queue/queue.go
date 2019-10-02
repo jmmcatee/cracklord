@@ -143,6 +143,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				if err != nil {
 					logger.Error(err)
 					j.Status = common.STATUS_FAILED
+					j.PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 					updateErr := q.db.UpdateJob(j)
 					if updateErr != nil {
@@ -178,6 +179,7 @@ func (q *Queue) AddJob(j common.Job) error {
 					}).Error("task add returned an empty job so it has failed")
 
 					j.Status = common.STATUS_FAILED
+					j.PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 					err = q.db.UpdateJob(j)
 					if err != nil {
@@ -993,7 +995,14 @@ func (q *Queue) keeper() {
 												if err != nil {
 													// Something failed so let's mark the job as failed
 													logger.WithField("error", err.Error()).Error("Error while attempting to start job on remote resource.")
-													retJob.Status = common.STATUS_FAILED
+													jobs[jobKey].Status = common.STATUS_FAILED
+													jobs[jobKey].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
+
+													err = q.db.UpdateJob(jobs[jobKey])
+													if err != nil {
+														log.Error(err)
+													}
+
 													continue JobLoop
 												}
 
@@ -1007,6 +1016,7 @@ func (q *Queue) keeper() {
 													}).Error("task add returned an empty job so it has failed")
 
 													jobs[jobKey].Status = common.STATUS_FAILED
+													jobs[jobKey].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 													err = q.db.UpdateJob(jobs[jobKey])
 													if err != nil {
@@ -1069,6 +1079,7 @@ func (q *Queue) keeper() {
 															}).Error("task run returned an empty job so it has failed")
 
 															jobs[jobKey].Status = common.STATUS_FAILED
+															jobs[jobKey].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 															err = q.db.UpdateJob(jobs[jobKey])
 															if err != nil {
@@ -1154,6 +1165,7 @@ func (q *Queue) updateQueue() {
 				}).Error("task status returned an empty job so it has failed")
 
 				jobs[i].Status = common.STATUS_FAILED
+				jobs[i].PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
 
 				err = q.db.UpdateJob(retJob)
 				if err != nil {
@@ -1678,6 +1690,8 @@ func (q *Queue) RemoveResource(resUUID string) error {
 						log.Error(err)
 					}
 				} else {
+					retJob.PurgeTime = time.Now().Add(time.Duration(q.jpurge*24) * time.Hour)
+
 					log.WithFields(log.Fields{
 						"uuid":   retJob.UUID,
 						"name":   retJob.Name,
