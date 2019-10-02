@@ -68,10 +68,7 @@ func (q *Queue) ResourceHardware(rpc common.RPCCall, hw *map[string]bool) error 
 }
 
 func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
-	log.WithFields(log.Fields{
-		"name": rpc.Job.Name,
-		"uuid": rpc.Job.UUID,
-	}).Info("Job added")
+	log.WithFields(common.LogJob(rpc.Job)).Info("Job added")
 
 	// Add a defered catch for panic from within the tools
 	defer func() {
@@ -115,6 +112,11 @@ func (q *Queue) AddTask(rpc common.RPCCall, rj *common.Job) error {
 	err = q.stack[rpc.Job.UUID].Run()
 	if err != nil {
 		log.Debug("Error starting task on resource")
+
+		rpc.Job.Status = common.STATUS_FAILED
+
+		common.CopyJob(rpc.Job, rj)
+
 		return errors.New("Error starting task on the resource: " + err.Error())
 	}
 

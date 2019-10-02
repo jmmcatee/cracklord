@@ -176,10 +176,13 @@ func (t *Tasker) Run() error {
 	// We will do this via hashcat's --left output, which also will create our hash file for cracking
 	hashcatLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
 	hashcatLeftExec.Dir = t.wd
-	log.WithField("Left Command", hashcatLeftExec.Args).Debug("Executing Left Command")
-	_, err := hashcatLeftExec.Output()
+	log.WithField("arguements", hashcatLeftExec.Args).Debug("executing left flag command")
+	showPotLeftStdout, err := hashcatLeftExec.Output()
 	if err != nil {
-		log.WithField("execError", err).Error("Error running hashcat --left command.")
+		log.WithFields(log.Fields{
+			"returncode": err,
+			"stdout":     showPotLeftStdout,
+		}).Error("error running hashcat --left command.")
 	}
 
 	// Get the first line of the Left output to count our separators (:)

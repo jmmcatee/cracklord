@@ -161,7 +161,7 @@ func (q *Queue) AddJob(j common.Job) error {
 								"name":   j.Name,
 								"params": common.CleanJobParamsForLogging(j),
 								"action": "failed delete job after unsuccesful update",
-							}).Error(updateErr)
+							}).Error(delErr)
 						}
 					}
 
@@ -190,6 +190,7 @@ func (q *Queue) AddJob(j common.Job) error {
 				log.WithFields(log.Fields{
 					"uuid":   retJob.UUID,
 					"name":   retJob.Name,
+					"status": retJob.Status,
 					"resid":  retJob.ResAssigned,
 					"params": common.CleanJobParamsForLogging(retJob),
 					"action": "failed updating job after succesful RPC call",
@@ -209,7 +210,9 @@ func (q *Queue) AddJob(j common.Job) error {
 				}
 
 				// Note the resources as being used
-				q.pool[i].Hardware[tool.Requirements] = false
+				if retJob.Status === common.STATUS_RUNNING {
+					q.pool[i].Hardware[tool.Requirements] = false
+				}
 
 				// Call out to our registered hooks to note job start
 				go HookOnJobStart(Hooks.JobStart, retJob)
@@ -1011,11 +1014,14 @@ func (q *Queue) keeper() {
 													}
 												} else {
 													// Job has been started so mark the hardware as in use and assign the resource ID
-													q.pool[resKey].Hardware[hardwareKey] = false
+													if retJob.Status == STATUS_RUNNING {
+														q.pool[resKey].Hardware[hardwareKey] = false
+													}
 
 													log.WithFields(log.Fields{
 														"uuid":   retJob.UUID,
 														"name":   retJob.Name,
+														"status": retJob.Status,
 														"resid":  retJob.ResAssigned,
 														"params": common.CleanJobParamsForLogging(retJob),
 													}).Debug("Saving RPC returned Job to Queue")
@@ -1058,6 +1064,7 @@ func (q *Queue) keeper() {
 															log.WithFields(log.Fields{
 																"jobuuid":       jobs[jobKey].UUID,
 																"jobname":       jobs[jobKey].Name,
+																"status":        retJob.Status,
 																"resource_uuid": jobs[jobKey].ResAssigned,
 															}).Error("task run returned an empty job so it has failed")
 
@@ -1069,7 +1076,9 @@ func (q *Queue) keeper() {
 															}
 														} else {
 															// Job has been started so mark the hardware as in use
-															q.pool[resKey].Hardware[hardwareKey] = false
+															if retJob.Status == STATUS_RUNNING {
+																q.pool[resKey].Hardware[hardwareKey] = false
+															}
 
 															log.WithFields(log.Fields{
 																"uuid":   retJob.UUID,
