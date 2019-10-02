@@ -2,11 +2,12 @@ package exampleplugin
 
 import (
 	"bytes"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jmmcatee/cracklord/common"
 	"io"
 	"os/exec"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/jmmcatee/cracklord/common"
 )
 
 /*
@@ -76,6 +77,10 @@ func (v *exampleTasker) Pause() error {
 */
 func (v *exampleTasker) Quit() common.Job {
 	return v.job
+}
+
+func (v *exampleTasker) Done() {
+
 }
 
 /*
