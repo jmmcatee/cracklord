@@ -521,7 +521,7 @@ func (q *Queue) PauseResource(resUUID string) error {
 					log.Error(err)
 				}
 
-				err := q.resCall(jobs[i].ResAssigned, q.pool[jobs[i].ResAssigned].Client, "Queue.TaskQuit", pauseJob, &retJob)
+				err := q.resCall(jobs[i].ResAssigned, q.pool[jobs[i].ResAssigned].Client, "Queue.TaskPause", pauseJob, &retJob)
 				if err != nil {
 					// This probably means something really bad happened on the resource, so throw an error in the log
 					log.Error(err)

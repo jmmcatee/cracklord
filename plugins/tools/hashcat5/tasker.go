@@ -312,6 +312,9 @@ func (t *Tasker) Run() error {
 func (t *Tasker) quitExec(returnStatus string) {
 	t.mux.Lock()
 
+	// First set the reason we are quiting the process (Pause or Quit)
+	t.returnStatus = returnStatus
+
 	if runtime.GOOS == "windows" {
 		t.exec.Process.Kill()
 	} else {
@@ -333,8 +336,6 @@ func (t *Tasker) quitExec(returnStatus string) {
 		t.exec.Process.Kill()
 	}
 
-	t.returnStatus = returnStatus
-
 	t.mux.Unlock()
 }
 
@@ -342,10 +343,10 @@ func (t *Tasker) quitExec(returnStatus string) {
 func (t *Tasker) Pause() error {
 	log.WithField("task", t.job.UUID).Debug("Attempting to pause hashcat task")
 
-	// Call status to update the job internals before pausing
-	t.Status()
-
 	if t.job.Status == common.STATUS_RUNNING {
+		// Call status to update the job internals before pausing
+		t.Status()
+
 		t.quitExec(common.STATUS_PAUSED)
 
 		log.WithField("task", t.job.UUID).Debug("Task paused successfully")
@@ -358,10 +359,10 @@ func (t *Tasker) Pause() error {
 func (t *Tasker) Quit() common.Job {
 	log.WithField("task", t.job.UUID).Debug("Attempting to quit hashcat task")
 
-	// Call status to update the job internals before quiting
-	t.Status()
-
 	if t.job.Status == common.STATUS_RUNNING {
+		// Call status to update the job internals before quiting
+		t.Status()
+
 		t.quitExec(common.STATUS_QUIT)
 
 		log.WithField("task", t.job.UUID).Debug("Task quit successfully")
