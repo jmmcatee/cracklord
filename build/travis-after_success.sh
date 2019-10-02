@@ -22,7 +22,7 @@ cp -r $QSRC/conf/* $QDST/etc/cracklord/
 mkdir -p $QDST/var/cracklord/www
 cp -r $BASEDIR/web/* $QDST/var/cracklord/www
 mkdir -p $QDST/etc/init
-cp -r $QSRC/cracklord-queued.conf $QDST/etc/init/
+cp -r $QSRC/cracklord-queued.service $QDST/lib/systemd/system/
 echo "done"
 
 echo -n "Creating resource server package directories"
@@ -32,7 +32,7 @@ go build -v -o $RDST/usr/bin/cracklord-resourced ./cmd/resourced
 mkdir -p $RDST/etc/cracklord
 cp -r $RSRC/conf/* $RDST/etc/cracklord/
 mkdir -p $RDST/etc/init
-cp -r $RSRC/cracklord-resourced.conf $RDST/etc/init/
+cp -r $RSRC/cracklord-resourced.service $RDST/lib/systemd/system/
 echo "done"
 
 echo -n "Generating queue package using FPM"

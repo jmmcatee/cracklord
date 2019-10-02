@@ -1,6 +1,6 @@
 #!/bin/sh
 
-service cracklord-resourced stop >/dev/null 2>&1 || true
+systemctl stop cracklord-resourced >/dev/null 2>&1 || true
 
 if [ $1 = "remove" ]; then
 	if getent passwd cracklord >/dev/null ; then

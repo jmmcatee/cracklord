@@ -1,0 +1,13 @@
+[Unit]
+Description=Cracklord Queue Daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/cracklord-queued --conf="/etc/cracklord/queued.conf" &
+ExecReload=/bin/kill -SIGINT $MAINPID
+KillMode=process
+Restart=on-failure
+Type=simple
+
+[Install]
+Alias=cracklord-queued.service

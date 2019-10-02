@@ -28,7 +28,7 @@ if [ -f $SSLDIR/cracklord_ca_ssl.conf -a -f $SSLDIR/cracklord_queued_ssl.conf -a
 	rm -r /etc/cracklord/ssl/*.csr
 fi 
 
-# Reload upstart configuration so our service appears and works
-initctl reload-configuration
+# Set to startup on boot
+systemctl enable cracklord-queued
 
-service cracklord-queued restart
+systemctl restart cracklord-queued

@@ -19,4 +19,6 @@ if [ -d /var/log/cracklord ]; then
 	chown -R cracklord:cracklord /var/log/cracklord
 fi
 
-service cracklord-resourced restart
+systemctl enable cracklord-resourced
+
+systemctl restart cracklord-resourced
