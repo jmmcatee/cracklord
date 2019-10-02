@@ -964,6 +964,10 @@ func (q *Queue) keeper() {
 								}).Debug("Found empty resource hardware")
 
 								// This resource is free, so lets find a job for it
+								jobs, err := q.db.GetAllJobs()
+								if err != nil {
+									log.Error(err)
+								}
 							JobLoop:
 								for jobKey := range jobs {
 									logger := log.WithFields(log.Fields{
