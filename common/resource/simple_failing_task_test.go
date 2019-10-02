@@ -58,6 +58,10 @@ type simpleFailureTask struct {
 	j        common.Job
 }
 
+func (t *simpleFailureTask) Done() {
+
+}
+
 func (t *simpleFailureTask) Status() common.Job {
 	return t.j
 }

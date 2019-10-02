@@ -69,6 +69,10 @@ type SimpleTimer struct {
 	j    common.Job
 }
 
+func (t *SimpleTimer) Done() {
+
+}
+
 func (t *SimpleTimer) Status() common.Job {
 	if t.j.Status == common.STATUS_PAUSED {
 		tmpData := make([]string, 1)
