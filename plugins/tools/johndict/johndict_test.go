@@ -134,9 +134,9 @@ func TestParsingETA(t *testing.T) {
 		in  string
 		out time.Duration
 	}{
-		{"01:24:01", time.Hour * time.Duration(1) + time.Minute * time.Duration(24)},
-		{"00:25:50", time.Minute * time.Duration(25) + time.Second * time.Duration(49)},
-		{"15:51:34", time.Hour * time.Duration(15) + time.Minute * time.Duration(51) + time.Second * time.Duration(33)},
+		{"01:24:00", time.Hour*time.Duration(1) + time.Minute*time.Duration(24)},
+		{"00:25:49", time.Minute*time.Duration(25) + time.Second*time.Duration(49)},
+		{"15:51:33", time.Hour*time.Duration(15) + time.Minute*time.Duration(51) + time.Second*time.Duration(33)},
 	}
 
 	for _, v := range timeTestTable {
@@ -148,13 +148,13 @@ func TestParsingETA(t *testing.T) {
 		}
 
 		if nt.IsZero() {
-			t.Error("Return is zero for value: "+v.in)
+			t.Error("Return is zero for value: " + v.in)
 		}
 
 		d := nt.Sub(time.Now().UTC())
 
 		// We'll just compare the number of seconds, that way we can round to an int, otherwise
-		// we'll get nanoseconds. 
+		// we'll get nanoseconds.
 		if int(d.Seconds()) != int(v.out.Seconds()) {
 			t.Errorf("Seconds don't match (%s): %d != %d", v.in, int(d.Seconds()), int(v.out.Seconds()))
 		}
@@ -168,7 +168,7 @@ func TestPrintTimeUntil(t *testing.T) {
 		out string
 	}{
 		{"01:24:01", "1 hours, 24 minutes"},
-		{"00:25:50", "25 minutes, 49 seconds"},
+		{"00:25:50", "25 minutes, 50 seconds"},
 		{"15:51:34", "15 hours, 51 minutes"},
 		// These will always change and should only be enabled during dev
 		// {"2019-07-01 14:02", "1443 days, 13 hours"},
