@@ -219,7 +219,7 @@ func ParseMachineOutput(out string) (Status, error) {
 
 	// If we did not find a status line return a failure and nil status
 	if !statusLineFound {
-		return Status{}, errors.New("No status line found.")
+		return Status{}, errors.New("no status line found")
 	}
 
 	// Set the time estimate

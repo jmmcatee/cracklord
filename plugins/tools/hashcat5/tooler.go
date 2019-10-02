@@ -16,10 +16,14 @@ import (
 )
 
 const (
-	USER_HASHES_FILENAME      = "user-input-hashes.txt"
-	HASHCAT_POT_SHOW_FILENAME = "hashcat-pot-show.txt"
-	HASHCAT_LEFT_FILENAME     = "hashcat-left.txt"
-	HASH_OUTPUT_FILENAME      = "output-hashes.txt"
+	// ConstUserHashesFilename is the filename used for user provided hashes
+	ConstUserHashesFilename = "user-input-hashes.txt"
+	// ConstHashcatPotShowFilename is the filename for the hashcat pot checking file
+	ConstHashcatPotShowFilename = "hashcat-pot-show.txt"
+	// ConstHashcatLeftFilename is the filename of the hashcat left file
+	ConstHashcatLeftFilename = "hashcat-left.txt"
+	// ConstHashcatOutputFilename is the filename of the hashcat output file
+	ConstHashcatOutputFilename = "output-hashes.txt"
 )
 
 type hashcat5Tooler struct {
@@ -379,7 +383,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 			"hashmode": htype,
 			"err":      ok,
 		}).Error("Could not find the hashmode provided")
-		return nil, errors.New("Could not find the hashmode provided.")
+		return nil, errors.New("could not find the hashmode provided")
 	}
 	opts = append(opts, "--hash-type="+htype)
 	t.hashMode = htype
@@ -397,7 +401,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		if dictIndex == len(config.Dictionaries) {
 			// We did not find the dictionary so return an error
 			log.WithField("dictionary", dictDictionary).Error("Dictionary provided does not exist.")
-			return nil, errors.New("Dictionary provided does not exist.")
+			return nil, errors.New("dictionary provided does not exist")
 		}
 		log.WithField("Dictionary", config.Dictionaries[dictIndex].Path).Debug("Dictionary selected.")
 
@@ -461,8 +465,8 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 			}
 
 			if ruleRandomMax <= 0 {
-				log.Error("The value given for the number of random rules to generate was not more than 0.")
-				return nil, errors.New("The value given for the number of random rules to generate was not more than 0.")
+				log.Error("the value given for the number of random rules to generate was not more than 0")
+				return nil, errors.New("the value given for the number of random rules to generate was not more than 0")
 			}
 
 			// Append the value
@@ -493,7 +497,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 				if ruleIndex == len(config.RuleFiles) {
 					// We did not find the rule file provided
 					log.WithField("rule file", ruleFile).Error("Rule file selected does not exit.")
-					return nil, errors.New("Rule file provided does not exist.")
+					return nil, errors.New("rule file provided does not exist")
 				}
 
 				// Add the fule file argument
@@ -508,7 +512,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 				fileParts := strings.Split((t.job.Parameters["dict_rules_custom_file"]), ";")
 				if len(fileParts) != 3 {
 					log.Error("Error parsing the uploaded file.")
-					return nil, errors.New("Error parsing the uploaded file.")
+					return nil, errors.New("error parsing the uploaded file")
 				}
 				// [0] - file:[filename of uploaded file]
 				// [1] - data:[data type (text/plain)]
@@ -592,7 +596,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		// We have now defined our custom character sets, if any, so check our provided custom mask
 		if len(bruCustomMask) <= 0 {
 			log.WithField("brute_custom_mask", bruCustomMask).Error("Length of brute_custom_mask was <= 0.")
-			return nil, errors.New("Length of brute_custom_mask was <= 0.")
+			return nil, errors.New("length of brute_custom_mask was less than or equal to 0")
 		}
 
 		// Append the custom mask
@@ -607,7 +611,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 		if charSetIndex == len(config.Charsets) {
 			// We did not find the dictionary so return an error
 			log.WithField("characterset", bruPreDefMask).Error("Character Set provided does not exist.")
-			return nil, errors.New("Character Set provided does not exist.")
+			return nil, errors.New("character Set provided does not exist")
 		}
 
 		// Add the custom character sets used by the configured pre definied character masks
@@ -633,7 +637,9 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 			}
 
 			// Enable increment mode
-			opts = append(opts, "--increment")
+			if incModeBool {
+				opts = append(opts, "--increment")
+			}
 
 			if incModeBool {
 				// Check the start and maxium integers
@@ -647,7 +653,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 					if incMinInt <= 0 {
 						log.WithField("brute_min_length", incMinString).Error("The brute_min_length value is not at least 1.")
-						return nil, errors.New("The brute_min_length value is not at least 1.")
+						return nil, errors.New("the brute_min_length value is not at least 1")
 					}
 
 					// Append the minimum value
@@ -664,7 +670,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 
 					if incMaxInt <= 0 {
 						log.WithField("brute_max_length", incMaxString).Error("The brute_max_length value is not at least 1.")
-						return nil, errors.New("The brute_max_length value is not at least 1.")
+						return nil, errors.New("the brute_max_length value is not at least 1")
 					}
 
 					// Append the minimum value
@@ -692,7 +698,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	}
 
 	var hashBytes []byte
-	hashFilePath := filepath.Join(t.wd, USER_HASHES_FILENAME)
+	hashFilePath := filepath.Join(t.wd, ConstUserHashesFilename)
 	if hashUseUploadBool {
 		// Use an uploaded hashfile
 		if _, hashUploadOk := t.job.Parameters["hashes_file_upload"]; hashUploadOk {
@@ -704,25 +710,25 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 			}
 		} else {
 			log.Error("No hash file was uploaded, even though we checked the box.")
-			return nil, errors.New("No hash file was uploaded, even though we checked the box.")
+			return nil, errors.New("no hash file was uploaded, even though we checked the box")
 		}
 	} else {
 		// Use the provided text input for the hashfile
 		if _, hashMultilineOk := t.job.Parameters["hashes_multiline"]; hashMultilineOk {
 			if len(t.job.Parameters["hashes_multiline"]) <= 0 {
 				log.Error("The hash multiline was provided with a length of 0.")
-				return nil, errors.New("The hash multiline was provided with a length of 0.")
+				return nil, errors.New("the hash multiline was provided with a length of 0")
 			}
 
 			hashBytes = []byte(t.job.Parameters["hashes_multiline"])
 		} else {
 			log.Error("Hashes were not provided in the multiline input and no file was uploaded.")
-			return nil, errors.New("Hashes were not provided in the multiline input and no file was uploaded.")
+			return nil, errors.New("hashes were not provided in the multiline input and no file was uploaded")
 		}
 	}
 
 	// Save hashes to a file for us to process later
-	err = ioutil.WriteFile(filepath.Join(t.wd, USER_HASHES_FILENAME), hashBytes, 0660)
+	err = ioutil.WriteFile(filepath.Join(t.wd, ConstUserHashesFilename), hashBytes, 0660)
 	if err != nil {
 		return nil, err
 	}
@@ -805,7 +811,7 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	}
 
 	// Setup the output file argument
-	opts = append(opts, "--outfile", filepath.Join(t.wd, HASH_OUTPUT_FILENAME))
+	opts = append(opts, "--outfile", filepath.Join(t.wd, ConstHashcatOutputFilename))
 
 	// Append args from the configuration file
 	t.start = append(t.start, config.Args...)
@@ -819,11 +825,11 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 	t.resume = append(t.resume, "--session="+t.job.UUID, "--restore")
 
 	// Setup the show command for the showPot execution
-	leftFilePath := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
-	t.showPotLeft = append(t.showPot, "--outfile", leftFilePath, "--left", USER_HASHES_FILENAME)
+	leftFilePath := filepath.Join(t.wd, ConstHashcatLeftFilename)
+	t.showPotLeft = append(t.showPot, "--outfile", leftFilePath, "--left", ConstUserHashesFilename)
 
-	showPotFilePath := filepath.Join(t.wd, HASHCAT_POT_SHOW_FILENAME)
-	t.showPot = append(t.showPot, "--outfile", showPotFilePath, "--show", USER_HASHES_FILENAME)
+	showPotFilePath := filepath.Join(t.wd, ConstHashcatPotShowFilename)
+	t.showPot = append(t.showPot, "--outfile", showPotFilePath, "--show", ConstUserHashesFilename)
 
 	// Append the various inputs to the argument
 	args = append(args, opts...)

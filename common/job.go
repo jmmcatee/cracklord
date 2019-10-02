@@ -3,6 +3,7 @@ package common
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 )
 
@@ -87,4 +88,23 @@ func IsEmpty(j Job) bool {
 	}
 
 	return false
+}
+
+// LogJob returns a github.com/Sirupsen/logrus log.Fields structure for logging a jobs status
+func LogJob(j Job) log.Fields {
+	return log.Fields{
+		"uuid":           j.UUID,
+		"name":           j.Name,
+		"resuuid":        j.ResAssigned,
+		"status":         j.Status,
+		"error":          j.Error,
+		"starttime":      j.StartTime,
+		"runtime":        j.RunTime,
+		"etc":            j.ETC,
+		"owner":          j.Owner,
+		"teamvisibility": j.TeamVisible,
+		"crackedhashes":  j.CrackedHashes,
+		"totalhashes":    j.TotalHashes,
+		"progress":       j.Progress,
+	}
 }

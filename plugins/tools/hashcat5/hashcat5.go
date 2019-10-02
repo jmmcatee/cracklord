@@ -28,7 +28,7 @@ var config Config
 
 // Setup configures this plugin for running and returns and error something is wrong.
 func Setup(confPath string) error {
-	log.Debug("Setting up hashcat 5.x plugin...")
+	log.Debug("setting up hashcat 5.x plugin...")
 
 	// Load the configuration file
 	confFile, err := ini.LoadFile(confPath)
@@ -36,7 +36,7 @@ func Setup(confPath string) error {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 			"file":  confPath,
-		}).Error("Unable to load configuration file.")
+		}).Error("unable to load configuration file.")
 		return err
 	}
 
@@ -44,8 +44,8 @@ func Setup(confPath string) error {
 	basicConfig := confFile.Section("Basic")
 	if len(basicConfig) == 0 {
 		// Nothing retrieved, so return error
-		log.Error(`No "Basic" configuration section.`)
-		return errors.New(`No "Basic" configuration section.`)
+		log.Error("no [Basic] configuration section")
+		return errors.New("no [Basic] configuration section")
 	}
 
 	// Setup BinPath & WorkingDir
@@ -54,21 +54,21 @@ func Setup(confPath string) error {
 
 	log.WithFields(log.Fields{
 		"binpath": config.BinPath,
-		"WorkDir": config.WorkingDir,
-	}).Debug("BinPath and WorkingDir")
+		"workdir": config.WorkingDir,
+	}).Debug("binary path and working directory setup")
 
 	// Get the dictionary section
 	dicts := confFile.Section("Dictionaries")
 	if len(dicts) == 0 {
 		// Nothing retrieved, so return error
-		log.Error(`No "Dictionaries" configuration section.`)
-		return errors.New(`No "Dictionaries" configuration section.`)
+		log.Error("no [Dictionaries] configuration section")
+		return errors.New("no [Dictionaries] configuration section")
 	}
 	for key, value := range dicts {
 		log.WithFields(log.Fields{
 			"name": key,
 			"path": value,
-		}).Debug("Added dictionary")
+		}).Debug("added dictionary")
 
 		config.Dictionaries = append(config.Dictionaries, Dictionary{Name: key, Path: value})
 	}
@@ -78,15 +78,15 @@ func Setup(confPath string) error {
 	rules := confFile.Section("Rules")
 	if len(rules) == 0 {
 		// Nothing retrieved, so return error
-		log.Error(`No "Rules" configuration section.`)
-		return errors.New(`No "Rules" configuration section.`)
+		log.Error("no [Rules] configuration section")
+		return errors.New("no [Rules] configuration section")
 	}
 
 	for key, value := range rules {
 		log.WithFields(log.Fields{
 			"name": key,
 			"path": value,
-		}).Debug("Added rule")
+		}).Debug("added rule")
 
 		config.RuleFiles = append(config.RuleFiles, RuleFile{Name: key, Path: value})
 	}
@@ -97,15 +97,15 @@ func Setup(confPath string) error {
 	if len(charset) == 0 {
 
 		// Nothing retrieved, so return error
-		log.Error(`No "charset" configuration section.`)
-		return errors.New(`No "charset" configuration section.`)
+		log.Error("no [Charset] configuration section")
+		return errors.New("no [Charset] configuration section")
 	}
 
 	for key, value := range charset {
 		log.WithFields(log.Fields{
 			"name": key,
 			"path": value,
-		}).Debug("Added charset to hashcat")
+		}).Debug("added charset to hashcat")
 
 		config.Charsets = append(config.Charsets, Charset{Name: key, Mask: value})
 	}
@@ -115,15 +115,15 @@ func Setup(confPath string) error {
 	options := confFile.Section("Options")
 	if len(options) == 0 {
 		// Nothing retrieved, so return error
-		log.Error(`No options configuration section.`)
-		return errors.New(`No options configuration section.`)
+		log.Error("no [Options] configuration section")
+		return errors.New("no [Options] configuration section")
 	}
 
 	for flag, value := range options {
 		log.WithFields(log.Fields{
 			"flag":  flag,
 			"value": value,
-		}).Debug("Added option to hashcat")
+		}).Debug("added option to hashcat")
 
 		// Catch some important flags that we need later
 		switch flag {
@@ -145,15 +145,15 @@ func Setup(confPath string) error {
 	excludeHashModes := confFile.Section("ExcludeHashMode")
 	if len(excludeHashModes) == 0 {
 		// Nothing retrieved, so return error
-		log.Error(`No excludeHashModes configuration section.`)
-		return errors.New(`No excludeHashModes configuration section.`)
+		log.Error("no [ExcludeHashMode] configuration section")
+		return errors.New("no [ExcludeHashMode] configuration section")
 	}
 
 	for mode, name := range excludeHashModes {
 		log.WithFields(log.Fields{
 			"mode": mode,
 			"name": name,
-		}).Debug("Added excludeHashModes to hashcat")
+		}).Debug("added excludeHashModes to hashcat")
 
 		exHMMap[mode] = name
 	}
@@ -162,7 +162,7 @@ func Setup(confPath string) error {
 	help, err := exec.Command(config.BinPath, "--help").Output()
 	if err != nil {
 		// Something is wrong with our executable so log and fail
-		log.WithField("error", err.Error()).Error("Error executing hashcat for help screen.")
+		log.WithField("error", err.Error()).Error("error executing hashcat for help screen")
 		return err
 	}
 

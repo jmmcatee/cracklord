@@ -54,9 +54,7 @@ func (t *Tasker) Status() common.Job {
 	if t.job.Status == common.STATUS_RUNNING {
 		if !t.stderrCp {
 			go func() {
-				log.WithFields(log.Fields{
-					"jobUUID": t.job.UUID,
-				}).Debug("Stopping Stderr Pipe Copy")
+				log.WithFields(common.LogJob(t.job)).Debug("stopping Stderr Pipe Copy")
 
 				t.stderrCp = true
 				for t.job.Status == common.STATUS_RUNNING {
@@ -65,17 +63,13 @@ func (t *Tasker) Status() common.Job {
 				}
 				t.stderrCp = false
 
-				log.WithFields(log.Fields{
-					"jobUUID": t.job.UUID,
-				}).Debug("Stopping Stderr Pipe Copy")
+				log.WithFields(common.LogJob(t.job)).Debug("stopping Stderr Pipe Copy")
 			}()
 		}
 
 		if !t.stdoutCp {
 			go func() {
-				log.WithFields(log.Fields{
-					"jobUUID": t.job.UUID,
-				}).Debug("Stopping Stdout Pipe Copy")
+				log.WithFields(common.LogJob(t.job)).Debug("stopping Stdout Pipe Copy")
 
 				t.stdoutCp = true
 				for t.job.Status == common.STATUS_RUNNING {
@@ -84,9 +78,7 @@ func (t *Tasker) Status() common.Job {
 				}
 				t.stdoutCp = false
 
-				log.WithFields(log.Fields{
-					"jobUUID": t.job.UUID,
-				}).Debug("Stopping Stdout Pipe Copy")
+				log.WithFields(common.LogJob(t.job)).Debug("stopping Stdout Pipe Copy")
 			}()
 		}
 
@@ -135,11 +127,9 @@ func (t *Tasker) Status() common.Job {
 
 	// Get the hash file
 	var hashes [][]string
-	hashFile, err := os.Open(filepath.Join(t.wd, HASH_OUTPUT_FILENAME))
+	hashFile, err := os.Open(filepath.Join(t.wd, ConstHashcatOutputFilename))
 	if err == nil {
 		_, hashes = ParseHashcatOutputFile(hashFile, t.inputSplits, t.hashMode)
-	} else {
-		log.WithField("io_error", err).Debug("Failed to open output.txt")
 	}
 
 	// Add in the pot file items
@@ -159,7 +149,7 @@ func (t *Tasker) Status() common.Job {
 	t.stderr.Reset()
 	t.stdout.Reset()
 
-	log.WithField("job", t.job).Debug("Returning job with status call")
+	log.WithFields(common.LogJob(t.job)).Debug("Returning job with status call")
 	return t.job
 }
 
@@ -171,34 +161,23 @@ func (t *Tasker) Run() error {
 
 	// Check that we have not already finished this job
 	if t.job.Status == common.STATUS_DONE || t.job.Status == common.STATUS_QUIT || t.job.Status == common.STATUS_FAILED {
-		log.WithField("Status", t.job.Status).Debug("Unable to start hashcat5 job as it is done.")
-		return errors.New("Job already finished.")
+		log.WithFields(common.LogJob(t.job)).Debug("unable to start hashcat5 job as it is done, quit or failed already")
+		return errors.New("job already finished")
 	}
 
 	// Check if this job is running
 	if t.job.Status == common.STATUS_RUNNING {
 		// Job already running so return no errors
-		log.Debug("hashcat5 job already running, doing nothing")
+		log.Debug("hashcat5 job already running")
 		return nil
 	}
 
-	// We need to first parse the stuff we were given by the user for the hash file.
-	// We will do this via hashcat's --left output, which also will create our hash file for cracking
-	hashcatLeftExec := exec.Command(config.BinPath, t.showPotLeft...)
-	hashcatLeftExec.Dir = t.wd
-	log.WithField("Left Command", hashcatLeftExec.Args).Debug("Executing Left Command")
-	showPotLeftStdout, err := hashcatLeftExec.Output()
-	if err != nil {
-		log.WithField("execError", err).Error("Error running hashcat --left command.")
-	}
-	log.WithField("showLeftStdout", string(showPotLeftStdout)).Debug("Show Left command stdout.")
-
 	// Get the first line of the Left output to count our separators (:)
-	hashcatLeftFilename := filepath.Join(t.wd, HASHCAT_LEFT_FILENAME)
+	hashcatLeftFilename := filepath.Join(t.wd, ConstHashcatLeftFilename)
 	hashcatLeftFile, err := os.Open(hashcatLeftFilename)
 	if err != nil {
 		log.Error(err)
-		return errors.New("Error opening LEFT Hash file")
+		return errors.New("error opening hashcat left flag file")
 	}
 
 	// Get the count of hashes and the split count
@@ -208,19 +187,19 @@ func (t *Tasker) Run() error {
 	// Create and pull the pot file search
 	hashcatShowPotExec := exec.Command(config.BinPath, t.showPot...)
 	hashcatShowPotExec.Dir = t.wd
-	log.WithField("Show Command", hashcatShowPotExec.Args).Debug("Executing Show Command")
+	log.WithField("args", hashcatShowPotExec.Args).Debug("show command executing")
 	showPotStdout, err := hashcatShowPotExec.Output()
 	if err != nil {
-		log.WithField("execError", err).Error("Error running hashcat --show command.")
+		log.WithField("error", err).Error("error running hashcat show command.")
 	}
 	log.WithField("showStdout", string(showPotStdout)).Debug("Show command stdout.")
 
 	// Get the output of the show pot file
-	hashcatPotShowFilename := filepath.Join(t.wd, HASHCAT_POT_SHOW_FILENAME)
+	hashcatPotShowFilename := filepath.Join(t.wd, ConstHashcatPotShowFilename)
 	hashcatPotShowFile, err := os.Open(hashcatPotShowFilename)
 	if err != nil {
 		log.Error(err)
-		return errors.New("Error opening LEFT Hash file")
+		return errors.New("error opening hashcat show file")
 	}
 	var potCount int64
 	potCount, t.showPotOutput = ParseShowPotFile(hashcatPotShowFile, t.inputSplits, t.hashMode)
@@ -229,12 +208,10 @@ func (t *Tasker) Run() error {
 	t.job.TotalHashes = leftCount + potCount
 	t.job.CrackedHashes = potCount
 
+	// Set commands for restore or start
 	// We need to check for a restore file. If it does not exist we have to start over and not give the --restore command
 	hashcatBinFolder := filepath.Dir(config.BinPath)
 	_, err = os.Stat(filepath.Join(hashcatBinFolder, t.job.UUID+".restore"))
-	log.WithField("error", err).Debug("Stat of restore file returned error")
-
-	// Set commands for restore or start
 	if t.job.Status == common.STATUS_CREATED || os.IsNotExist(err) {
 		t.exec = *exec.Command(config.BinPath, t.start...)
 	} else {
@@ -244,8 +221,8 @@ func (t *Tasker) Run() error {
 	// Set the working directory
 	t.exec.Dir = t.wd
 	log.WithFields(log.Fields{
-		"dir": t.exec.Dir,
-	}).Debug("Setup working directory")
+		"workingdir": t.exec.Dir,
+	}).Debug("setup working directory")
 
 	// Assign the stderr, stdout, stdin pipes
 	t.stderrPipe, err = t.exec.StderrPipe()
@@ -267,13 +244,13 @@ func (t *Tasker) Run() error {
 	t.stdout = bytes.NewBuffer([]byte(""))
 
 	// Start the command
-	log.WithField("argument", t.exec.Args).Debug("Running command.")
+	log.WithField("arguments", t.exec.Args).Debug("running command")
 	err = t.exec.Start()
 	t.doneWG.Add(1)
 	if err != nil {
 		// We had an error starting to return that and quit the job
 		t.job.Status = common.STATUS_FAILED
-		log.Errorf("There was an error starting the job: %v", err)
+		log.WithFields(common.LogJob(t.job)).Errorf("there was an error starting the job: %v", err)
 		return err
 	}
 
@@ -285,12 +262,8 @@ func (t *Tasker) Run() error {
 		// Wait for the job to finish
 		t.exec.Wait()
 		t.mux.Lock()
-		log.WithFields(log.Fields{
-			"task":           t.job.UUID,
-			"returnedStatus": t.returnStatus,
-		}).Debug("Job exec returned Wait().")
+		log.WithFields(common.LogJob(t.job)).Debug("job execution returned wait function")
 
-		//log.WithField("task", t.job.UUID).Debug("Took lock on job to change status to done.")
 		switch t.returnStatus {
 		case "":
 			t.job.Status = common.STATUS_DONE
@@ -341,7 +314,7 @@ func (t *Tasker) quitExec(returnStatus string) {
 
 // Pause kills the hashcat process and marks the job as paused
 func (t *Tasker) Pause() error {
-	log.WithField("task", t.job.UUID).Debug("Attempting to pause hashcat task")
+	log.WithFields(common.LogJob(t.job)).Debug("attempting to pause hashcat task")
 
 	if t.job.Status == common.STATUS_RUNNING {
 		// Call status to update the job internals before pausing
@@ -349,7 +322,7 @@ func (t *Tasker) Pause() error {
 
 		t.quitExec(common.STATUS_PAUSED)
 
-		log.WithField("task", t.job.UUID).Debug("Task paused successfully")
+		log.WithFields(common.LogJob(t.job)).Debug("task paused successfully")
 	}
 
 	return nil
@@ -357,7 +330,7 @@ func (t *Tasker) Pause() error {
 
 // Quit kills the hashcat process and then returns the most up-to-date status
 func (t *Tasker) Quit() common.Job {
-	log.WithField("task", t.job.UUID).Debug("Attempting to quit hashcat task")
+	log.WithFields(common.LogJob(t.job)).Debug("attempting to quit hashcat task")
 
 	if t.job.Status == common.STATUS_RUNNING {
 		// Call status to update the job internals before quiting
@@ -365,7 +338,7 @@ func (t *Tasker) Quit() common.Job {
 
 		t.quitExec(common.STATUS_QUIT)
 
-		log.WithField("task", t.job.UUID).Debug("Task quit successfully")
+		log.WithFields(common.LogJob(t.job)).Debug("task quit successfully")
 	}
 	return t.job
 }
