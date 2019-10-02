@@ -204,7 +204,17 @@ func (db *JobDB) cleanExistingDatabase() error {
 				job.Status = common.STATUS_QUIT
 			}
 
-			err = b.Put(jk, jv)
+			jobBytes, err := json.Marshal(job)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error":    err,
+					"jobbytes": jobBytes,
+				}).Error("failed to marshal job value from Cursor")
+
+				return err
+			}
+
+			err = b.Put(jk, jobBytes)
 			if err != nil {
 				return err
 			}
