@@ -808,6 +808,8 @@ func (h *hashcat5Tooler) NewTask(job common.Job) (common.Tasker, error) {
 				}
 			}
 		}
+	} else {
+		opts = append(opts, "-O")
 	}
 
 	// Setup the output file argument
