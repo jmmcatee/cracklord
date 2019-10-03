@@ -1033,9 +1033,7 @@ func (q *Queue) keeper() {
 													}
 												} else {
 													// Job has been started so mark the hardware as in use and assign the resource ID
-													if retJob.Status == STATUS_RUNNING {
-														q.pool[resKey].Hardware[hardwareKey] = false
-													}
+													q.pool[resKey].Hardware[hardwareKey] = false
 
 													log.WithFields(log.Fields{
 														"uuid":   retJob.UUID,
@@ -1096,9 +1094,7 @@ func (q *Queue) keeper() {
 															}
 														} else {
 															// Job has been started so mark the hardware as in use
-															if retJob.Status == STATUS_RUNNING {
-																q.pool[resKey].Hardware[hardwareKey] = false
-															}
+															q.pool[resKey].Hardware[hardwareKey] = false
 
 															log.WithFields(log.Fields{
 																"uuid":   retJob.UUID,

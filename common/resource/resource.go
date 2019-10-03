@@ -270,6 +270,8 @@ func (q *Queue) TaskDone(rpc common.RPCCall, j *common.Job) error {
 
 	common.CopyJob(q.stack[rpc.Job.UUID].Status(), j)
 
+	q.stack[rpc.Job.UUID].Done()
+
 	// Delete the specific job
 	delete(q.stack, rpc.Job.UUID)
 
