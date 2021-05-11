@@ -93,7 +93,7 @@ func main() {
 
 	CertPath, ok := genConf["CertFile"]
 	if !ok {
-		log.Error("The KeyFile directive was not included in the 'General' section of the configuration file.")
+		log.Error("The CertFile directive was not included in the 'General' section of the configuration file.")
 		log.Error("See https://github.com/jmmcatee/cracklord/src/wiki/Configuration-Files.")
 	}
 	CertPath = common.StripQuotes(CertPath)
